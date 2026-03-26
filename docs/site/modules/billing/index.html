@@ -1,152 +1,990 @@
 <!DOCTYPE html>
-<html lang="en-US">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Billing - User Story Development Guide | CardDemo</title>
+    <meta name="last-updated" content="2026-03-26T18:01:22Z">
+    <title>billing - Module Documentation | CardDemo</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; color: #212529; line-height: 1.6; }
-        .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
-        .header { background: linear-gradient(135deg, #e65100 0%, #ef6c00 100%); color: #fff; padding: 36px 32px; border-radius: 10px; margin-bottom: 28px; }
-        .header h1 { font-size: 2rem; margin-bottom: 8px; }
-        .header p { opacity: 0.85; font-size: 1.05rem; }
-        .badge { display: inline-block; background: rgba(255,255,255,0.2); border-radius: 4px; padding: 2px 10px; font-size: 0.8rem; margin-right: 8px; }
-        .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 28px; margin-bottom: 24px; }
-        h2 { font-size: 1.35rem; color: #e65100; border-bottom: 2px solid #fff3e0; padding-bottom: 8px; margin-bottom: 18px; }
-        h3 { font-size: 1.1rem; color: #ef6c00; margin: 18px 0 10px; }
-        ul, ol { padding-left: 22px; }
+        body {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 { color: #4fc3f7; border-bottom: 2px solid #4fc3f7; padding-bottom: 10px; margin-bottom: 20px; font-size: 2rem; }
+        h2 { color: #81c784; margin-top: 36px; margin-bottom: 14px; font-size: 1.35rem; border-left: 4px solid #81c784; padding-left: 10px; }
+        h3 { color: #ffb74d; margin-top: 20px; margin-bottom: 10px; font-size: 1.1rem; }
+        h4 { color: #b0bec5; margin-top: 14px; margin-bottom: 8px; }
+        p { margin-bottom: 12px; }
+        ul, ol { padding-left: 24px; margin-bottom: 12px; }
         li { margin-bottom: 6px; }
-        code { background: #f3f4f6; border-radius: 3px; padding: 2px 6px; font-size: 0.88rem; font-family: 'Courier New', monospace; }
-        pre { background: #1e1e2e; color: #cdd6f4; border-radius: 6px; padding: 18px; overflow-x: auto; font-size: 0.85rem; margin: 12px 0; }
-        .complexity { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 12px 0; }
-        .complexity-card { border-radius: 6px; padding: 14px; }
-        .simple { background: #e8f5e9; border-left: 4px solid #4caf50; }
-        .medium { background: #fff3e0; border-left: 4px solid #ff9800; }
-        .complex { background: #fce4ec; border-left: 4px solid #e91e63; }
-        .complexity-card strong { display: block; margin-bottom: 4px; }
-        .ac-example { background: #f1f8ff; border-left: 4px solid #0288d1; border-radius: 4px; padding: 12px 16px; margin: 10px 0; font-size: 0.93rem; }
-        .footer { text-align: center; padding: 20px; color: #6c757d; font-size: 0.9rem; }
-        .nav-link { display: inline-block; margin: 6px 8px 0 0; color: #e65100; text-decoration: none; font-size: 0.95rem; }
-        .nav-link:hover { text-decoration: underline; }
-        table { width: 100%; border-collapse: collapse; margin: 12px 0; }
-        th { background: #fff3e0; color: #e65100; text-align: left; padding: 10px 12px; font-size: 0.9rem; }
-        td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
+        code {
+            background-color: #2d2d2d;
+            color: #f48fb1;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.88em;
+        }
+        pre {
+            background-color: #2d2d2d;
+            color: #cdd6f4;
+            padding: 16px 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 12px 0 18px 0;
+            font-size: 0.85em;
+            line-height: 1.5;
+            border-left: 3px solid #4fc3f7;
+        }
+        pre code { background: none; color: inherit; padding: 0; }
+        a { color: #4fc3f7; text-decoration: none; }
+        a:hover { text-decoration: underline; color: #81d4fa; }
+        .nav { margin-bottom: 24px; display: flex; gap: 16px; flex-wrap: wrap; }
+        .badge {
+            display: inline-block;
+            background: #263238;
+            border: 1px solid #4fc3f7;
+            color: #4fc3f7;
+            border-radius: 4px;
+            padding: 2px 10px;
+            font-size: 0.8rem;
+            margin-right: 6px;
+            margin-bottom: 6px;
+        }
+        .badge-orange { border-color: #ffb74d; color: #ffb74d; }
+        .badge-green  { border-color: #81c784; color: #81c784; }
+        .badge-red    { border-color: #ef9a9a; color: #ef9a9a; }
+        .section-card {
+            background-color: #212121;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 28px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0 18px 0;
+            font-size: 0.92em;
+        }
+        th {
+            background-color: #263238;
+            color: #81c784;
+            text-align: left;
+            padding: 10px 14px;
+            border-bottom: 2px solid #444;
+        }
+        td {
+            padding: 9px 14px;
+            border-bottom: 1px solid #2d2d2d;
+            vertical-align: top;
+        }
+        tr:hover td { background-color: #252525; }
+        .flow-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin: 8px 0;
+        }
+        .flow-num {
+            background: #4fc3f7;
+            color: #1a1a1a;
+            font-weight: bold;
+            min-width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85em;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .rule-block {
+            background: #1e2a1e;
+            border-left: 4px solid #81c784;
+            border-radius: 4px;
+            padding: 12px 16px;
+            margin: 8px 0;
+        }
+        .warning-block {
+            background: #2a1e1e;
+            border-left: 4px solid #ef9a9a;
+            border-radius: 4px;
+            padding: 12px 16px;
+            margin: 8px 0;
+        }
+        .info-block {
+            background: #1e2330;
+            border-left: 4px solid #4fc3f7;
+            border-radius: 4px;
+            padding: 12px 16px;
+            margin: 8px 0;
+        }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+        @media (max-width: 768px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        }
+        .complexity-card { border-radius: 6px; padding: 14px; margin-bottom: 0; }
+        .simple  { background: #1a2a1a; border: 1px solid #4caf50; }
+        .medium  { background: #2a2a1a; border: 1px solid #ff9800; }
+        .complex { background: #2a1a2a; border: 1px solid #e91e63; }
+        .complexity-card strong { display: block; margin-bottom: 6px; font-size: 0.95em; }
+        .ac-block {
+            background: #1e1e2e;
+            border: 1px solid #3d3d5c;
+            border-radius: 6px;
+            padding: 14px 18px;
+            margin: 10px 0;
+        }
+        .ac-block .given { color: #ffb74d; }
+        .ac-block .when  { color: #81c784; }
+        .ac-block .then  { color: #4fc3f7; }
+        footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #444;
+            color: #888;
+            font-size: 0.85em;
+            text-align: center;
+        }
+        .toc { background: #212121; border: 1px solid #333; border-radius: 8px; padding: 16px 24px; margin-bottom: 28px; }
+        .toc h3 { color: #4fc3f7; margin-top: 0; }
+        .toc ol { margin-bottom: 0; }
+        .toc li { margin-bottom: 4px; }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="header">
-        <h1>💰 Billing</h1>
-        <p>User Story Development Guide — CardDemo Mainframe Application</p>
-        <div style="margin-top:12px">
-            <span class="badge">CICS</span>
-            <span class="badge">COBOL</span>
-            <span class="badge">VSAM ACCTFILE + TRANFILE</span>
-            <span class="badge">Transaction: CB00</span>
-        </div>
-    </div>
 
-    <div class="card">
-        <h2>📋 Module Overview</h2>
-        <p><strong>Purpose:</strong> Process bill payments for a credit card account. Accepts a payment amount from the cardholder, creates a credit transaction record, and reduces the account's current balance.</p>
-        <p style="margin-top:10px"><strong>Business Context:</strong> Payment processing is the primary cardholder action to reduce outstanding balance. Payments are recorded as positive (credit) transactions and immediately update the account balance. The billing flow depends on accounts and transactions modules.</p>
-        <h3>Key Components</h3>
-        <table>
-            <tr><th>Component</th><th>Type</th><th>Responsibility</th></tr>
-            <tr><td><code>COBIL00C.cbl</code></td><td>CICS (CB00)</td><td>Payment input, validation, TRANFILE write, ACCTFILE balance update</td></tr>
-            <tr><td><code>COBIL00.bms</code></td><td>BMS Map</td><td>Bill payment 3270 screen layout</td></tr>
-        </table>
-    </div>
+<nav class="nav">
+    <a href="../../index.html">← Back to Index</a>
+    <a href="../accounts/index.html">Accounts</a>
+    <a href="../transactions/index.html">Transactions</a>
+    <a href="../reports/index.html">Reports →</a>
+</nav>
 
-    <div class="card">
-        <h2>🎯 User Story Development Guide</h2>
-        <h3>📝 Module-Specific US Templates</h3>
+<h1>💰 billing</h1>
+<div>
+    <span class="badge">CICS Online</span>
+    <span class="badge badge-orange">COBOL</span>
+    <span class="badge badge-green">Transaction: CB00</span>
+    <span class="badge">VSAM ACCTFILE + TRANFILE</span>
+    <span class="badge badge-red">Full-Balance Payment</span>
+</div>
+
+<!-- Table of Contents -->
+<div class="toc">
+    <h3>Contents</h3>
+    <ol>
+        <li><a href="#overview">Module Overview &amp; Purpose</a></li>
+        <li><a href="#architecture">Architectural Context</a></li>
+        <li><a href="#components">Key Components</a></li>
+        <li><a href="#dependencies">Dependencies</a></li>
+        <li><a href="#screen-interface">Screen Interface (BMS Map)</a></li>
+        <li><a href="#processing-flow">Processing Flow</a></li>
+        <li><a href="#data-models">Data Models &amp; VSAM Files</a></li>
+        <li><a href="#business-rules">Business Rules</a></li>
+        <li><a href="#copybooks">Copybooks Used</a></li>
+        <li><a href="#error-handling">Error Handling</a></li>
+        <li><a href="#key-constants">Key Hard-Coded Constants</a></li>
+        <li><a href="#navigation">Navigation Key Map</a></li>
+        <li><a href="#user-stories">User Story Templates</a></li>
+        <li><a href="#acceptance-criteria">Acceptance Criteria Examples</a></li>
+        <li><a href="#complexity">Story Complexity Guidelines</a></li>
+        <li><a href="#code-snippets">Code Snippets</a></li>
+        <li><a href="#config">Configuration &amp; Environment</a></li>
+        <li><a href="#tech-debt">Technical Debt &amp; Modernisation Notes</a></li>
+    </ol>
+</div>
+
+ --><!-- ═══════════════════════════ OVERVIEW ═══════════
+<div class="section-card" id="overview">
+<h2>1. Module Overview &amp; Purpose</h2>
+
+<p>The <strong>billing</strong> module provides the online bill payment capability for the CardDemo mainframe credit card management application. It allows a cardholder to pay their <em>entire outstanding balance in full</em> through a single CICS 3270 terminal interaction.</p>
+
+<p>When a payment is confirmed, the module:</p>
+<ul>
+    <li>Reads the current account balance from <code>ACCTFILE</code> (VSAM KSDS)</li>
+    <li>Resolves the primary card number via <code>XREFFILE</code> alternate index (<code>CXACAIX</code>)</li>
+    <li>Writes a new credit transaction record to <code>TRANFILE</code> (VSAM KSDS)</li>
+    <li>Rewrites the account record to reduce <code>ACCT-CURR-BAL</code> to zero</li>
+    <li>Returns a confirmation message with the generated transaction ID</li>
+</ul>
+
+<div class="info-block">
+    <strong>Important:</strong> This is a <em>pay-in-full</em> implementation. The payment amount is always equal to the full current balance (<code>ACCT-CURR-BAL</code>). There is no partial payment amount entry field on the screen. The screen displays the current balance and asks for a Y/N confirmation only.
+</div>
+</div>
+
+<!-- ═══════════════════════════ ARCHITECTURE ═══════════════════════════ -->
+<div class="section-card" id="architecture">
+<h2>2. Architectural Context</h2>
+
+<p>The billing module follows the standard CardDemo CICS architecture pattern:</p>
+<ul>
+    <li><strong>One transaction, one program, one BMS mapset</strong> — CICS transaction <code>CB00</code> invokes <code>COBIL00C</code> which uses mapset <code>COBIL00</code>.</li>
+    <li><strong>COMMAREA-driven state</strong> — Session context (user ID, account ID, card number) flows in via <code>CARDDEMO-COMMAREA</code> (copybook <code>COCOM01Y</code>). The billing program also stores per-transaction state in the <code>CDEMO-CB00-INFO</code> group.</li>
+    <li><strong>Pseudo-conversational CICS</strong> — Each ENTER/PF key press causes the program to <code>RETURN TRANSID(CB00) COMMAREA(...)</code>, preserving state across terminal interactions without holding server resources.</li>
+    <li><strong>VSAM direct access</strong> — Account record is read with UPDATE intent for the subsequent REWRITE; no intermediate batch coordination is required for online payment.</li>
+</ul>
+
+<h3>Module Position in Navigation Flow</h3>
+<pre>
+Authentication (CC00)
+  └─→ Main Menu (CM00/COMEN01C)
+        └─→ Bill Payment (CB00/COBIL00C)   ← THIS MODULE
+ reads  ACCTFILE   (account balance)
+              ├─→ reads  XREFFILE   (card-account cross-ref, via CXACAIX AIX)
+              ├─→ writes TRANFILE   (new payment transaction record)
+              └─→ rewrites ACCTFILE (updated balance = 0)
+</pre>
+
+<h3>Architecture Diagram — Billing</h3>
+<pre>
+
+  CICS Region                                            │
+                                                         │
+  Terminal ──→ CB00 ──→ COBIL00C.cbl                     │
+               │               │                         │
+          │               │       ┌───────┴─────────
+               │       │  COBIL00 BMS Map      │          │
+               │       │  (COBIL0A screen)     │          │
+               │       └───────────────────────┘          │
+               │                                          │
+               │       VSAM File I/O                      │
+               │       ├── READ    ACCTDAT  (ACCTFILE)    │
+               │       ├── REWRITE ACCTDAT  (ACCTFILE)    │
+               │       ├── READ    CXACAIX  (XREFFILE AIX)│
+               │       ├── STARTBR TRANSACT (TRANFILE)    │
+               │       ├── READPREV TRANSACT              │
+               │       ├── ENDBR   TRANSACT               │
+               │       └── WRITE   TRANSACT (TRANFILE)    │
+               │                                          │
+               └── COMMAREA → next transaction            │
+
+</pre>
+</div>
+
+<!-- ═══════════════════════════ COMPONENTS ═══════════════════════════ -->
+<div class="section-card" id="components">
+<h2>3. Key Components</h2>
+
+<table>
+    <tr>
+        <th>File</th>
+        <th>Type</th>
+        <th>CICS Name</th>
+        <th>Responsibility</th>
+    </tr>
+    <tr>
+        <td><code>app/cbl/COBIL00C.cbl</code></td>
+        <td>CICS COBOL Program</td>
+        <td>COBIL00C</td>
+        <td>Main bill payment logic: session init, screen send/receive, validation, VSAM I/O, balance update</td>
+    </tr>
+    <tr>
+        <td><code>app/bms/COBIL00.bms</code></td>
+        <td>BMS Mapset</td>
+        <td>COBIL00 / COBIL0A</td>
+        <td>3270 terminal screen definition — fields: TRNNAME, TITLE01/02, CURDATE, CURTIME, PGMNAME, ACTIDIN, CURBAL, CONFIRM, ERRMSG</td>
+    </tr>
+    <tr>
+        <td><code>app/cpy-bms/COBIL00.CPY</code></td>
+        <td>COBOL Copybook (BMS-generated)</td>
+        <td>—</td>
+        <td>Input/output map structures <code>COBIL0AI</code> (input) and <code>COBIL0AO</code> (output) redefining each other; included via <code>COPY COBIL00.</code></td>
+    </tr>
+</table>
+
+<h3>Internal Paragraph Structure of COBIL00C</h3>
+<table>
+    <tr><th>Paragraph</th><th>Function</th></tr>
+    <tr><td><code>MAIN-PARA</code></td><td>Entry point; routes to send (first entry) or receive (re-entry) based on <code>CDEMO-PGM-CONTEXT</code></td></tr>
+    <tr><td><code>PROCESS-ENTER-KEY</code></td><td>Core logic: validate account ID, read balance, handle confirmation, call file I/O paragraphs</td></tr>
+    <tr><td><code>SEND-BILLPAY-SCREEN</code></td><td>Populates header and sends COBIL0A map via <code>EXEC CICS SEND MAP</code></td></tr>
+    <tr><td><code>RECEIVE-BILLPAY-SCREEN</code></td><td>Receives user input from COBIL0A map via <code>EXEC CICS RECEIVE MAP</code></td></tr>
+    <tr><td><code>POPULATE-HEADER-INFO</code></td><td>Sets transaction name, program name, current date/time in map output fields</td></tr>
+    <tr><td><code>GET-CURRENT-TIMESTAMP</code></td><td>Uses <code>EXEC CICS ASKTIME / FORMATTIME</code> to build ISO-style timestamp for TRAN-ORIG-TS and TRAN-PROC-TS</td></tr>
+    <tr><td><code>READ-ACCTDAT-FILE</code></td><td>CICS READ with UPDATE on ACCTFILE keyed by ACCT-ID</td></tr>
+    <tr><td><code>UPDATE-ACCTDAT-FILE</code></td><td>CICS REWRITE on ACCTFILE with modified ACCOUNT-RECORD</td></tr>
+    <tr><td><code>READ-CXACAIX-FILE</code></td><td>CICS READ on XREFFILE alternate index (CXACAIX) keyed by XREF-ACCT-ID to obtain XREF-CARD-NUM</td></tr>
+    <tr><td><code>STARTBR-TRANSACT-FILE</code></td><td>CICS STARTBR on TRANFILE at HIGH-VALUES to position at end of file</td></tr>
+    <tr><td><code>READPREV-TRANSACT-FILE</code></td><td>CICS READPREV on TRANFILE to retrieve highest existing TRAN-ID</td></tr>
+    <tr><td><code>ENDBR-TRANSACT-FILE</code></td><td>CICS ENDBR to release browse on TRANFILE</td></tr>
+    <tr><td><code>WRITE-TRANSACT-FILE</code></td><td>CICS WRITE new TRAN-RECORD to TRANFILE; displays success message with TRAN-ID on success</td></tr>
+    <tr><td><code>CLEAR-CURRENT-SCREEN</code></td><td>Calls INITIALIZE-ALL-FIELDS then re-sends the empty screen</td></tr>
+    <tr><td><code>INITIALIZE-ALL-FIELDS</code></td><td>Clears ACTIDIN, CURBAL, CONFIRM, and WS-MESSAGE map fields</td></tr>
+    <tr><td><code>RETURN-TO-PREV-SCREEN</code></td><td>XCTL to previous program (from COMMAREA) or to COMEN01C if not set</td></tr>
+</table>
+</div>
+
+<!-- ═══════════════════════════ DEPENDENCIES ═══════════════════════════ -->
+<div class="section-card" id="dependencies">
+<h2>4. Dependencies</h2>
+
+<h3>Internal Module Dependencies</h3>
+<table>
+    <tr><th>Module</th><th>Dependency Type</th><th>Details</th></tr>
+    <tr>
+        <td><strong>authentication</strong></td>
+        <td>Required prerequisite</td>
+        <td>COMMAREA must be populated with <code>CDEMO-USER-ID</code> and <code>CDEMO-USER-TYPE</code>; if <code>EIBCALEN = 0</code> the program XCTLs to <code>COSGN00C</code></td>
+    </tr>
+    <tr>
+        <td><strong>accounts</strong></td>
+        <td>Data provider</td>
+        <td>Account record read from ACCTFILE; <code>ACCT-ACTIVE-STATUS</code>, <code>ACCT-CURR-BAL</code>, and <code>ACCT-CURR-CYC-CREDIT</code> are the key fields consumed and updated</td>
+    </tr>
+    <tr>
+        <td><strong>transactions</strong></td>
+        <td>Data consumer</td>
+        <td>Payment creates a TRAN-RECORD in TRANFILE; visible in the Transaction List screen (CT00) as a credit entry</td>
+    </tr>
+    <tr>
+        <td><strong>credit-cards</strong></td>
+        <td>Cross-reference lookup</td>
+        <td>XREFFILE alternate index (CXACAIX) is read to resolve XREF-CARD-NUM from XREF-ACCT-ID, needed to populate TRAN-CARD-NUM</td>
+    </tr>
+</table>
+
+<h3>VSAM File Dependencies</h3>
+<table>
+    <tr><th>CICS Dataset Name</th><th>VSAM File</th><th>Access</th><th>Purpose</th></tr>
+    <tr><td><code>ACCTDAT</code></td><td>ACCTFILE</td><td>READ (UPDATE) + REWRITE</td><td>Account balance read and updated</td></tr>
+    <tr><td><code>CXACAIX</code></td><td>XREFFILE (AIX)</td><td>READ</td><td>Resolve card number from account ID</td></tr>
+    <tr><td><code>TRANSACT</code></td><td>TRANFILE</td><td>STARTBR + READPREV + ENDBR + WRITE</td><td>Browse for max ID; write payment transaction</td></tr>
+</table>
+
+<h3>Copybook Dependencies</h3>
+<table>
+    <tr><th>Copybook</th><th>Content</th><th>Used For</th></tr>
+    <tr><td><code>COCOM01Y</code></td><td>CARDDEMO-COMMAREA structure</td><td>Session state (user, account, program navigation)</td></tr>
+    <tr><td><code>COBIL00</code></td><td>BMS map I/O structures COBIL0AI / COBIL0AO</td><td>Screen field access</td></tr>
+    <tr><td><code>CVACT01Y</code></td><td>ACCOUNT-RECORD layout</td><td>ACCTFILE record access</td></tr>
+    <tr><td><code>CVACT03Y</code></td><td>CARD-XREF-RECORD layout</td><td>XREFFILE record access</td></tr>
+    <tr><td><code>CVTRA05Y</code></td><td>TRAN-RECORD layout</td><td>TRANFILE record write</td></tr>
+    <tr><td><code>COTTL01Y</code></td><td>Screen title constants (CCDA-TITLE01/02)</td><td>Header population</td></tr>
+    <tr><td><code>CSDAT01Y</code></td><td>Date/time working storage fields</td><td>Current date formatting for header display</td></tr>
+    <tr><td><code>CSMSG01Y</code></td><td>Standard message constants (e.g. CCDA-MSG-INVALID-KEY)</td><td>Error messages</td></tr>
+    <tr><td><code>DFHAID</code></td><td>CICS attention identifier (AID) constants</td><td>EIBAID comparisons (DFHENTER, DFHPF3, DFHPF4)</td></tr>
+    <tr><td><code>DFHBMSCA</code></td><td>CICS BMS attribute constants (DFHGREEN, etc.)</td><td>Field attribute manipulation</td></tr>
+</table>
+</div>
+
+<!-- ═══════════════════════════ SCREEN INTERFACE ═══════════════════════════ -->
+<div class="section-card" id="screen-interface">
+<h2>5. Screen Interface (BMS Map)</h2>
+
+<p>Mapset: <code>COBIL00</code> &nbsp;|&nbsp; Map: <code>COBIL0A</code> &nbsp;|&nbsp; Size: 24×80 &nbsp;|&nbsp; Mode: INOUT</p>
+
+<h3>Screen Field Inventory</h3>
+<table>
+    <tr><th>Field Name</th><th>Position</th><th>Length</th><th>Attr</th><th>Description</th></tr>
+    <tr><td><code>TRNNAME</code></td><td>Row 1, Col 7</td><td>4</td><td>ASKIP/FSET</td><td>Transaction ID display (CB00)</td></tr>
+    <tr><td><code>TITLE01</code></td><td>Row 1, Col 21</td><td>40</td><td>ASKIP/FSET</td><td>Screen title line 1</td></tr>
+    <tr><td><code>CURDATE</code></td><td>Row 1, Col 71</td><td>8</td><td>ASKIP/FSET</td><td>Current date (mm/dd/yy)</td></tr>
+    <tr><td><code>PGMNAME</code></td><td>Row 2, Col 7</td><td>8</td><td>ASKIP/FSET</td><td>Program name (COBIL00C)</td></tr>
+    <tr><td><code>TITLE02</code></td><td>Row 2, Col 21</td><td>40</td><td>ASKIP/FSET</td><td>Screen title line 2</td></tr>
+    <tr><td><code>CURTIME</code></td><td>Row 2, Col 71</td><td>8</td><td>ASKIP/FSET</td><td>Current time (hh:mm:ss)</td></tr>
+    <tr><td><code>ACTIDIN</code></td><td>Row 6, Col 21</td><td>11</td><td>UNPROT/IC</td><td><strong>Input:</strong> Account ID entry (cursor home position)</td></tr>
+    <tr><td><code>CURBAL</code></td><td>Row 11, Col 32</td><td>14</td><td>ASKIP/FSET</td><td><strong>Output:</strong> Current balance display (populated after account lookup)</td></tr>
+    <tr><td><code>CONFIRM</code></td><td>Row 15, Col 60</td><td>1</td><td>UNPROT</td><td><strong>Input:</strong> Payment confirmation (Y=pay, N=cancel)</td></tr>
+    <tr><td><code>ERRMSG</code></td><td>Row 23, Col 1</td><td>78</td><td>ASKIP/BRT/FSET</td><td>Error/status messages (color=RED for errors, GREEN for success)</td></tr>
+</table>
+
+<h3>Screen Layout (schematic)</h3>
+<pre>
+Row  1: Tran: CB00       [ Bill Payment screen title    ]  Date: mm/dd/yy
+Row  2: Prog: COBIL00C   [                              ]  Time: hh:mm:ss
+Row  4:                         Bill Payment
+Row  6:  Enter Acct ID: [___________]
+Row  8:  ──────────────────────────────────────────────────────────────────
+Row 11:  Your current balance is:  [______________]
+Row 15:  Do you want to pay your balance now. Please confirm: [_] (Y/N)
+Row 23: [error/success message field — 78 chars]
+Row 24: ENTER=Continue  F3=Back  F4=Clear
+</pre>
+
+<div class="info-block">
+    <strong>Two-pass interaction:</strong> The screen is designed for two ENTER key presses.
+    <ol style="margin: 8px 0 0 0;">
+        <li><strong>First ENTER</strong> — user types Account ID, presses ENTER → balance displayed in CURBAL</li>
+        <li><strong>Second ENTER</strong> — user types Y or N in CONFIRM, presses ENTER → payment processed or cancelled</li>
+    </ol>
+</div>
+</div>
+
+ PROCESSING FLOW ═══════════════════════════ --><!-- ════════════════
+<div class="section-card" id="processing-flow">
+<h2>6. Processing Flow</h2>
+
+<h3>Main Program Logic (MAIN-PARA)</h3>
+<div class="flow-step"><div class="flow-num">1</div><div>If <code>EIBCALEN = 0</code> (no COMMAREA): XCTL to <code>COSGN00C</code> — requires prior authentication</div></div>
+<div class="flow-step"><div class="flow-num">2</div><div>If first entry (<code>CDEMO-PGM-CONTEXT ≠ REENTER</code>): set re-enter flag, initialise output map, send blank screen with cursor on ACTIDIN</div></div>
+<div class="flow-step"><div class="flow-num">3</div><div>If re-entry: RECEIVE screen, evaluate EIBAID key pressed</div></div>
+<div class="flow-step"><div class="flow-num">4</div><div>ENTER → <code>PROCESS-ENTER-KEY</code></div></div>
+<div class="flow-step"><div class="flow-num">5</div><div>PF3 → XCTL back to calling program (or COMEN01C)</div></div>
+<div class="flow-step"><div class="flow-num">6</div><div>PF4 → <code>CLEAR-CURRENT-SCREEN</code> — clears all input fields</div></div>
+<div class="flow-step"><div class="flow-num">7</div><div>Any other key → set error flag, display "Invalid key" message, re-send screen</div></div>
+<div class="flow-step"><div class="flow-num">8</div><div>RETURN with TRANSID(CB00) and updated COMMAREA</div></div>
+
+<h3>Process-Enter-Key Detail Flow</h3>
+<pre>
+PROCESS-ENTER-KEY:
+
+  1. If ACTIDIN is blank/low-values → error "Acct ID can NOT be empty..."
+
+  2. Move ACTIDIN → ACCT-ID, XREF-ACCT-ID
+
+  3. Evaluate CONFIRM field:
+       'Y' or 'y' → SET CONF-PAY-YES, READ-ACCTDAT-FILE
+       'N' or 'n' → CLEAR-CURRENT-SCREEN, set error flag (display "N" case)
+       Spaces/Low → READ-ACCTDAT-FILE (first pass, show balance only)
+       Other      → error "Invalid value. Valid values are (Y/N)..."
+
+  4. Move ACCT-CURR-BAL → WS-CURR-BAL → CURBALI (display balance on screen)
+
+  5. If ACCT-CURR-BAL ≤ 0 → error "You have nothing to pay..."
+
+  6. If CONF-PAY-YES:
+       a. READ-CXACAIX-FILE (get XREF-CARD-NUM from XREF-ACCT-ID)
+       b. STARTBR TRANSACT at HIGH-VALUES
+       c. READPREV TRANSACT → get highest TRAN-ID
+       d. ENDBR TRANSACT
+       e. WS-TRAN-ID-NUM = TRAN-ID + 1
+       f. INITIALIZE TRAN-RECORD
+       g. Populate TRAN-RECORD:
+            TRAN-ID          = WS-TRAN-ID-NUM
+            TRAN-TYPE-CD     = '02'
+            TRAN-CAT-CD      = 2
+            TRAN-SOURCE      = 'POS TERM'
+            TRAN-DESC        = 'BILL PAYMENT - ONLINE'
+            TRAN-AMT         = ACCT-CURR-BAL  (full balance)
+            TRAN-CARD-NUM    = XREF-CARD-NUM
+            TRAN-MERCHANT-ID = 999999999
+            TRAN-MERCHANT-NAME = 'BILL PAYMENT'
+            TRAN-MERCHANT-CITY = 'N/A'
+            TRAN-MERCHANT-ZIP  = 'N/A'
+            TRAN-ORIG-TS     = current timestamp
+            TRAN-PROC-TS     = current timestamp
+       h. WRITE-TRANSACT-FILE
+          → On success: ACCT-CURR-BAL = ACCT-CURR-BAL - TRAN-AMT (→ 0)
+          → UPDATE-ACCTDAT-FILE (REWRITE)
+          → Display "Payment successful. Your Transaction ID is XXXXXXXXXXXXXXXX"
+     Else:
+       Display "Confirm to make a bill payment..."
+
+  7. SEND-BILLPAY-SCREEN
+</pre>
+
+<h3>Transaction ID Generation</h3>
+<p>Transaction IDs are generated by browsing TRANFILE backwards from HIGH-VALUES to find the current maximum TRAN-ID numeric value, then incrementing by 1. This is a sequential counter, not a UUID or timestamp-based ID.</p>
+<pre>
+MOVE HIGH-VALUES TO TRAN-ID
+STARTBR TRANSACT (RIDFLD=TRAN-ID)
+READPREV TRANSACT → returns highest record; TRAN-ID = last used
+ENDBR TRANSACT
+WS-TRAN-ID-NUM = TRAN-ID + 1   (numeric add)
+INITIALIZE TRAN-RECORD
+MOVE WS-TRAN-ID-NUM TO TRAN-ID
+</pre>
+</div>
+
+<!-- ═══════════════════════════ DATA MODELS ═══════════════════════════ -->
+<div class="section-card" id="data-models">
+<h2>7. Data Models &amp; VSAM Files</h2>
+
+<h3>Account Record (ACCTFILE / ACCTDAT)</h3>
+<p>Key fields used by the billing module (from <code>CVACT01Y.cpy</code>):</p>
+<pre><code>01  ACCOUNT-RECORD.
+    05  ACCT-ID                  PIC 9(11)       -- Primary key; entered by user as ACTIDIN
+    05  ACCT-ACTIVE-STATUS       PIC X(01)       -- Must be 'Y' (Active) to process payment
+    05  ACCT-CURR-BAL            PIC S9(10)V99   -- Current balance; DISPLAYED and used as payment amount
+    05  ACCT-CURR-CYC-CREDIT     PIC S9(10)V99   -- Incremented by payment amount (not currently in billing code)
+    05  ACCT-CREDIT-LIMIT        PIC S9(10)V99   -- Not checked in billing; for reference only
+    05  ACCT-GROUP-ID            PIC X(10)       -- Interest group; not used in billing</code></pre>
+
+<div class="warning-block">
+    <strong>Note on ACCT-CURR-CYC-CREDIT:</strong> The system overview references this field being updated, but inspection of <code>COBIL00C.cbl</code> shows only <code>ACCT-CURR-BAL</code> is modified (<code>ACCT-CURR-BAL = ACCT-CURR-BAL - TRAN-AMT</code>). <code>ACCT-CURR-CYC-CREDIT</code> is NOT updated by the current billing program. This may be a documentation discrepancy or an intentional simplification in the demo.
+</div>
+
+<h3>Card-Account Cross-Reference (XREFFILE / CXACAIX AIX)</h3>
+<p>Key fields used (from <code>CVACT03Y.cpy</code>):</p>
+<pre><code>01  CARD-XREF-RECORD.
+    05  XREF-CARD-NUM   PIC X(16)    -- Returned value: primary card number
+    05  XREF-CUST-ID    PIC 9(09)    -- Not used by billing
+    05  XREF-ACCT-ID    PIC 9(11)    -- AIX key: searched by account ID to get card number</code></pre>
+
+<h3>Transaction Record (TRANFILE / TRANSACT)</h3>
+<p>Fields populated when writing the payment record (from <code>CVTRA05Y.cpy</code>):</p>
+<pre><code>01  TRAN-RECORD.
+    05  TRAN-ID              PIC X(16)       -- System-generated: max existing + 1
+    05  TRAN-TYPE-CD         PIC X(02)       -- Hard-coded: '02' (payment type)
+    05  TRAN-CAT-CD          PIC 9(04)       -- Hard-coded: 2
+    05  TRAN-SOURCE          PIC X(10)       -- Hard-coded: 'POS TERM'
+    05  TRAN-DESC            PIC X(100)      -- Hard-coded: 'BILL PAYMENT - ONLINE'
+    05  TRAN-AMT             PIC S9(09)V99   -- Set to ACCT-CURR-BAL (full current balance)
+    05  TRAN-MERCHANT-ID     PIC 9(09)       -- Hard-coded: 999999999
+    05  TRAN-MERCHANT-NAME   PIC X(50)       -- Hard-coded: 'BILL PAYMENT'
+    05  TRAN-MERCHANT-CITY   PIC X(50)       -- Hard-coded: 'N/A'
+    05  TRAN-MERCHANT-ZIP    PIC X(10)       -- Hard-coded: 'N/A'
+    05  TRAN-CARD-NUM        PIC X(16)       -- From XREF-CARD-NUM (XREFFILE lookup)
+    05  TRAN-ORIG-TS         PIC X(26)       -- Current timestamp (CICS ASKTIME/FORMATTIME)
+    05  TRAN-PROC-TS         PIC X(26)       -- Same as TRAN-ORIG-TS</code></pre>
+
+<h3>Communication Area (COMMAREA)</h3>
+<p>Billing-specific fields in <code>CARDDEMO-COMMAREA</code> (from <code>COCOM01Y.cpy</code>):</p>
+<pre><code>01  CARDDEMO-COMMAREA.
+    05  CDEMO-FROM-TRANID     PIC X(04)   -- Source transaction (set to 'CB00' on exit)
+    05  CDEMO-FROM-PROGRAM    PIC X(08)   -- Source program (set to 'COBIL00C' on exit)
+    05  CDEMO-TO-TRANID       PIC X(04)   -- Target for XCTL navigation
+    05  CDEMO-TO-PROGRAM      PIC X(08)   -- Target program for XCTL
+    05  CDEMO-USER-ID         PIC X(08)   -- Current user (read only in billing)
+    05  CDEMO-USER-TYPE       PIC X(01)   -- A=Admin, U=User (not checked in billing)
+    05  CDEMO-PGM-CONTEXT     PIC 9(01)   -- 0=Enter, 1=Re-enter (pseudo-conv state)
+    05  CDEMO-ACCT-ID         PIC 9(11)   -- Not used directly; user enters on screen
+    --- CB00-specific section ---
+    05  CDEMO-CB00-INFO.
+        10  CDEMO-CB00-TRNID-FIRST    PIC X(16)   -- Not actively used in billing
+        10  CDEMO-CB00-TRNID-LAST     PIC X(16)   -- Not actively used in billing
+        10  CDEMO-CB00-PAGE-NUM       PIC 9(08)   -- Not actively used in billing
+        10  CDEMO-CB00-NEXT-PAGE-FLG  PIC X(01)   -- Not actively used in billing
+        10  CDEMO-CB00-TRN-SEL-FLG   PIC X(01)   -- Pre-populate account field if set
+        10  CDEMO-CB00-TRN-SELECTED  PIC X(16)   -- Pre-populated account value</code></pre>
+</div>
+
+<!-- ═══════════════════════════ BUSINESS RULES ═══════════════════════════ -->
+<div class="section-card" id="business-rules">
+<h2>8. Business Rules</h2>
+
+<div class="rule-block">
+    <strong>BR-BIL-001 — Account ID is required</strong><br>
+    The ACTIDIN field must not be blank or low-values. Error: "Acct ID can NOT be empty..."
+</div>
+<div class="rule-block">
+    <strong>BR-BIL-002 — Account must exist</strong><br>
+    ACCTFILE READ must return DFHRESP(NORMAL). If NOTFND: "Account ID NOT found..." Error. No payment proceeds.
+</div>
+<div class="rule-block">
+    <strong>BR-BIL-003 — Balance must be positive</strong><br>
+    <code>ACCT-CURR-BAL</code> must be greater than zero. If zero or negative: "You have nothing to pay..." No payment proceeds.
+</div>
+<div class="rule-block">
+    <strong>BR-BIL-004 — Confirmation required</strong><br>
+    After balance is displayed, the user must enter 'Y' (or 'y') in the CONFIRM field and press ENTER to execute the payment. Any other non-Y input (blank, N, n, other) does not process the payment.
+</div>
+<div class="rule-block">
+    <strong>BR-BIL-005 — Payment is always full balance</strong><br>
+    The payment amount is always <code>ACCT-CURR-BAL</code> — the entire current outstanding balance. There is no partial payment entry. After payment, <code>ACCT-CURR-BAL</code> is set to zero.
+</div>
+<div class="rule-block">
+    <strong>BR-BIL-006 — Transaction record created for every payment</strong><br>
+    A TRAN-RECORD is written to TRANFILE with type code '02', category 2, and the full balance amount. This creates an audit trail and is visible in the Transaction List (CT00).
+</div>
+<div class="rule-block">
+    <strong>BR-BIL-007 — Transaction ID is sequential</strong><br>
+    New TRAN-ID = (highest existing TRAN-ID in TRANFILE) + 1. This is determined by a backwards browse of TRANFILE. Risk: concurrent writes could produce duplicate IDs.
+</div>
+<div class="rule-block">
+    <strong>BR-BIL-008 — Card number resolved via XREFFILE</strong><br>
+    The card number is NOT entered by the user. It is resolved from the XREFFILE alternate index (CXACAIX) using the account ID. The first (lowest) card number linked to the account is used.
+</div>
+<div class="rule-block">
+    <strong>BR-BIL-009 — No minimum payment enforcement</strong><br>
+    There is no minimum payment amount check. The demo application always pays in full. Minimum payment logic is a known gap for modernisation.
+</div>
+<div class="rule-block">
+    <strong>BR-BIL-010 — No ACCT-CURR-CYC-CREDIT update</strong><br>
+    Despite documentation stating that <code>ACCT-CURR-CYC-CREDIT</code> is incremented, the source code does not perform this update. Only <code>ACCT-CURR-BAL</code> is modified.
+</div>
+
+<h3>Confirmation Field Behaviour</h3>
+<table>
+    <tr><th>CONFIRM Value</th><th>Action</th></tr>
+    <tr><td><code>'Y'</code> or <code>'y'</code></td><td>Payment processed (full balance)</td></tr>
+    <tr><td><code>'N'</code> or <code>'n'</code></td><td>Screen cleared, no payment, error flag set</td></tr>
+    <tr><td>Spaces / Low-values</td><td>Account lookup only — balance displayed, no payment yet</td></tr>
+    <tr><td>Any other value</td><td>Error: "Invalid value. Valid values are (Y/N)..."</td></tr>
+</table>
+</div>
+
+<!-- ═══════════════════════════ COPYBOOKS ═══════════════════════════ -->
+<div class="section-card" id="copybooks">
+<h2>9. Copybooks Used</h2>
+<pre><code>IDENTIFICATION DIVISION.
+PROGRAM-ID. COBIL00C.
+
+DATA DIVISION.
+WORKING-STORAGE SECTION.
+
+  COPY COCOM01Y.     -- CARDDEMO-COMMAREA + CDEMO-CB00-INFO
+  COPY COBIL00.      -- BMS map I/O: COBIL0AI (input) / COBIL0AO (output)
+  COPY COTTL01Y.     -- Screen title constants
+  COPY CSDAT01Y.     -- Date/time working fields (WS-CURDATE-*, WS-CURTIME-*)
+  COPY CSMSG01Y.     -- Standard error message constants
+  COPY CVACT01Y.     -- ACCOUNT-RECORD (ACCTFILE)
+  COPY CVACT03Y.     -- CARD-XREF-RECORD (XREFFILE)
+  COPY CVTRA05Y.     -- TRAN-RECORD (TRANFILE)
+  COPY DFHAID.       -- EIBAID constants (DFHENTER, DFHPF3, DFHPF4, etc.)
+  COPY DFHBMSCA.     -- BMS attribute constants (DFHGREEN, DFHRED, etc.)</code></pre>
+</div>
+
+<!-- ═══════════════════════════ ERROR HANDLING ═══════════════════════════ -->
+<div class="section-card" id="error-handling">
+<h2>10. Error Handling</h2>
+
+<table>
+    <tr><th>Condition</th><th>CICS Response Code</th><th>Message Displayed</th><th>Recovery Action</th></tr>
+    <tr><td>ACTIDIN blank</td><td>N/A (validation)</td><td>"Acct ID can NOT be empty..."</td><td>Cursor set to ACTIDIN; screen re-sent</td></tr>
+    <tr><td>CONFIRM invalid value</td><td>N/A (validation)</td><td>"Invalid value. Valid values are (Y/N)..."</td><td>Cursor set to CONFIRM; screen re-sent</td></tr>
+    <tr><td>Balance ≤ 0</td><td>N/A (validation)</td><td>"You have nothing to pay..."</td><td>Cursor set to ACTIDIN; screen re-sent</td></tr>
+    <tr><td>ACCTFILE NOTFND</td><td>DFHRESP(NOTFND)</td><td>"Account ID NOT found..."</td><td>Error flag on; screen re-sent</td></tr>
+    <tr><td>ACCTFILE other error</td><td>Other RESP</td><td>"Unable to lookup Account..."</td><td>DISPLAY RESP codes to SYSOUT; screen re-sent</td></tr>
+    <tr><td>ACCTFILE REWRITE error</td><td>DFHRESP(NOTFND)</td><td>"Account ID NOT found..."</td><td>Error flag on; screen re-sent (balance may be in inconsistent state)</td></tr>
+    <tr><td>XREFFILE NOTFND</td><td>DFHRESP(NOTFND)</td><td>"Account ID NOT found..."</td><td>Error flag on; screen re-sent</td></tr>
+    <tr><td>TRANFILE STARTBR NOTFND</td><td>DFHRESP(NOTFND)</td><td>"Transaction ID NOT found..."</td><td>Error flag on; screen re-sent</td></tr>
+    <tr><td>TRANFILE READPREV ENDFILE</td><td>DFHRESP(ENDFILE)</td><td>None (silent)</td><td>MOVE ZEROS to TRAN-ID; next ID will be 1</td></tr>
+    <tr><td>TRANFILE WRITE DUPKEY/DUPREC</td><td>DFHRESP(DUPKEY/DUPREC)</td><td>"Tran ID already exist..."</td><td>Error flag on; screen re-sent (balance NOT updated)</td></tr>
+    <tr><td>TRANFILE WRITE other error</td><td>Other RESP</td><td>"Unable to Add Bill pay Transaction..."</td><td>DISPLAY RESP to SYSOUT; screen re-sent</td></tr>
+    <tr><td>Invalid AID key</td><td>N/A</td><td>CCDA-MSG-INVALID-KEY constant</td><td>Screen re-sent with error</td></tr>
+</table>
+
+<div class="warning-block">
+    <strong>Data integrity risk:</strong> The TRANFILE WRITE and ACCTFILE REWRITE are separate CICS commands with no two-phase commit. If the WRITE succeeds but the REWRITE fails (or vice versa), the database will be in an inconsistent state. CICS unit-of-work (UOW) syncpoint behavior applies; review CICS transaction definition for syncpoint configuration.
+</div>
+</div>
+
+ --><!-- ═══════════════════════════ KEY CONSTANTS ═══════════════════
+<div class="section-card" id="key-constants">
+<h2>11. Key Hard-Coded Constants</h2>
+<table>
+    <tr><th>Field in TRAN-RECORD</th><th>Hard-coded Value</th><th>Notes</th></tr>
+    <tr><td><code>TRAN-TYPE-CD</code></td><td><code>'02'</code></td><td>Payment transaction type code</td></tr>
+    <tr><td><code>TRAN-CAT-CD</code></td><td><code>2</code></td><td>Payment category code</td></tr>
+    <tr><td><code>TRAN-SOURCE</code></td><td><code>'POS TERM'</code></td><td>Identifies online CICS payment channel</td></tr>
+    <tr><td><code>TRAN-DESC</code></td><td><code>'BILL PAYMENT - ONLINE'</code></td><td>Static description for all bill payments</td></tr>
+    <tr><td><code>TRAN-MERCHANT-ID</code></td><td><code>999999999</code></td><td>Sentinel value — not a real merchant</td></tr>
+    <tr><td><code>TRAN-MERCHANT-NAME</code></td><td><code>'BILL PAYMENT'</code></td><td>Static merchant name</td></tr>
+    <tr><td><code>TRAN-MERCHANT-CITY</code></td><td><code>'N/A'</code></td><td>No city for payment transactions</td></tr>
+    <tr><td><code>TRAN-MERCHANT-ZIP</code></td><td><code>'N/A'</code></td><td>No ZIP for payment transactions</td></tr>
+    <tr><td><code>WS-TRANSACT-FILE</code></td><td><code>'TRANSACT'</code></td><td>CICS dataset name for TRANFILE</td></tr>
+    <tr><td><code>WS-ACCTDAT-FILE</code></td><td><code>'ACCTDAT '</code></td><td>CICS dataset name for ACCTFILE</td></tr>
+    <tr><td><code>WS-CXACAIX-FILE</code></td><td><code>'CXACAIX '</code></td><td>CICS dataset name for XREFFILE alternate index</td></tr>
+    <tr><td><code>WS-TRANID</code></td><td><code>'CB00'</code></td><td>Transaction ID for RETURN TRANSID</td></tr>
+    <tr><td><code>WS-PGMNAME</code></td><td><code>'COBIL00C'</code></td><td>Program name constant</td></tr>
+</table>
+</div>
+
+ NAVIGATION ═══════════════════════════ --><!-- ═══════════
+<div class="section-card" id="navigation">
+<h2>12. Navigation Key Map</h2>
+<table>
+    <tr><th>Key</th><th>EIBAID Constant</th><th>Action in Billing</th></tr>
+    <tr><td><strong>ENTER</strong></td><td><code>DFHENTER</code></td><td>Submit / Process: validate account ID, display balance, or process payment</td></tr>
+    <tr><td><strong>PF3</strong></td><td><code>DFHPF3</code></td><td>Return to calling program (CDEMO-FROM-PROGRAM) or Main Menu (COMEN01C)</td></tr>
+    <tr><td><strong>PF4</strong></td><td><code>DFHPF4</code></td><td>Clear all input fields (ACTIDIN, CURBAL, CONFIRM, message)</td></tr>
+    <tr><td>Any other key</td><td>OTHER</td><td>Error: CCDA-MSG-INVALID-KEY displayed; no state change</td></tr>
+</table>
+</div>
+
+<!-- ═══════════════════════════ USER STORIES ═══════════════════════════ -->
+<div class="section-card" id="user-stories">
+<h2>13. User Story Templates</h2>
+
+<h3>Core Stories</h3>
+<ul>
+    <li>As a cardholder, I want to view my current balance on the bill payment screen so I know my total outstanding amount before confirming payment</li>
+    <li>As a cardholder, I want to pay my outstanding balance in full so my account is cleared and no interest accrues on the paid amount</li>
+    <li>As a cardholder, I want to receive a transaction ID after a successful payment so I have an audit reference for the payment</li>
+    <li>As a cardholder, I want to see a confirmation prompt before my payment is processed so I can avoid accidental payments</li>
+    <li>As a cardholder, I want to cancel a payment using PF3 so I can return to the main menu without making a payment</li>
+</ul>
+
+<h3>Enhancement Stories (Modernisation Candidates)</h3>
+<ul>
+    <li>As a cardholder, I want to enter a partial payment amount so I can pay more than the minimum but less than the full balance</li>
+    <li>As a cardholder, I want to see the minimum payment due on the payment screen so I know the lowest amount I must pay</li>
+    <li>As a cardholder, I want to see my payment due date on the screen so I can avoid late fees</li>
+    <li>As a cardholder, I want to view my payment history within the billing screen so I can confirm past payments without navigating to Transaction List</li>
+    <li>As a system, I want to update ACCT-CURR-CYC-CREDIT when a payment is processed so cycle-end reporting is accurate</li>
+    <li>As a system operator, I want to run a scheduled auto-payment batch job so eligible accounts with auto-pay enabled are paid on the due date without manual cardholder action</li>
+    <li>As a cardholder, I want to reverse a mistaken payment so my balance is restored when an incorrect payment is submitted</li>
+    <li>As a cardholder, I want to pay via EFT/ACH from my bank account so electronic funds are transferred directly</li>
+</ul>
+
+<h3>User Story Pattern</h3>
+<pre>
+Pattern: As a [cardholder / system / system operator],
+         I want to [payment action],
+         so that [financial outcome / compliance / usability goal]
+</pre>
+</div>
+
+ ACCEPTANCE CRITERIA ═══════════════════════════ --><!-- ═════════════════
+<div class="section-card" id="acceptance-criteria">
+<h2>14. Acceptance Criteria Examples</h2>
+
+<div class="ac-block">
+    <strong>AC-BIL-001: Successful full-balance payment</strong><br>
+    <span class="given">Given</span> a cardholder with account 12345678901 having ACCT-CURR-BAL = $500.00 and ACCT-ACTIVE-STATUS = 'Y'<br>
+    <span class="when">When</span> entering account ID, pressing ENTER to see balance, entering 'Y' in CONFIRM and pressing ENTER<br>
+    <span class="then">Then</span> a TRAN-RECORD is written to TRANFILE with TRAN-AMT = $500.00 and TRAN-TYPE-CD = '02'; ACCT-CURR-BAL is updated to $0.00; a success message with TRAN-ID is displayed in green
+</div>
+
+<div class="ac-block">
+    <strong>AC-BIL-002: Zero balance — no payment</strong><br>
+    <span class="given">Given</span> an account with ACCT-CURR-BAL = $0.00<br>
+    <span class="when">When</span> entering the account ID and pressing ENTER<br>
+    <span class="then">Then</span> the message "You have nothing to pay..." is displayed; no TRAN-RECORD is written; ACCTFILE is not updated
+</div>
+
+<div class="ac-block">
+    <strong>AC-BIL-003: Account not found</strong><br>
+    <span class="given">Given</span> an account ID that does not exist in ACCTFILE<br>
+    <span class="when">When</span> entering the account ID and pressing ENTER<br>
+    <span class="then">Then</span> the message "Account ID NOT found..." is displayed; no VSAM updates occur
+</div>
+
+<div class="ac-block">
+    <strong>AC-BIL-004: Blank account ID</strong><br>
+    <span class="given">Given</span> no account ID entered<br>
+    <span class="when">When</span> pressing ENTER<br>
+    <span class="then">Then</span> "Acct ID can NOT be empty..." is displayed; cursor is positioned on the ACTIDIN field
+</div>
+
+<div class="ac-block">
+    <strong>AC-BIL-005: Payment declined via N confirmation</strong><br>
+    <span class="given">Given</span> a cardholder who has seen their balance displayed<br>
+    <span class="when">When</span> entering 'N' in CONFIRM and pressing ENTER<br>
+    <span class="then">Then</span> the screen is cleared; no TRAN-RECORD is written; ACCTFILE is not modified
+</div>
+
+<div class="ac-block">
+    <strong>AC-BIL-006: Payment visible in Transaction List</strong><br>
+    <span class="given">Given</span> a payment was successfully processed for account 12345678901<br>
+    <span class="when">When</span> navigating to Transaction List (CT00) for the card linked to that account<br>
+    <span class="then">Then</span> a transaction with TRAN-TYPE-CD = '02', TRAN-DESC = 'BILL PAYMENT - ONLINE', and positive TRAN-AMT appears in the list
+</div>
+
+<div class="ac-block">
+    <strong>AC-BIL-007: PF3 returns to menu</strong><br>
+    <span class="given">Given</span> the billing screen is displayed<br>
+    <span class="when">When</span> pressing PF3<br>
+    <span class="then">Then</span> the application XCTLs to the previous program (from CDEMO-FROM-PROGRAM) or to COMEN01C if not set; no data changes occur
+</div>
+
+<div class="ac-block">
+    <strong>AC-BIL-008: PF4 clears all fields</strong><br>
+    <span class="given">Given</span> the billing screen has data entered in ACTIDIN and/or CURBAL displayed<br>
+    <span class="when">When</span> pressing PF4<br>
+    <span class="then">Then</span> ACTIDIN, CURBAL, and CONFIRM fields are cleared; screen is redisplayed; no VSAM operations occur
+</div>
+</div>
+
+ COMPLEXITY ═══════════════════════════ --><!-- ══════
+<div class="section-card" id="complexity">
+<h2>15. Story Complexity Guidelines</h2>
+<div class="grid-3">
+    <div class="complexity-card simple">
+        <strong>Simple (1–2 pts)</strong>
         <ul>
-            <li><strong>Make payment:</strong> As a cardholder, I want to make a bill payment so my outstanding balance is reduced</li>
-            <li><strong>View balance before paying:</strong> As a cardholder, I want to see my current balance on the payment screen so I know how much to pay</li>
-            <li><strong>Partial payment:</strong> As a cardholder, I want to enter a partial payment amount so I can pay more than the minimum but less than the full balance</li>
-            <li><strong>Payment confirmation:</strong> As a cardholder, I want to receive a confirmation message after submitting a payment so I know it was processed</li>
-            <li><strong>Payment history:</strong> As a cardholder, I want to see my payment transactions in the transaction list so I have a record of all payments made</li>
-        </ul>
-
-        <h3>⚡ Development Acceleration Factors</h3>
-        <ul>
-            <li><strong>TRAN-RECORD structure:</strong> Payment creates a standard TRAN-RECORD with positive TRAN-AMT — no new data structures needed</li>
-            <li><strong>Account balance update:</strong> Same ACCTFILE REWRITE pattern as POSTTRAN batch — well-established approach</li>
-            <li><strong>Single-screen flow:</strong> COBIL00C is self-contained — input, validation, and update in one CICS program</li>
-            <li><strong>Existing validation patterns:</strong> Amount format validation reuses patterns from Transaction Add (COTRN02C)</li>
-        </ul>
-
-        <h3>📊 Complexity Guidelines</h3>
-        <div class="complexity">
-            <div class="complexity-card simple">
-                <strong>Simple (1–2 pts)</strong>
-                Add minimum payment display; show last payment date on screen; add payment amount field validation message improvement
-            </div>
-            <div class="complexity-card medium">
-                <strong>Medium (3–5 pts)</strong>
-                Add minimum payment calculation and enforcement; implement payment due date display; add statement balance vs. current balance distinction
-            </div>
-            <div class="complexity-card complex">
-                <strong>Complex (5–8 pts)</strong>
-                EFT/ACH payment integration; scheduled auto-payment batch job; payment reversal capability; late fee calculation and application
-            </div>
-        </div>
-    </div>
-
-    <div class="card">
-        <h2>🔧 Technical Foundation</h2>
-        <h3>Bill Payment Flow</h3>
-        <pre>Entry: ACCT-ID + CARD-NUM in COMMAREA
-  → Display COBIL00 screen with current balance from ACCTFILE
-  → User enters payment amount → ENTER
-  → Validate: amount > 0, numeric, not exceeding balance rules
-  → Read ACCTFILE (key=ACCT-ID) for current balance
-  → Generate payment TRAN-ID
-  → WRITE TRANFILE:
-      TRAN-TYPE-CD  = payment type code
-      TRAN-AMT      = +positive payment amount
-      TRAN-CARD-NUM = current card
-      TRAN-ORIG-TS  = current timestamp
-  → Update ACCTFILE:
-      ACCT-CURR-BAL        -= payment amount
-      ACCT-CURR-CYC-CREDIT += payment amount
-  → Display confirmation message</pre>
-
-        <h3>🔗 Dependencies</h3>
-        <ul>
-            <li><strong>accounts:</strong> ACCT-ID must be set in COMMAREA; account must be ACTIVE (ACCT-ACTIVE-STATUS='Y')</li>
-            <li><strong>transactions:</strong> Payment creates a TRAN-RECORD in TRANFILE — visible in transaction list as a credit entry</li>
-            <li><strong>ACCTFILE:</strong> Balance update is a direct REWRITE — subject to CLOSEFIL dependency if batch is also running</li>
-            <li><strong>TRANFILE:</strong> Payment transaction written before balance update; if TRANFILE write fails, balance update does not proceed</li>
-        </ul>
-
-        <h3>Business Rules</h3>
-        <ul>
-            <li>Payment amount must be greater than zero</li>
-            <li>No minimum payment enforcement in base application (demo simplification)</li>
-            <li>Account must be active (ACCT-ACTIVE-STATUS = 'Y') to accept payment</li>
-            <li>Payment creates a positive (credit) TRAN-RECORD entry — visible in transaction history</li>
-            <li>ACCT-CURR-CYC-CREDIT is incremented by payment amount for cycle tracking</li>
+            <li>Add minimum payment display label to screen</li>
+            <li>Show last payment date on billing screen</li>
+            <li>Improve error message text/colour for balance-zero case</li>
+            <li>Add ACCT-CURR-CYC-CREDIT update to match documented behaviour</li>
         </ul>
     </div>
-
-    <div class="card">
-        <h2>✅ Acceptance Criteria Examples</h2>
-        <div class="ac-example"><strong>Successful payment:</strong><br>Given a cardholder with an active account and balance of $500,<br>When entering a payment of $100 and pressing ENTER,<br>Then ACCT-CURR-BAL is reduced to $400; a credit TRAN-RECORD is written; confirmation message displayed</div>
-        <div class="ac-example"><strong>Invalid payment amount — zero:</strong><br>Given a payment amount of $0 or blank,<br>When pressing ENTER,<br>Then the screen redisplays with "Amount must be greater than zero" and no VSAM updates occur</div>
-        <div class="ac-example"><strong>Invalid payment amount — non-numeric:</strong><br>Given a non-numeric entry in the payment field,<br>When pressing ENTER,<br>Then field validation error is displayed and cursor repositioned on the amount field</div>
-        <div class="ac-example"><strong>Payment on inactive account:</strong><br>Given an account with ACCT-ACTIVE-STATUS = 'N',<br>When attempting a payment,<br>Then the system displays "Account is not active" and no payment is processed</div>
-        <div class="ac-example"><strong>Payment appears in transaction list:</strong><br>Given a payment was successfully processed,<br>When navigating to Transaction List (CT00),<br>Then the payment entry appears with positive amount and payment type code</div>
+    <div class="complexity-card medium">
+        <strong>Medium (3–5 pts)</strong>
+        <ul>
+            <li>Add partial payment amount input field to BMS map and program</li>
+            <li>Implement minimum payment calculation and enforcement</li>
+            <li>Add payment due date display from account record</li>
+            <li>Display statement vs. current balance distinction</li>
+        </ul>
     </div>
-
-    <div class="footer">
-        <a href="../../index.html" class="nav-link">← Back to Index</a>
-        <a href="../transactions/index.html" class="nav-link">Transactions</a>
-        <a href="../reports/index.html" class="nav-link">Reports →</a>
-        <p style="margin-top:10px"><em>Last updated: 2026-03-26 | CardDemo Documentation</em></p>
+    <div class="complexity-card complex">
+        <strong>Complex (5–8 pts)</strong>
+        <ul>
+            <li>EFT/ACH payment integration via external interface</li>
+            <li>Scheduled auto-payment batch job (new JCL + COBOL)</li>
+            <li>Payment reversal capability with new transaction type</li>
+            <li>Late fee calculation and application on missed payments</li>
+            <li>Atomic TRANFILE WRITE + ACCTFILE REWRITE with rollback</li>
+        </ul>
     </div>
 </div>
+</div>
+
+ CODE SNIPPETS ═══════════════════════════ --><!-- ═══════════════════════
+<div class="section-card" id="code-snippets">
+<h2>16. Code Snippets</h2>
+
+<h3>Reading Account with UPDATE Intent (from COBIL00C.cbl)</h3>
+<pre><code>READ-ACCTDAT-FILE.
+    EXEC CICS READ
+         DATASET   (WS-ACCTDAT-FILE)
+         INTO      (ACCOUNT-RECORD)
+         LENGTH    (LENGTH OF ACCOUNT-RECORD)
+         RIDFLD    (ACCT-ID)
+         KEYLENGTH (LENGTH OF ACCT-ID)
+         UPDATE
+         RESP      (WS-RESP-CD)
+         RESP2     (WS-REAS-CD)
+    END-EXEC
+
+    EVALUATE WS-RESP-CD
+        WHEN DFHRESP(NORMAL)
+            CONTINUE
+        WHEN DFHRESP(NOTFND)
+            MOVE 'Y'     TO WS-ERR-FLG
+            MOVE 'Account ID NOT found...' TO WS-MESSAGE
+            MOVE -1       TO ACTIDINL OF COBIL0AI
+            PERFORM SEND-BILLPAY-SCREEN
+        WHEN OTHER
+            DISPLAY 'RESP:' WS-RESP-CD 'REAS:' WS-REAS-CD
+            MOVE 'Y'     TO WS-ERR-FLG
+            MOVE 'Unable to lookup Account...' TO WS-MESSAGE
+            PERFORM SEND-BILLPAY-SCREEN
+    END-EVALUATE.</code></pre>
+
+<h3>Transaction ID Generation (from COBIL00C.cbl)</h3>
+<pre><code>    MOVE HIGH-VALUES TO TRAN-ID
+    PERFORM STARTBR-TRANSACT-FILE
+    PERFORM READPREV-TRANSACT-FILE
+    PERFORM ENDBR-TRANSACT-FILE
+    MOVE TRAN-ID     TO WS-TRAN-ID-NUM
+    ADD 1 TO WS-TRAN-ID-NUM
+    INITIALIZE TRAN-RECORD
+    MOVE WS-TRAN-ID-NUM       TO TRAN-ID</code></pre>
+
+<h3>Payment Transaction Record Population (from COBIL00C.cbl)</h3>
+<pre><code>    MOVE '02'                 TO TRAN-TYPE-CD
+    MOVE 2                    TO TRAN-CAT-CD
+    MOVE 'POS TERM'           TO TRAN-SOURCE
+    MOVE 'BILL PAYMENT - ONLINE' TO TRAN-DESC
+    MOVE ACCT-CURR-BAL        TO TRAN-AMT
+    MOVE XREF-CARD-NUM        TO TRAN-CARD-NUM
+    MOVE 999999999            TO TRAN-MERCHANT-ID
+    MOVE 'BILL PAYMENT'       TO TRAN-MERCHANT-NAME
+    MOVE 'N/A'                TO TRAN-MERCHANT-CITY
+    MOVE 'N/A'                TO TRAN-MERCHANT-ZIP
+    PERFORM GET-CURRENT-TIMESTAMP
+    MOVE WS-TIMESTAMP         TO TRAN-ORIG-TS
+                                 TRAN-PROC-TS</code></pre>
+
+<h3>Balance Update (from COBIL00C.cbl)</h3>
+<pre><code>    COMPUTE ACCT-CURR-BAL = ACCT-CURR-BAL - TRAN-AMT
+    PERFORM UPDATE-ACCTDAT-FILE</code></pre>
+
+<h3>Pseudo-conversational RETURN (from COBIL00C.cbl)</h3>
+<pre><code>    EXEC CICS RETURN
+              TRANSID (WS-TRANID)
+              COMMAREA (CARDDEMO-COMMAREA)
+    END-EXEC.</code></pre>
+
+<h3>Timestamp Generation (from COBIL00C.cbl)</h3>
+<pre><code>GET-CURRENT-TIMESTAMP.
+    EXEC CICS ASKTIME
+      ABSTIME(WS-ABS-TIME)
+    END-EXEC
+
+    EXEC CICS FORMATTIME
+      ABSTIME(WS-ABS-TIME)
+      YYYYMMDD(WS-CUR-DATE-X10)
+      DATESEP('-')
+      TIME(WS-CUR-TIME-X08)
+      TIMESEP(':')
+    END-EXEC
+
+    INITIALIZE WS-TIMESTAMP
+    MOVE WS-CUR-DATE-X10 TO WS-TIMESTAMP(01:10)
+    MOVE WS-CUR-TIME-X08 TO WS-TIMESTAMP(12:08)
+    MOVE ZEROS           TO WS-TIMESTAMP-TM-MS6.</code></pre>
+</div>
+
+<!-- ═══════════════════════════ CONFIG ═══════════════════════════ -->
+<div class="section-card" id="config">
+<h2>17. Configuration &amp; Environment</h2>
+
+<h3>CICS Dataset Definitions Required</h3>
+<table>
+    <tr><th>CICS Dataset</th><th>VSAM DDname</th><th>Access Required</th></tr>
+    <tr><td><code>ACCTDAT</code></td><td>ACCTFILE</td><td>READ, UPDATE, REWRITE</td></tr>
+    <tr><td><code>TRANSACT</code></td><td>TRANFILE</td><td>READ, BROWSE, WRITE</td></tr>
+    <tr><td><code>CXACAIX</code></td><td>XREFFILE (alternate index)</td><td>READ</td></tr>
+</table>
+
+<h3>CICS Program Definition</h3>
+<pre><code>CEDA DEFINE PROGRAM(COBIL00C)
+  GROUP(CARDDEMO)
+  LANGUAGE(COBOL)
+  DATALOCATION(ANY)</code></pre>
+
+<h3>CICS Transaction Definition</h3>
+<pre><code>CEDA DEFINE TRANSACTION(CB00)
+  GROUP(CARDDEMO)
+  PROGRAM(COBIL00C)
+  TWASIZE(0)
+  PROFILE(DFHCICST)</code></pre>
+
+<h3>BMS Mapset Definition</h3>
+<pre><code>CEDA DEFINE MAPSET(COBIL00)
+  GROUP(CARDDEMO)
+  RESIDENT(NO)</code></pre>
+
+<h3>Batch Interaction Notes</h3>
+<div class="warning-block">
+    The billing module accesses ACCTFILE and TRANFILE online. If batch jobs (POSTTRAN, INTCALC) are running simultaneously, CICS files must be managed carefully:
+    <ul style="margin-top: 8px;">
+        <li>CLOSEFIL job closes CICS datasets before batch runs that update them</li>
+        <li>OPENFIL job reopens them after batch completion</li>
+        <li>Online billing cannot run while ACCTDAT or TRANSACT are closed</li>
+    </ul>
+</div>
+</div>
+
+ TECH DEBT ═══════════════════════════ --><!-- ══════════════════
+<div class="section-card" id="tech-debt">
+<h2>18. Technical Debt &amp; Modernisation Notes</h2>
+
+<h3>Known Issues</h3>
+<ul>
+    <li><strong>Pay-in-full only:</strong> No partial payment capability. Cardholders cannot choose payment amount.</li>
+    <li><strong>ACCT-CURR-CYC-CREDIT not updated:</strong> The cycle credit field is referenced in documentation but not updated in the code — potential reporting inaccuracy.</li>
+    <li><strong>Sequential TRAN-ID with race condition:</strong> STARTBR/READPREV/ADD 1 pattern is not atomic. Concurrent payments could generate duplicate TRAN-IDs (DUPKEY error would surface).</li>
+    <li><strong>No atomicity guarantee:</strong> TRANFILE WRITE and ACCTFILE REWRITE are separate CICS commands. Failure between them leaves data inconsistent.</li>
+    <li><strong>Hard-coded merchant sentinel (999999999):</strong> Not a real merchant ID; analytics systems downstream may need to filter or handle this sentinel.</li>
+    <li><strong>Hard-coded CICS dataset names:</strong> <code>'ACCTDAT '</code>, <code>'TRANSACT'</code>, <code>'CXACAIX '</code> are compile-time constants. Changes require recompile.</li>
+</ul>
+
+<h3>Modernisation Recommendations</h3>
+<ul>
+    <li>Add partial payment amount input field to BMS map; validate against minimum payment calculation</li>
+    <li>Fix ACCT-CURR-CYC-CREDIT update in the REWRITE block</li>
+    <li>Replace sequential TRAN-ID generation with a globally unique ID (e.g. CICS ASKTIME-based or UUID-equivalent)</li>
+    <li>Wrap TRANFILE WRITE + ACCTFILE REWRITE in a CICS syncpoint-aware unit of work</li>
+    <li>Externalise CICS dataset names to a central COPYBOOK or runtime parameters</li>
+    <li>Add ACCT-ACTIVE-STATUS validation before proceeding with account lookup</li>
+</ul>
+</div>
+
+<footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #444; color: #888; font-size: 0.85em;">
+    <a href="../../index.html" style="color: #4fc3f7; margin-right: 16px;">← Back to Index</a>
+    <a href="../accounts/index.html" style="color: #4fc3f7; margin-right: 16px;">Accounts</a>
+    <a href="../transactions/index.html" style="color: #4fc3f7; margin-right: 16px;">Transactions</a>
+    <a href="../reports/index.html" style="color: #4fc3f7;">Reports →</a>
+    <br><br>
+    Last reviewed: 2026-03-26T18:01:22Z | CardDemo Mainframe Documentation
+</footer>
+
 </body>
 </html>

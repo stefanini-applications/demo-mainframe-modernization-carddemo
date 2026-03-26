@@ -1,168 +1,750 @@
 <!DOCTYPE html>
-<html lang="en-US">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Management - User Story Development Guide | CardDemo</title>
+    <meta name="last-updated" content="2026-03-26T18:01:26Z">
+    <title>user-management - Module Documentation | CardDemo</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; color: #212529; line-height: 1.6; }
-        .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
-        .header { background: linear-gradient(135deg, #37474f 0%, #455a64 100%); color: #fff; padding: 36px 32px; border-radius: 10px; margin-bottom: 28px; }
-        .header h1 { font-size: 2rem; margin-bottom: 8px; }
-        .header p { opacity: 0.85; font-size: 1.05rem; }
-        .badge { display: inline-block; background: rgba(255,255,255,0.2); border-radius: 4px; padding: 2px 10px; font-size: 0.8rem; margin-right: 8px; }
-        .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 28px; margin-bottom: 24px; }
-        h2 { font-size: 1.35rem; color: #37474f; border-bottom: 2px solid #eceff1; padding-bottom: 8px; margin-bottom: 18px; }
-        h3 { font-size: 1.1rem; color: #455a64; margin: 18px 0 10px; }
-        ul, ol { padding-left: 22px; }
-        li { margin-bottom: 6px; }
-        code { background: #f3f4f6; border-radius: 3px; padding: 2px 6px; font-size: 0.88rem; font-family: 'Courier New', monospace; }
-        pre { background: #1e1e2e; color: #cdd6f4; border-radius: 6px; padding: 18px; overflow-x: auto; font-size: 0.85rem; margin: 12px 0; }
-        .complexity { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 12px 0; }
-        .complexity-card { border-radius: 6px; padding: 14px; }
-        .simple { background: #e8f5e9; border-left: 4px solid #4caf50; }
-        .medium { background: #fff3e0; border-left: 4px solid #ff9800; }
-        .complex { background: #fce4ec; border-left: 4px solid #e91e63; }
-        .complexity-card strong { display: block; margin-bottom: 4px; }
-        .ac-example { background: #f1f8ff; border-left: 4px solid #0288d1; border-radius: 4px; padding: 12px 16px; margin: 10px 0; font-size: 0.93rem; }
-        .footer { text-align: center; padding: 20px; color: #6c757d; font-size: 0.9rem; }
-        .nav-link { display: inline-block; margin: 6px 8px 0 0; color: #37474f; text-decoration: none; font-size: 0.95rem; }
-        .nav-link:hover { text-decoration: underline; }
-        table { width: 100%; border-collapse: collapse; margin: 12px 0; }
-        th { background: #eceff1; color: #37474f; text-align: left; padding: 10px 12px; font-size: 0.9rem; }
-        td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
-        .warning { background: #fff8e1; border-left: 4px solid #ffc107; border-radius: 4px; padding: 12px 16px; margin: 10px 0; font-size: 0.93rem; }
+        body {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        nav { margin-bottom: 20px; }
+        nav a { color: #4fc3f7; text-decoration: none; font-size: 0.9rem; }
+        nav a:hover { text-decoration: underline; }
+        h1 { color: #4fc3f7; border-bottom: 2px solid #4fc3f7; padding-bottom: 10px; margin-bottom: 20px; font-size: 2rem; }
+        h2 { color: #81c784; margin-top: 36px; margin-bottom: 14px; font-size: 1.4rem; border-left: 4px solid #81c784; padding-left: 10px; }
+        h3 { color: #ffb74d; margin-top: 20px; margin-bottom: 10px; font-size: 1.1rem; }
+        h4 { color: #ce93d8; margin-top: 14px; margin-bottom: 8px; font-size: 1rem; }
+        p { margin-bottom: 12px; }
+        ul, ol { padding-left: 24px; margin-bottom: 12px; }
+        li { margin-bottom: 5px; }
+        code {
+            background-color: #2d2d2d;
+            color: #f8f8f2;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.88rem;
+        }
+        pre {
+            background-color: #2d2d2d;
+            color: #f8f8f2;
+            padding: 16px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 12px 0;
+            border-left: 3px solid #4fc3f7;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+        a { color: #4fc3f7; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        table { width: 100%; border-collapse: collapse; margin: 14px 0; }
+        th {
+            background-color: #37474f;
+            color: #80cbc4;
+            text-align: left;
+            padding: 10px 12px;
+            border: 1px solid #455a64;
+            font-size: 0.9rem;
+        }
+        td { padding: 9px 12px; border: 1px solid #37474f; font-size: 0.88rem; }
+        tr:nth-child(even) td { background-color: #222; }
+        tr:hover td { background-color: #263238; }
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            margin-right: 6px;
+        }
+        .badge-cics  { background-color: #1565c0; color: #e3f2fd; }
+        .badge-vsam  { background-color: #2e7d32; color: #e8f5e9; }
+        .badge-batch { background-color: #6a1b9a; color: #f3e5f5; }
+        .badge-admin { background-color: #b71c1c; color: #ffebee; }
+        .section-card {
+            background-color: #212121;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .note {
+            background-color: #1c2a1c;
+            border-left: 4px solid #66bb6a;
+            padding: 12px 16px;
+            border-radius: 0 4px 4px 0;
+            margin: 12px 0;
+        }
+        .warning {
+            background-color: #2a1c00;
+            border-left: 4px solid #ffa726;
+            padding: 12px 16px;
+            border-radius: 0 4px 4px 0;
+            margin: 12px 0;
+        }
+        .module-header {
+            background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+            border: 1px solid #3949ab;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 28px;
+        }
+        .module-header h1 { border-bottom-color: #5c6bc0; color: #7986cb; }
+        .module-meta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+        .flow-step { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+        .step-num {
+            background-color: #4fc3f7;
+            color: #1a1a1a;
+            border-radius: 50%;
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #444;
+            color: #888;
+            font-size: 0.85em;
+        }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="header">
-        <h1>👥 User Management</h1>
-        <p>User Story Development Guide — CardDemo Mainframe Application</p>
-        <div style="margin-top:12px">
-            <span class="badge">CICS</span>
-            <span class="badge">Admin Only</span>
-            <span class="badge">COBOL</span>
-            <span class="badge">VSAM USRSEC</span>
-            <span class="badge">CA00 · CU00–CU03</span>
-        </div>
-    </div>
 
-    <div class="card">
-        <h2>📋 Module Overview</h2>
-        <p><strong>Purpose:</strong> Administrative management of system users — list, add, update, and delete user accounts. Controls who can access the CardDemo application and with what privileges.</p>
-        <p style="margin-top:10px"><strong>Business Context:</strong> Admin-only module. User type ('A' or 'U') stored in USRSEC determines which menu and functions are accessible. User management is the access control mechanism for the entire application.</p>
-        <div class="warning">⚠️ <strong>Admin Access Required:</strong> All user management functions require CDEMO-USER-TYPE = 'A' in COMMAREA. Regular users cannot access CA00 or CU00–CU03.</div>
-        <h3>Key Components</h3>
-        <table>
-            <tr><th>Component</th><th>Transaction</th><th>Responsibility</th></tr>
-            <tr><td><code>COADM01C.cbl</code></td><td>CA00</td><td>Admin menu — entry point for all admin functions</td></tr>
-            <tr><td><code>COUSR00C.cbl</code></td><td>CU00</td><td>List all users in USRSEC (paginated)</td></tr>
-            <tr><td><code>COUSR01C.cbl</code></td><td>CU01</td><td>Add new user to USRSEC</td></tr>
-            <tr><td><code>COUSR02C.cbl</code></td><td>CU02</td><td>Update existing user fields</td></tr>
-            <tr><td><code>COUSR03C.cbl</code></td><td>CU03</td><td>Delete user from USRSEC (hard delete)</td></tr>
-            <tr><td><code>CSUSR01Y.cpy</code></td><td>—</td><td>SEC-USER-DATA structure (RECLN=80)</td></tr>
-        </table>
-    </div>
+<nav><a href="../../index.html">&larr; Back to Index</a></nav>
 
-    <div class="card">
-        <h2>🎯 User Story Development Guide</h2>
-        <h3>📝 Module-Specific US Templates</h3>
-        <ul>
-            <li><strong>List users:</strong> As an administrator, I want to view all system users so I can audit who has access to CardDemo</li>
-            <li><strong>Add user:</strong> As an administrator, I want to add a new user with ID, name, password, and type so they can access the system</li>
-            <li><strong>Update user:</strong> As an administrator, I want to update a user's type from 'U' to 'A' so they have admin privileges</li>
-            <li><strong>Delete user:</strong> As an administrator, I want to delete a user account so terminated employees lose system access</li>
-            <li><strong>Password reset:</strong> As an administrator, I want to reset a user's password so locked-out users can regain access</li>
-            <li><strong>User type control:</strong> As an administrator, I want to change a user's type so their access level matches their role</li>
-        </ul>
-
-        <h3>⚡ Development Acceleration Factors</h3>
-        <ul>
-            <li><strong>USRSEC KSDS:</strong> Simple primary-key access by SEC-USR-ID — all CRUD operations are direct keyed reads/writes</li>
-            <li><strong>Admin type check:</strong> CDEMO-USER-TYPE = 'A' check already implemented — reuse this pattern for any new admin function</li>
-            <li><strong>Four-program CRUD:</strong> List/Add/Update/Delete already separated — each can be modified independently</li>
-            <li><strong>DUSRSECJ JCL:</strong> Bulk user load pattern exists — reuse for user import from external systems</li>
-        </ul>
-
-        <h3>📊 Complexity Guidelines</h3>
-        <div class="complexity">
-            <div class="complexity-card simple">
-                <strong>Simple (1–2 pts)</strong>
-                Add display-only field to user list; change field order on add/update screens; improve error message text
-            </div>
-            <div class="complexity-card medium">
-                <strong>Medium (3–5 pts)</strong>
-                Add user active/inactive flag to USRSEC; implement soft delete (deactivate vs. hard delete); add user search by name
-            </div>
-            <div class="complexity-card complex">
-                <strong>Complex (5–8 pts)</strong>
-                Add audit log for user changes (new VSAM file); implement password complexity rules (utility program); add user groups/roles beyond A/U types; bulk user import from external source
-            </div>
-        </div>
-    </div>
-
-    <div class="card">
-        <h2>🔧 Technical Foundation</h2>
-        <h3>Add User Flow</h3>
-        <pre>Admin on CU01 screen:
-  → Enter: User ID, First Name, Last Name, Password, Type
-  → Validate: ID unique (READ USRSEC → NOTFOUND expected)
-  → Validate: type = 'A' or 'U', all required fields present
-  → WRITE USRSEC record (SEC-USER-DATA)
-  → Display confirmation</pre>
-
-        <h3>Update User Flow</h3>
-        <pre>Admin selects user from list (CU00) → navigates to CU02:
-  → READ USRSEC (key = selected SEC-USR-ID)
-  → Display current values on screen
-  → Admin modifies fields → ENTER
-  → Validate changes
-  → REWRITE USRSEC record
-  → Display confirmation</pre>
-
-        <h3>Delete User Flow</h3>
-        <pre>Admin selects user from list → navigates to CU03:
-  → Display user details for confirmation
-  → Admin confirms deletion → ENTER
-  → DELETE from USRSEC (key = SEC-USR-ID)
-  → Hard delete — record permanently removed
-  → Return to user list with confirmation</pre>
-
-        <h3>Data Model</h3>
-        <pre>SEC-USER-DATA (USRSEC VSAM, RECLN=80):
-  SEC-USR-ID      PIC X(08)  ← Primary key (unique, 8 char)
-  SEC-USR-FNAME   PIC X(20)  ← First name
-  SEC-USR-LNAME   PIC X(20)  ← Last name
-  SEC-USR-PWD     PIC X(08)  ← Password (plain text — demo only)
-  SEC-USR-TYPE    PIC X(01)  ← 'A'=Admin, 'U'=User
-  SEC-USR-FILLER  PIC X(23)  ← Reserved</pre>
-
-        <h3>🔗 Dependencies</h3>
-        <ul>
-            <li><strong>authentication:</strong> COMMAREA must have CDEMO-USER-TYPE = 'A' — user management blocked for non-admins</li>
-            <li><strong>USRSEC VSAM file:</strong> Must be pre-loaded via DUSRSECJ JCL before first admin login</li>
-            <li><strong>RACF (optional):</strong> May integrate with external RACF security for enterprise deployments</li>
-        </ul>
-    </div>
-
-    <div class="card">
-        <h2>✅ Acceptance Criteria Examples</h2>
-        <div class="ac-example"><strong>List users — admin only:</strong><br>Given a signed-in admin (CDEMO-USER-TYPE='A'),<br>When navigating to User List (CU00),<br>Then all users in USRSEC are displayed with ID, name, and type</div>
-        <div class="ac-example"><strong>Non-admin blocked:</strong><br>Given a signed-in regular user (CDEMO-USER-TYPE='U'),<br>When attempting to navigate to CA00 or CU00,<br>Then access is denied with an "Unauthorized" message and user is returned to Main Menu</div>
-        <div class="ac-example"><strong>Add user — success:</strong><br>Given all required fields entered on CU01 with a unique User ID,<br>When pressing ENTER,<br>Then a new SEC-USER-DATA record is written to USRSEC; success message displayed; user appears in list</div>
-        <div class="ac-example"><strong>Add user — duplicate ID:</strong><br>Given a User ID that already exists in USRSEC,<br>When pressing ENTER on CU01,<br>Then "User ID already exists" error is displayed and no USRSEC write occurs</div>
-        <div class="ac-example"><strong>Delete user — confirmed:</strong><br>Given an admin confirms deletion on CU03,<br>When pressing ENTER,<br>Then the record is permanently removed from USRSEC and user can no longer log in</div>
-        <div class="ac-example"><strong>Update user type:</strong><br>Given an admin changes SEC-USR-TYPE from 'U' to 'A' on CU02,<br>When pressing ENTER,<br>Then USRSEC is updated; the user's next login routes them to the Admin Menu</div>
-    </div>
-
-    <div class="footer">
-        <a href="../../index.html" class="nav-link">← Back to Index</a>
-        <a href="../reports/index.html" class="nav-link">Reports</a>
-        <a href="../batch-processing/index.html" class="nav-link">Batch Processing →</a>
-        <p style="margin-top:10px"><em>Last updated: 2026-03-26 | CardDemo Documentation</em></p>
+<div class="module-header">
+    <h1>user-management</h1>
+    <p>Administrative management of system users &mdash; list, add, update, and delete &mdash; for the CardDemo mainframe application.</p>
+    <div class="module-meta">
+        <span class="badge badge-cics">CICS Online</span>
+        <span class="badge badge-vsam">VSAM KSDS</span>
+        <span class="badge badge-admin">Admin Only</span>
+        <span class="badge badge-batch">JCL Init</span>
     </div>
 </div>
+
+<h2>Overview</h2>
+<p>
+    The <strong>user-management</strong> module provides administrators with complete lifecycle management
+    of user accounts stored in the USRSEC VSAM KSDS file. All operations&mdash;listing, adding, updating,
+    and deleting users&mdash;are performed through CICS 3270 terminal screens and are exclusively available
+    to users authenticated with Admin type (<code>CDEMO-USER-TYPE = 'A'</code>).
+</p>
+<p>
+    This module is a core security boundary of the CardDemo system. The USRSEC file is shared with
+    the <a href="../authentication/index.html">authentication</a> module: the signon program
+    (<code>COSGN00C</code>) reads user credentials from this same file, while user-management programs
+    write, update, and delete those records. Proper administration of the USRSEC file directly controls
+    who can access the application and with what privilege level.
+</p>
+<div class="note">
+    <strong>Admin-only access:</strong> Every program in this module checks the COMMAREA field
+    <code>CDEMO-USER-TYPE</code>. Any non-admin session (or a session with no COMMAREA) is
+    immediately redirected to the signon screen (<code>COSGN00C</code>).
+</div>
+
+<h2>Architectural Context</h2>
+<div class="section-card">
+    <h3>Position in the System</h3>
+    <p>
+        User Management sits at the top of the administrative branch of CardDemo's CICS program hierarchy.
+        After signon (<code>CC00 / COSGN00C</code>), admin users are routed to the Admin Menu
+        (<code>CA00 / COADM01C</code>), from which all user management functions are reached.
+        Regular users never see the Admin Menu; they are routed to the Main Menu
+        (<code>CM00 / COMEN01C</code>).
+    </p>
+    <h3>Navigation Flow</h3>
+    <pre>CC00 COSGN00C (Signon)
+  +--[Admin user]--> CA00 COADM01C (Admin Menu)
+                         |-- Option 1 --> CU00 COUSR00C (User List)
+                         |                    |--[U sel]--> CU02 COUSR02C (Update)
+                         |                    +--[D sel]--> CU03 COUSR03C (Delete)
+                         |-- Option 2 --> CU01 COUSR01C (Add User)
+                         |-- Option 3 --> CU02 COUSR02C (Update User)
+                         |-- Option 4 --> CU03 COUSR03C (Delete User)
+                         |-- Option 5 --> COTRTLIC  (Transaction Types - DB2, optional)
+                         +-- Option 6 --> COTRTUPC  (Tran Type Maintenance - DB2, optional)</pre>
+    <h3>Technology Stack</h3>
+    <ul>
+        <li><strong>Runtime:</strong> IBM CICS (transaction-per-screen model)</li>
+        <li><strong>Language:</strong> COBOL (ANSI 85 / IBM Enterprise COBOL)</li>
+        <li><strong>Screen Interface:</strong> BMS (Basic Mapping Support) 3270 terminal maps</li>
+        <li><strong>Data Store:</strong> VSAM KSDS &mdash; USRSEC file (RECLN=80, KEY=8 bytes at offset 0)</li>
+        <li><strong>Session State:</strong> COMMAREA (<code>CARDDEMO-COMMAREA</code> from <code>COCOM01Y.cpy</code>)</li>
+        <li><strong>Initial Data Load:</strong> JCL job DUSRSECJ using IEBGENER + IDCAMS REPRO</li>
+    </ul>
+</div>
+
+<h2>Key Components</h2>
+<table>
+    <tr><th>Program</th><th>Transaction</th><th>BMS Map</th><th>Function</th></tr>
+    <tr>
+        <td><code>COADM01C.cbl</code></td><td><code>CA00</code></td><td><code>COADM01</code></td>
+        <td>Admin Menu &mdash; entry point for all admin operations; routes to user management or transaction-type programs based on numeric option selection</td>
+    </tr>
+    <tr>
+        <td><code>COUSR00C.cbl</code></td><td><code>CU00</code></td><td><code>COUSR00</code></td>
+        <td>User List &mdash; paginated browse of USRSEC (10 per page); supports row selection for update (<code>U</code>) or delete (<code>D</code>)</td>
+    </tr>
+    <tr>
+        <td><code>COUSR01C.cbl</code></td><td><code>CU01</code></td><td><code>COUSR01</code></td>
+        <td>Add User &mdash; collects first name, last name, User ID, password, and user type; writes new record to USRSEC; handles duplicate key error</td>
+    </tr>
+    <tr>
+        <td><code>COUSR02C.cbl</code></td><td><code>CU02</code></td><td><code>COUSR02</code></td>
+        <td>Update User &mdash; reads USRSEC with exclusive UPDATE lock; allows modification of name, password, and user type; rewrites record on confirm</td>
+    </tr>
+    <tr>
+        <td><code>COUSR03C.cbl</code></td><td><code>CU03</code></td><td><code>COUSR03</code></td>
+        <td>Delete User &mdash; reads USRSEC with UPDATE lock; presents user details for confirmation; hard-deletes record on ENTER</td>
+    </tr>
+</table>
+
+<h3>Supporting Copybooks</h3>
+<table>
+    <tr><th>Copybook</th><th>Content</th><th>Used By</th></tr>
+    <tr><td><code>CSUSR01Y.cpy</code></td><td><code>SEC-USER-DATA</code> record layout (80 bytes, including 23-byte filler)</td><td>All user-management programs + COSGN00C</td></tr>
+    <tr><td><code>COADM02Y.cpy</code></td><td><code>CARDDEMO-ADMIN-MENU-OPTIONS</code> &mdash; admin menu option table (6 entries: programs, option numbers, display text)</td><td>COADM01C</td></tr>
+    <tr><td><code>COCOM01Y.cpy</code></td><td><code>CARDDEMO-COMMAREA</code> &mdash; shared session state passed between all CICS programs via XCTL/RETURN</td><td>All programs</td></tr>
+    <tr><td><code>COUSR00.CPY</code>&ndash;<code>COUSR03.CPY</code></td><td>BMS map symbolic descriptions for each user management screen (generated from BMS source)</td><td>Respective programs</td></tr>
+    <tr><td><code>COTTL01Y.cpy</code></td><td>Screen title constants (<code>CCDA-TITLE01</code>, <code>CCDA-TITLE02</code>)</td><td>All user-management programs</td></tr>
+    <tr><td><code>CSDAT01Y.cpy</code></td><td>Date/time working storage fields for screen header display</td><td>All user-management programs</td></tr>
+    <tr><td><code>CSMSG01Y.cpy</code></td><td>Common message literals (e.g., <code>CCDA-MSG-INVALID-KEY</code>)</td><td>All user-management programs</td></tr>
+</table>
+
+<h2>Data Model</h2>
+<h3>SEC-USER-DATA &mdash; USRSEC VSAM KSDS Record (80 bytes)</h3>
+<pre>01 SEC-USER-DATA.
+   05 SEC-USR-ID       PIC X(08).  *> Primary key &mdash; 8-char alphanumeric User ID
+   05 SEC-USR-FNAME    PIC X(20).  *> First name (left-justified, space-padded)
+   05 SEC-USR-LNAME    PIC X(20).  *> Last name
+   05 SEC-USR-PWD      PIC X(08).  *> Password &mdash; plain text, max 8 chars (demo design)
+   05 SEC-USR-TYPE     PIC X(01).  *> 'A' = Admin, 'U' = Regular User
+   05 SEC-USR-FILLER   PIC X(23).  *> Unused filler; total record = 80 bytes</pre>
+
+<h3>VSAM Cluster Definition</h3>
+<pre>Dataset:   AWS.M2.CARDDEMO.USRSEC.VSAM.KSDS
+Type:      VSAM KSDS (Key-Sequenced Data Set)
+RECLN:     80 bytes (fixed-length)
+KEY:       Length=8, Offset=0  (maps to SEC-USR-ID)
+CISZ:      8192
+TRACKS:    (45 primary, 15 secondary)
+FREESPACE: (10 CI%, 15 CA%)</pre>
+
+<h3>CARDDEMO-COMMAREA Fields Used by This Module</h3>
+<pre>05 CDEMO-USER-ID       PIC X(08)  *> Logged-in user ID (set by COSGN00C)
+05 CDEMO-USER-TYPE     PIC X(01)  *> 'A'=Admin &mdash; checked on every program entry
+05 CDEMO-FROM-TRANID   PIC X(04)  *> Source transaction for navigation chain
+05 CDEMO-FROM-PROGRAM  PIC X(08)  *> Source program
+05 CDEMO-TO-PROGRAM    PIC X(08)  *> Target program for XCTL
+05 CDEMO-PGM-CONTEXT   PIC 9(01)  *> 0=first entry, 1=re-enter (pseudo-conversational)
+
+*> CU00-specific pagination state (embedded in COMMAREA extension):
+05 CDEMO-CU00-INFO.
+   10 CDEMO-CU00-USRID-FIRST    PIC X(08)  *> First User ID on current page
+   10 CDEMO-CU00-USRID-LAST     PIC X(08)  *> Last User ID on current page
+   10 CDEMO-CU00-PAGE-NUM       PIC 9(08)  *> Current page number
+   10 CDEMO-CU00-NEXT-PAGE-FLG  PIC X(01)  *> 'Y' = more pages exist beyond current
+   10 CDEMO-CU00-USR-SEL-FLG    PIC X(01)  *> 'U'=update, 'D'=delete action selected
+   10 CDEMO-CU00-USR-SELECTED   PIC X(08)  *> User ID of selected row</pre>
+
+<h3>Sample Initial Data (from DUSRSECJ.jcl in-stream)</h3>
+<pre>*--- Layout: [ID(8)][FNAME(20)][LNAME(20)][PWD(8)][TYPE(1)][FILL(23)] ---
+
+*--- Admin Users (SEC-USR-TYPE = 'A') ---
+ADMIN001MARGARET            GOLD                PASSWORDA
+ADMIN002RUSSELL             RUSSELL             PASSWORDA
+ADMIN003RAYMOND             WHITMORE            PASSWORDA
+ADMIN004EMMANUEL            CASGRAIN            PASSWORDA
+ADMIN005GRANVILLE           LACHAPELLE          PASSWORDA
+
+*--- Regular Users (SEC-USR-TYPE = 'U') ---
+USER0001LAWRENCE            THOMAS              PASSWORDU
+USER0002AJITH               KUMAR               PASSWORDU
+USER0003LAURITZ             ALME                PASSWORDU
+USER0004AVERARDO            MAZZI               PASSWORDU
+USER0005LEE                 TING                PASSWORDU</pre>
+
+<h2>CICS Transaction Interface</h2>
+<p>All interactions use the IBM 3270 terminal protocol via BMS maps. There is no REST or HTTP API.</p>
+<h3>Transaction Catalog</h3>
+<table>
+    <tr><th>Transaction ID</th><th>Program</th><th>Map / Mapset</th><th>Access Level</th></tr>
+    <tr><td><code>CA00</code></td><td><code>COADM01C</code></td><td>COADM1A / COADM01</td><td>Admin only</td></tr>
+    <tr><td><code>CU00</code></td><td><code>COUSR00C</code></td><td>COUSR0A / COUSR00</td><td>Admin only</td></tr>
+    <tr><td><code>CU01</code></td><td><code>COUSR01C</code></td><td>COUSR1A / COUSR01</td><td>Admin only</td></tr>
+    <tr><td><code>CU02</code></td><td><code>COUSR02C</code></td><td>COUSR2A / COUSR02</td><td>Admin only</td></tr>
+    <tr><td><code>CU03</code></td><td><code>COUSR03C</code></td><td>COUSR3A / COUSR03</td><td>Admin only</td></tr>
+</table>
+
+<h3>Screen Navigation Keys</h3>
+<table>
+    <tr><th>Key</th><th>Action</th><th>Applicable Screens</th></tr>
+    <tr><td><code>ENTER</code></td><td>Submit / process screen input</td><td>All screens</td></tr>
+    <tr><td><code>PF3</code></td><td>Return to Admin Menu (or Signon if no COMMAREA)</td><td>All screens</td></tr>
+    <tr><td><code>PF4</code></td><td>Clear all input fields on current screen</td><td>CU01 (Add User)</td></tr>
+    <tr><td><code>PF7</code></td><td>Scroll up &mdash; previous page of users</td><td>CU00 (User List)</td></tr>
+    <tr><td><code>PF8</code></td><td>Scroll down &mdash; next page of users</td><td>CU00 (User List)</td></tr>
+    <tr><td>Any other key</td><td>Displays "Invalid key pressed" error message</td><td>All screens</td></tr>
+</table>
+
+<h2>Processing Flows</h2>
+
+<h3>CA00 &mdash; Admin Menu (COADM01C)</h3>
+<div class="flow-step"><div class="step-num">1</div><div>Receives COMMAREA; if EIBCALEN=0 (no session), XCTLs to COSGN00C immediately.</div></div>
+<div class="flow-step"><div class="step-num">2</div><div>On first entry (<code>CDEMO-PGM-CONTEXT=0</code>): sends Admin Menu screen listing 6 options.</div></div>
+<div class="flow-step"><div class="step-num">3</div><div>On ENTER: reads option number, validates it is numeric and within 1&ndash;<code>CDEMO-ADMIN-OPT-COUNT</code> (6).</div></div>
+<div class="flow-step"><div class="step-num">4</div><div>Looks up <code>CDEMO-ADMIN-OPT-PGMNAME(option)</code> in the option table; checks for "DUMMY" placeholder (disabled option).</div></div>
+<div class="flow-step"><div class="step-num">5</div><div>XCTLs to the target program with COMMAREA. A <code>PGMIDERR</code> HANDLE CONDITION traps missing programs gracefully.</div></div>
+<div class="flow-step"><div class="step-num">6</div><div>On PF3: XCTLs to COSGN00C (signon screen).</div></div>
+
+<h3>CU00 &mdash; User List (COUSR00C)</h3>
+<div class="flow-step"><div class="step-num">1</div><div>On first entry, starts VSAM STARTBR from beginning of USRSEC file.</div></div>
+<div class="flow-step"><div class="step-num">2</div><div>Reads up to 10 records with READNEXT; populates screen rows with User ID, Name (FNAME + LNAME), and User Type.</div></div>
+<div class="flow-step"><div class="step-num">3</div><div>Saves first/last User ID of current page in COMMAREA (<code>CDEMO-CU00-USRID-FIRST/LAST</code>); sets <code>NEXT-PAGE-FLG='Y'</code> if more records exist.</div></div>
+<div class="flow-step"><div class="step-num">4</div><div>PF7: repositions STARTBR to <code>CDEMO-CU00-USRID-FIRST</code> and reads backward (previous page). PF8: restarts from <code>CDEMO-CU00-USRID-LAST</code> + 1 (next page).</div></div>
+<div class="flow-step"><div class="step-num">5</div><div>On ENTER with a row selection: if selection flag is 'U', stores selected User ID in <code>CDEMO-CU00-USR-SELECTED</code> and XCTLs to COUSR02C; if 'D', XCTLs to COUSR03C.</div></div>
+<div class="flow-step"><div class="step-num">6</div><div>On PF3: returns to Admin Menu (COADM01C).</div></div>
+
+<h3>CU01 &mdash; Add User (COUSR01C)</h3>
+<div class="flow-step"><div class="step-num">1</div><div>On first entry: displays blank Add User form; positions cursor on FNAME field.</div></div>
+<div class="flow-step"><div class="step-num">2</div><div>On ENTER: validates each required field in sequence (FNAME, LNAME, USERID, PASSWORD, USRTYPE). First blank field triggers error, sets cursor on offending field, redisplays.</div></div>
+<div class="flow-step"><div class="step-num">3</div><div>Moves screen fields to <code>SEC-USER-DATA</code> working storage: USERIDI&rarr;SEC-USR-ID, FNAMEI&rarr;SEC-USR-FNAME, etc.</div></div>
+<div class="flow-step"><div class="step-num">4</div><div>Executes <code>CICS WRITE DATASET('USRSEC') ... RIDFLD(SEC-USR-ID)</code>.</div></div>
+<div class="flow-step"><div class="step-num">5</div><div>On DFHRESP(NORMAL): clears all screen fields; shows green success message "User &lt;id&gt; has been added..."</div></div>
+<div class="flow-step"><div class="step-num">6</div><div>On DFHRESP(DUPKEY/DUPREC): shows red error "User ID already exist..." and positions cursor on USERID field.</div></div>
+
+<h3>CU02 &mdash; Update User (COUSR02C)</h3>
+<div class="flow-step"><div class="step-num">1</div><div>Reads <code>CDEMO-CU02-USR-SELECTED</code> (target User ID passed from CU00 via COMMAREA).</div></div>
+<div class="flow-step"><div class="step-num">2</div><div>Executes <code>CICS READ DATASET('USRSEC') ... UPDATE</code> to lock record; populates screen fields with current values.</div></div>
+<div class="flow-step"><div class="step-num">3</div><div>On ENTER: validates all required fields are non-blank; if any field changed sets <code>USR-MODIFIED-YES</code> flag.</div></div>
+<div class="flow-step"><div class="step-num">4</div><div>If modified: executes <code>CICS REWRITE DATASET('USRSEC')</code> with updated SEC-USER-DATA.</div></div>
+<div class="flow-step"><div class="step-num">5</div><div>Displays green success message on DFHRESP(NORMAL); red error message on any failure.</div></div>
+<div class="flow-step"><div class="step-num">6</div><div>On PF3: cancels without writing and returns to Admin Menu.</div></div>
+
+<h3>CU03 &mdash; Delete User (COUSR03C)</h3>
+<div class="flow-step"><div class="step-num">1</div><div>Reads target User ID from COMMAREA (<code>CDEMO-CU02-USR-SELECTED</code> &mdash; shared field with CU02).</div></div>
+<div class="flow-step"><div class="step-num">2</div><div>Executes <code>CICS READ ... UPDATE</code> to lock record; displays user details (ID, name, type) for operator confirmation.</div></div>
+<div class="flow-step"><div class="step-num">3</div><div>On ENTER (confirmation): performs READ UPDATE again, then executes <code>CICS DELETE DATASET('USRSEC') RIDFLD(SEC-USR-ID)</code>.</div></div>
+<div class="flow-step"><div class="step-num">4</div><div>On DFHRESP(NORMAL): displays green success "User &lt;id&gt; has been deleted..."</div></div>
+<div class="flow-step"><div class="step-num">5</div><div>On PF3: cancels delete without making changes; returns to Admin Menu.</div></div>
+
+<h2>Business Rules</h2>
+<ul>
+    <li><strong>Admin-only access:</strong> <code>CDEMO-USER-TYPE</code> in COMMAREA must equal <code>'A'</code>. If <code>EIBCALEN = 0</code> (no CICS session established), any program immediately XCTLs to <code>COSGN00C</code> to force re-authentication.</li>
+    <li><strong>User ID uniqueness:</strong> VSAM KSDS primary key constraint enforces uniqueness. COUSR01C explicitly handles <code>DFHRESP(DUPKEY)</code> and <code>DFHRESP(DUPREC)</code> with a user-facing error message rather than abending.</li>
+    <li><strong>User ID format:</strong> 8-character left-justified alphanumeric string (e.g., <code>ADMIN001</code>, <code>USER0001</code>). All 8 bytes form the VSAM key; trailing spaces are part of the key value.</li>
+    <li><strong>User type values:</strong> Only <code>'A'</code> (Admin) and <code>'U'</code> (Regular User) are meaningful. The user type stored in USRSEC is loaded into COMMAREA at signon and controls menu routing for the entire session.</li>
+    <li><strong>All fields required on add:</strong> First Name, Last Name, User ID, Password, and User Type must all be non-blank. Field validation is sequential: the first blank field triggers an error. Each validation targets cursor placement to the offending field.</li>
+    <li><strong>Password constraints:</strong> Maximum 8 characters, stored in plain text (demo environment characteristic). No complexity, history, or expiry requirements are enforced in the base application.</li>
+    <li><strong>Hard delete:</strong> User deletion removes the VSAM record permanently using <code>CICS DELETE</code>. There is no soft-delete or deactivation flag; deleted users immediately lose the ability to log in.</li>
+    <li><strong>Delete confirmation:</strong> COUSR03C is a two-step operation. The user must first view the record details, then press ENTER to confirm deletion. PF3 at any point cancels without making changes.</li>
+    <li><strong>Pagination:</strong> CU00 displays exactly 10 users per page. <code>CDEMO-CU00-NEXT-PAGE-FLG</code> is set to <code>'Y'</code> when additional records exist. Page state (first/last IDs, page number) is preserved in COMMAREA across pseudo-conversational returns.</li>
+    <li><strong>Record locking:</strong> Both update (COUSR02C) and delete (COUSR03C) operations use <code>CICS READ ... UPDATE</code> to obtain an exclusive lock before presenting data for modification, preventing lost updates from concurrent sessions.</li>
+    <li><strong>PGMIDERR handling:</strong> COADM01C registers a <code>HANDLE CONDITION PGMIDERR</code> so that optional programs (e.g., DB2-dependent menu options not installed) fail gracefully with a message rather than causing a transaction abend.</li>
+    <li><strong>COMMAREA required:</strong> All programs test <code>EIBCALEN = 0</code> at entry. A zero-length COMMAREA means no authenticated session exists; the program routes immediately to signon without attempting any VSAM I/O.</li>
+</ul>
+
+<h2>Dependencies</h2>
+<h3>Internal Module Dependencies</h3>
+<table>
+    <tr><th>Module</th><th>Relationship</th><th>Details</th></tr>
+    <tr>
+        <td><a href="../authentication/index.html">authentication</a></td>
+        <td>Required prerequisite</td>
+        <td>Signon (<code>COSGN00C</code>) must establish <code>CDEMO-USER-TYPE='A'</code> before any user-management screen is accessible. Both modules share the USRSEC VSAM file: authentication reads it, user-management writes/updates/deletes it.</td>
+    </tr>
+    <tr>
+        <td><a href="../transaction-types/index.html">transaction-types</a></td>
+        <td>Optional sibling</td>
+        <td>Admin Menu options 5 and 6 route to DB2-based transaction type programs. These require IBM DB2 to be configured and the programs to be linked. COADM01C handles <code>PGMIDERR</code> if these programs are absent.</td>
+    </tr>
+</table>
+<h3>External Infrastructure Dependencies</h3>
+<table>
+    <tr><th>Component</th><th>Required?</th><th>Purpose</th></tr>
+    <tr><td>IBM CICS</td><td>Yes</td><td>Transaction processing; VSAM file I/O via CICS API; BMS 3270 terminal interface</td></tr>
+    <tr><td>VSAM KSDS &mdash; USRSEC</td><td>Yes</td><td>Persistent user security data store; must be defined and opened in CICS before any user-management transaction executes</td></tr>
+    <tr><td>z/OS JCL (DUSRSECJ)</td><td>Initial setup only</td><td>Creates and populates the USRSEC VSAM dataset; must be run once before the application is first used, and again to reset test data</td></tr>
+    <tr><td>IBM DB2</td><td>Optional</td><td>Required only if Admin Menu options 5 and 6 (transaction type management) are used</td></tr>
+</table>
+
+<h2>Configuration and Environment</h2>
+<h3>VSAM File Definition (DUSRSECJ.jcl, STEP02 &mdash; IDCAMS)</h3>
+<pre>DEFINE CLUSTER (NAME(AWS.M2.CARDDEMO.USRSEC.VSAM.KSDS)
+                KEYS(8,0)
+                RECORDSIZE(80,80)
+                REUSE
+                INDEXED
+                TRACKS(45,15)
+                FREESPACE(10,15)
+                CISZ(8192))
+       DATA    (NAME(AWS.M2.CARDDEMO.USRSEC.VSAM.KSDS.DAT))
+       INDEX   (NAME(AWS.M2.CARDDEMO.USRSEC.VSAM.KSDS.IDX))</pre>
+
+<h3>CICS File Definition (CSD)</h3>
+<p>The USRSEC VSAM file must be defined in the CICS System Definition (CSD) with these attributes:</p>
+<pre>File name:   USRSEC
+Dataset:     AWS.M2.CARDDEMO.USRSEC.VSAM.KSDS
+Type:        KSDS
+Access:      READ, WRITE, UPDATE, DELETE, BROWSE
+RecordFormat: FIXED
+LSRPOOL:     (as per site standards)</pre>
+
+<h3>Admin Menu Option Count (COADM02Y.cpy)</h3>
+<pre>05 CDEMO-ADMIN-OPT-COUNT  PIC 9(02) VALUE 6.
+*  Value 4 = user-management only (no DB2 options shown)
+*  Value 6 = all options including DB2 transaction types</pre>
+<div class="note">
+    To disable DB2-dependent options 5 and 6, change <code>CDEMO-ADMIN-OPT-COUNT</code> to <code>4</code> and recompile COADM01C. Users will only see the four core user-management options.
+</div>
+
+<h2>Initial Data Load</h2>
+<p>The JCL job <strong>DUSRSECJ</strong> initializes the USRSEC file in three ordered steps:</p>
+<table>
+    <tr><th>Step</th><th>Program</th><th>Action</th></tr>
+    <tr><td>PREDEL</td><td>IEFBR14</td><td>Pre-deletes the sequential PS dataset (<code>AWS.M2.CARDDEMO.USRSEC.PS</code>) if it already exists; prevents IEBGENER DISP=NEW failure</td></tr>
+    <tr><td>STEP01</td><td>IEBGENER</td><td>Creates the sequential PS file from in-stream data containing 10 fixed-length 80-byte user records (5 admin, 5 regular)</td></tr>
+    <tr><td>STEP02</td><td>IDCAMS</td><td>Deletes (if present) and redefines the VSAM KSDS cluster with KEYS(8,0), RECSIZE(80,80)</td></tr>
+    <tr><td>STEP03</td><td>IDCAMS REPRO</td><td>Copies the sequential PS data into the VSAM KSDS file</td></tr>
+</table>
+<div class="warning">
+    <strong>Warning:</strong> Running DUSRSECJ resets the USRSEC file to the initial 10 users, permanently destroying any user records added through the CICS application. Use only for initial environment setup or controlled test data reset.
+</div>
+
+<h2>Code Examples</h2>
+
+<h3>Field Validation Pattern on Add (COUSR01C)</h3>
+<pre>PROCESS-ENTER-KEY.
+    EVALUATE TRUE
+        WHEN FNAMEI OF COUSR1AI = SPACES OR LOW-VALUES
+            MOVE 'Y'  TO WS-ERR-FLG
+            MOVE 'First Name can NOT be empty...' TO WS-MESSAGE
+            MOVE -1   TO FNAMEL OF COUSR1AI
+            PERFORM SEND-USRADD-SCREEN
+        WHEN LNAMEI OF COUSR1AI = SPACES OR LOW-VALUES
+            MOVE 'Y'  TO WS-ERR-FLG
+            MOVE 'Last Name can NOT be empty...' TO WS-MESSAGE
+            MOVE -1   TO LNAMEL OF COUSR1AI
+            PERFORM SEND-USRADD-SCREEN
+        WHEN USERIDI OF COUSR1AI = SPACES OR LOW-VALUES
+            MOVE 'Y'  TO WS-ERR-FLG
+            MOVE 'User ID can NOT be empty...' TO WS-MESSAGE
+            MOVE -1   TO USERIDL OF COUSR1AI
+            PERFORM SEND-USRADD-SCREEN
+        WHEN PASSWDI OF COUSR1AI = SPACES OR LOW-VALUES
+            MOVE 'Y'  TO WS-ERR-FLG
+            MOVE 'Password can NOT be empty...' TO WS-MESSAGE
+            MOVE -1   TO PASSWDL OF COUSR1AI
+            PERFORM SEND-USRADD-SCREEN
+        WHEN USRTYPEI OF COUSR1AI = SPACES OR LOW-VALUES
+            MOVE 'Y'  TO WS-ERR-FLG
+            MOVE 'User Type can NOT be empty...' TO WS-MESSAGE
+            MOVE -1   TO USRTYPEL OF COUSR1AI
+            PERFORM SEND-USRADD-SCREEN
+        WHEN OTHER
+            MOVE -1   TO FNAMEL OF COUSR1AI
+            CONTINUE
+    END-EVALUATE.</pre>
+
+<h3>CICS WRITE &mdash; Create New User (COUSR01C)</h3>
+<pre>WRITE-USER-SEC-FILE.
+    EXEC CICS WRITE
+         DATASET   (WS-USRSEC-FILE)
+         FROM      (SEC-USER-DATA)
+         LENGTH    (LENGTH OF SEC-USER-DATA)
+         RIDFLD    (SEC-USR-ID)
+         KEYLENGTH (LENGTH OF SEC-USR-ID)
+         RESP      (WS-RESP-CD)
+         RESP2     (WS-REAS-CD)
+    END-EXEC
+
+    EVALUATE WS-RESP-CD
+        WHEN DFHRESP(NORMAL)
+            STRING 'User '    DELIMITED BY SIZE
+                   SEC-USR-ID DELIMITED BY SPACE
+                   ' has been added ...' DELIMITED BY SIZE
+              INTO WS-MESSAGE
+            MOVE DFHGREEN TO ERRMSGC OF COUSR1AO
+            PERFORM INITIALIZE-ALL-FIELDS
+            PERFORM SEND-USRADD-SCREEN
+        WHEN DFHRESP(DUPKEY)
+        WHEN DFHRESP(DUPREC)
+            MOVE 'Y' TO WS-ERR-FLG
+            MOVE 'User ID already exist...' TO WS-MESSAGE
+            MOVE -1 TO USERIDL OF COUSR1AI
+            PERFORM SEND-USRADD-SCREEN
+        WHEN OTHER
+            MOVE 'Y' TO WS-ERR-FLG
+            MOVE 'Unable to Add User...' TO WS-MESSAGE
+            PERFORM SEND-USRADD-SCREEN
+    END-EVALUATE.</pre>
+
+<h3>CICS READ with UPDATE Lock (COUSR02C / COUSR03C)</h3>
+<pre>READ-USER-SEC-FILE.
+    EXEC CICS READ
+         DATASET   (WS-USRSEC-FILE)
+         INTO      (SEC-USER-DATA)
+         LENGTH    (LENGTH OF SEC-USER-DATA)
+         RIDFLD    (SEC-USR-ID)
+         KEYLENGTH (LENGTH OF SEC-USR-ID)
+         UPDATE
+         RESP      (WS-RESP-CD)
+         RESP2     (WS-REAS-CD)
+    END-EXEC.
+
+    IF WS-RESP-CD NOT = DFHRESP(NORMAL)
+        MOVE 'Y' TO WS-ERR-FLG
+        MOVE 'User not found or locked...' TO WS-MESSAGE
+        MOVE DFHNEUTR TO ERRMSGC OF COUSR2AO
+    END-IF.</pre>
+
+<h3>CICS REWRITE &mdash; Save Updated Record (COUSR02C)</h3>
+<pre>UPDATE-USER-SEC-FILE.
+    EXEC CICS REWRITE
+         DATASET   (WS-USRSEC-FILE)
+         FROM      (SEC-USER-DATA)
+         LENGTH    (LENGTH OF SEC-USER-DATA)
+         RESP      (WS-RESP-CD)
+         RESP2     (WS-REAS-CD)
+    END-EXEC.
+
+    EVALUATE WS-RESP-CD
+        WHEN DFHRESP(NORMAL)
+            MOVE 'User updated successfully' TO WS-MESSAGE
+            MOVE DFHGREEN TO ERRMSGC OF COUSR2AO
+        WHEN OTHER
+            MOVE 'Update failed...' TO WS-MESSAGE
+    END-EVALUATE.</pre>
+
+<h3>CICS DELETE &mdash; Hard Delete (COUSR03C)</h3>
+<pre>DELETE-USER-SEC-FILE.
+    EXEC CICS DELETE
+         DATASET   (WS-USRSEC-FILE)
+         RIDFLD    (SEC-USR-ID)
+         KEYLENGTH (LENGTH OF SEC-USR-ID)
+         RESP      (WS-RESP-CD)
+         RESP2     (WS-REAS-CD)
+    END-EXEC.
+
+    EVALUATE WS-RESP-CD
+        WHEN DFHRESP(NORMAL)
+            STRING 'User ' DELIMITED BY SIZE
+                   SEC-USR-ID DELIMITED BY SPACE
+                   ' has been deleted' DELIMITED BY SIZE
+              INTO WS-MESSAGE
+            MOVE DFHGREEN TO ERRMSGC OF COUSR3AO
+        WHEN OTHER
+            MOVE 'Delete failed...' TO WS-MESSAGE
+    END-EVALUATE.</pre>
+
+<h3>Paginated VSAM Browse (COUSR00C)</h3>
+<pre>BROWSE-USER-SEC-FILE.
+    EXEC CICS STARTBR
+         DATASET   (WS-USRSEC-FILE)
+         RIDFLD    (SEC-USR-ID)
+         GTEQ
+         RESP      (WS-RESP-CD)
+    END-EXEC
+
+    MOVE ZEROS TO WS-REC-COUNT
+    PERFORM VARYING WS-IDX FROM 1 BY 1
+            UNTIL WS-IDX > 10 OR USER-SEC-EOF
+        EXEC CICS READNEXT
+             DATASET   (WS-USRSEC-FILE)
+             INTO      (SEC-USER-DATA)
+             LENGTH    (LENGTH OF SEC-USER-DATA)
+             RIDFLD    (SEC-USR-ID)
+             RESP      (WS-RESP-CD)
+        END-EXEC
+        EVALUATE WS-RESP-CD
+            WHEN DFHRESP(NORMAL)
+                ADD 1 TO WS-REC-COUNT
+                MOVE SEC-USR-ID    TO USER-ID(WS-IDX)
+                MOVE SEC-USR-FNAME TO USER-NAME(WS-IDX)
+                MOVE SEC-USR-TYPE  TO USER-TYPE(WS-IDX)
+            WHEN DFHRESP(ENDFILE)
+                SET USER-SEC-EOF TO TRUE
+            WHEN OTHER
+                SET USER-SEC-EOF TO TRUE
+        END-EVALUATE
+    END-PERFORM
+
+    EXEC CICS ENDBR
+         DATASET (WS-USRSEC-FILE)
+    END-EXEC.
+
+    *> Check if more pages exist after this one
+    IF NOT USER-SEC-EOF
+        SET NEXT-PAGE-YES TO TRUE
+    END-IF.</pre>
+
+<h3>Admin Menu Option Routing (COADM01C)</h3>
+<pre>PROCESS-ENTER-KEY.
+    *> Extract and right-justify numeric option from screen input
+    PERFORM VARYING WS-IDX
+            FROM LENGTH OF OPTIONI OF COADM1AI BY -1 UNTIL
+            OPTIONI OF COADM1AI(WS-IDX:1) NOT = SPACES OR WS-IDX = 1
+    END-PERFORM
+    MOVE OPTIONI OF COADM1AI(1:WS-IDX) TO WS-OPTION-X
+    INSPECT WS-OPTION-X REPLACING ALL ' ' BY '0'
+    MOVE WS-OPTION-X TO WS-OPTION
+
+    IF WS-OPTION IS NOT NUMERIC OR
+       WS-OPTION > CDEMO-ADMIN-OPT-COUNT OR
+       WS-OPTION = ZEROS
+        MOVE 'Please enter a valid option number...' TO WS-MESSAGE
+        PERFORM SEND-MENU-SCREEN
+    END-IF
+
+    IF NOT ERR-FLG-ON
+        IF CDEMO-ADMIN-OPT-PGMNAME(WS-OPTION)(1:5) NOT = 'DUMMY'
+            MOVE WS-TRANID  TO CDEMO-FROM-TRANID
+            MOVE WS-PGMNAME TO CDEMO-FROM-PROGRAM
+            MOVE ZEROS      TO CDEMO-PGM-CONTEXT
+            EXEC CICS
+                XCTL PROGRAM(CDEMO-ADMIN-OPT-PGMNAME(WS-OPTION))
+                COMMAREA(CARDDEMO-COMMAREA)
+            END-EXEC
+        END-IF
+    END-IF.</pre>
+
+<h2>Development Guidelines</h2>
+
+<h3>Adding a New Admin Menu Option</h3>
+<ol>
+    <li>Open <code>app/cpy/COADM02Y.cpy</code></li>
+    <li>Increment <code>CDEMO-ADMIN-OPT-COUNT</code> by 1</li>
+    <li>Add a new 45-byte FILLER group: option number (2 bytes, PIC 9(02)), display text (35 bytes, PIC X(35)), program name (8 bytes, PIC X(08))</li>
+    <li>Recompile COADM01C and any other programs that COPY COADM02Y</li>
+    <li>Define the new target program in CICS CSD (DEFINE PROGRAM) and link the compiled load module</li>
+    <li>Add a HANDLE CONDITION PGMIDERR in COADM01C if the new program may be absent in some environments</li>
+</ol>
+
+<h3>Validation and Error Handling Patterns</h3>
+<p>All user-management programs follow a consistent error-handling pattern:</p>
+<ul>
+    <li>Use <code>WS-ERR-FLG</code> (PIC X(01), 88-levels ERR-FLG-ON/OFF) to track error state within a transaction</li>
+    <li>Set cursor position using negative length field (e.g., <code>MOVE -1 TO FNAMEL OF COUSR1AI</code>) to position the 3270 cursor on the error field</li>
+    <li>Always evaluate CICS RESP codes using <code>DFHRESP(condition)</code> constants rather than numeric values</li>
+    <li>Display success messages in DFHGREEN; error messages naturally appear in the default color (red/neutral)</li>
+</ul>
+
+<h3>Pseudo-Conversational COMMAREA Pattern</h3>
+<p>All programs use the pseudo-conversational programming model: each CICS RETURN passes the COMMAREA back to the next invocation of the same transaction, preserving state across screen interactions.</p>
+<pre>*--- Return control to same transaction with state preserved ---
+EXEC CICS RETURN
+     TRANSID  (WS-TRANID)
+     COMMAREA (CARDDEMO-COMMAREA)
+END-EXEC.
+
+*--- Transfer to another program (XCTL) ---
+MOVE WS-TRANID  TO CDEMO-FROM-TRANID
+MOVE WS-PGMNAME TO CDEMO-FROM-PROGRAM
+MOVE ZEROS      TO CDEMO-PGM-CONTEXT
+EXEC CICS XCTL
+     PROGRAM (CDEMO-TO-PROGRAM)
+     COMMAREA(CARDDEMO-COMMAREA)
+END-EXEC.</pre>
+
+<h3>Security Considerations for Modernization</h3>
+<div class="warning">
+    <strong>Plain-text passwords:</strong> <code>SEC-USR-PWD PIC X(08)</code> is stored in plain text in USRSEC. Modernization must replace this with a hashed credential store (bcrypt or Argon2) and ensure passwords are never displayed on update screens.
+</div>
+<div class="warning">
+    <strong>No audit trail:</strong> Deletes are hard deletes with no logging. Add an audit log (DB2 table or z/OS SMF record) to capture who deleted which user ID and when.
+</div>
+<div class="warning">
+    <strong>No session invalidation:</strong> If an admin deletes a user who is currently logged in, that user's existing CICS session (with their COMMAREA) is not invalidated. Sessions expire only when the 3270 terminal disconnects or the CICS transaction times out.
+</div>
+
+<h2>User Stories</h2>
+<table>
+    <tr><th>Story</th><th>Acceptance Criteria</th><th>Complexity</th><th>Transaction</th></tr>
+    <tr>
+        <td>As an administrator, I want to view all system users so I can audit access</td>
+        <td>List screen shows User ID, name, and type for all USRSEC records; PF7/PF8 paginate 10 per page; selection flag enables update/delete actions</td>
+        <td>Simple (1-2 pts)</td>
+        <td>CU00</td>
+    </tr>
+    <tr>
+        <td>As an administrator, I want to add a new user so they can access the system</td>
+        <td>All five fields required; duplicate User ID rejected with red error message; successful add shows green confirmation; new record present in USRSEC with correct type</td>
+        <td>Medium (3 pts)</td>
+        <td>CU01</td>
+    </tr>
+    <tr>
+        <td>As an administrator, I want to update a user's type so their permissions are correct</td>
+        <td>Current values pre-populated; all fields editable; changes saved on ENTER; USRSEC record reflects updated type; user sees correct menu on next login</td>
+        <td>Medium (3 pts)</td>
+        <td>CU02</td>
+    </tr>
+    <tr>
+        <td>As an administrator, I want to update a user's password so they can regain access</td>
+        <td>Password field editable in CU02; new value written to SEC-USR-PWD; user can authenticate via CC00 with new password</td>
+        <td>Medium (3 pts)</td>
+        <td>CU02</td>
+    </tr>
+    <tr>
+        <td>As an administrator, I want to delete an inactive user so unauthorized access is prevented</td>
+        <td>User details shown for confirmation; PF3 cancels without deleting; ENTER permanently removes USRSEC record; deleted user cannot log in; green confirmation shown</td>
+        <td>Medium (3 pts)</td>
+        <td>CU03</td>
+    </tr>
+    <tr>
+        <td>As a system operator, I want to initialize the user security file so the application has default users</td>
+        <td>DUSRSECJ job completes RC=0; USRSEC contains 10 records (ADMIN001-005, USER0001-0005); admin users can log in via CC00</td>
+        <td>Simple (1-2 pts)</td>
+        <td>JCL DUSRSECJ</td>
+    </tr>
+</table>
+
+<h2>Source Files</h2>
+<table>
+    <tr><th>File</th><th>Type</th><th>Description</th></tr>
+    <tr><td><code>app/cbl/COADM01C.cbl</code></td><td>COBOL Program</td><td>Admin Menu &mdash; routes admin users to all admin functions; 6-option menu driven by COADM02Y table</td></tr>
+    <tr><td><code>app/cbl/COUSR00C.cbl</code></td><td>COBOL Program</td><td>User List &mdash; paginated VSAM sequential browse, 10 users per page, row selection for update/delete</td></tr>
+    <tr><td><code>app/cbl/COUSR01C.cbl</code></td><td>COBOL Program</td><td>Add User &mdash; validates all required fields, writes new USRSEC record, handles duplicate key</td></tr>
+    <tr><td><code>app/cbl/COUSR02C.cbl</code></td><td>COBOL Program</td><td>Update User &mdash; reads with UPDATE lock, allows field edits, rewrites updated record</td></tr>
+    <tr><td><code>app/cbl/COUSR03C.cbl</code></td><td>COBOL Program</td><td>Delete User &mdash; reads with UPDATE lock, two-step confirmation, hard-deletes USRSEC record</td></tr>
+    <tr><td><code>app/bms/COADM01.bms</code></td><td>BMS Map Source</td><td>Admin Menu screen definition</td></tr>
+    <tr><td><code>app/bms/COUSR00.bms</code></td><td>BMS Map Source</td><td>User List screen (10 rows: selection, User ID, Name, Type)</td></tr>
+    <tr><td><code>app/bms/COUSR01.bms</code></td><td>BMS Map Source</td><td>Add User screen (FNAME, LNAME, USERID, PASSWD, USRTYPE input fields)</td></tr>
+    <tr><td><code>app/bms/COUSR02.bms</code></td><td>BMS Map Source</td><td>Update User screen (all fields pre-populated and editable)</td></tr>
+    <tr><td><code>app/bms/COUSR03.bms</code></td><td>BMS Map Source</td><td>Delete User screen (display-only confirmation with user details)</td></tr>
+    <tr><td><code>app/cpy/CSUSR01Y.cpy</code></td><td>Copybook</td><td>SEC-USER-DATA record layout (80 bytes; key, names, password, type, filler)</td></tr>
+    <tr><td><code>app/cpy/COADM02Y.cpy</code></td><td>Copybook</td><td>Admin menu option table (6 entries with program names and display text)</td></tr>
+    <tr><td><code>app/cpy/COCOM01Y.cpy</code></td><td>Copybook</td><td>CARDDEMO-COMMAREA shared session state structure</td></tr>
+    <tr><td><code>app/cpy-bms/COADM01.CPY</code></td><td>BMS Symbolic</td><td>Symbolic description of COADM01 map (generated)</td></tr>
+    <tr><td><code>app/cpy-bms/COUSR00.CPY</code></td><td>BMS Symbolic</td><td>Symbolic description of COUSR00 map (generated)</td></tr>
+    <tr><td><code>app/cpy-bms/COUSR01.CPY</code></td><td>BMS Symbolic</td><td>Symbolic description of COUSR01 map (generated)</td></tr>
+    <tr><td><code>app/cpy-bms/COUSR02.CPY</code></td><td>BMS Symbolic</td><td>Symbolic description of COUSR02 map (generated)</td></tr>
+    <tr><td><code>app/cpy-bms/COUSR03.CPY</code></td><td>BMS Symbolic</td><td>Symbolic description of COUSR03 map (generated)</td></tr>
+    <tr><td><code>app/jcl/DUSRSECJ.jcl</code></td><td>JCL Job</td><td>Initial USRSEC file creation (IEBGENER + IDCAMS) with 10 seed users</td></tr>
+    <tr><td><code>app/data/EBCDIC/AWS.M2.CARDDEMO.USRSEC.PS</code></td><td>Data File</td><td>Sample user security data in EBCDIC encoding</td></tr>
+</table>
+
+<footer>
+    Last reviewed: 2026-03-26T18:01:26Z
+</footer>
+
 </body>
 </html>
