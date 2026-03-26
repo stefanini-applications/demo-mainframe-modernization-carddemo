@@ -757,36 +757,123 @@ SEC-USER-DATA (USRSEC VSAM KSDS, RECLN=80, KEY=8 at offset 0):
 ### 9. Authorization (Optional — IMS/DB2/MQ)
 
 **ID:** `authorization`  
-**Purpose:** Credit card authorization processing using IMS, DB2, and MQ integration  
+**Purpose:** Credit card authorization processing using IMS hierarchical database, DB2 relational database, and IBM MQ message queuing. Extends CardDemo with real-time authorization flows, fraud detection, and operational authorization management.  
 **Location:** `app/app-authorization-ims-db2-mq/`  
 **Key Components:**
-- `COPAUS0C.cbl` — CICS; Pending Authorization Summary (CPVS / COPAU00)
-- `COPAUS1C.cbl` — CICS; Pending Authorization Details (CPVD / COPAU01)
-- `COPAUA0C.cbl` — CICS; Process Authorization Requests via MQ (CP00)
-- `CBPAUP0C.cbl` — Batch; Purge Expired Authorizations (CBPAUP0J)
+- `COPAUA0C.cbl` — CICS; Authorization request processor, MQ-triggered (CP00); reads VSAM files, applies business rules, inserts/updates IMS, sends MQ response
+- `COPAUS0C.cbl` — CICS; Pending Authorization Summary display (CPVS / COPAU00); reads IMS PAUTSUM0 segment
+- `COPAUS1C.cbl` — CICS; Pending Authorization Details display (CPVD / COPAU01); reads IMS PAUTDTL1 segments; calls COPAUS2C for fraud marking
+- `COPAUS2C.cbl` — CICS; Fraud marking and DB2 update (called by COPAUS1C); inserts DB2 AUTHFRDS row, updates IMS PAUTDTL1
+- `CBPAUP0C.cbl` — Batch IMS BMP; Purge expired pending authorizations (CBPAUP0J); adjusts credit balances; supports IMS checkpoint/restart
+- `DBUNLDGS.CBL / PAUDBLOD.CBL / PAUDBUNL.CBL` — IMS database load/unload utilities
+- `COPAU00.bms / COPAU01.bms` — BMS maps for summary and detail screens
+- `CIPAUSMY.cpy` — IMS PAUTSUM0 segment copybook (authorization summary)
+- `CIPAUDTY.cpy` — IMS PAUTDTL1 segment copybook (authorization details)
+- `CCPAURQY.cpy` — MQ authorization request structure
+- `CCPAURLY.cpy` — MQ authorization response structure
+- `CCPAUERY.cpy` — Error log record structure (multi-subsystem classification)
+- `IMSFUNCS.cpy` — IMS DL/I function codes (GU, GHU, GN, REPL, ISRT, DLET, etc.)
 
 **CICS Transactions:**
-- `CPVS` → Pending Authorization Summary (reads IMS and VSAM)
-- `CPVD` → Pending Authorization Details (updates IMS, inserts DB2)
-- `CP00` → Authorization processor (MQ trigger, request/response, IMS insert/update)
+- `CP00` → Authorization processor (MQ trigger; processes up to 500 messages per invocation)
+- `CPVS` → Pending Authorization Summary (reads IMS PAUTSUM0 and VSAM account/customer data)
+- `CPVD` → Pending Authorization Details (reads IMS PAUTDTL1; supports fraud marking; requires DB2 plan)
+- `CDRD` → Date conversion utility (CODATE01)
+- `CDRA` → Account inquiry utility (COACCT01)
+
+**IMS DB Structure:**
+```
+DBPAUTP0 (HIDAM Primary Database):
+  PAUTSUM0 [ROOT, 100 bytes]         -- Account-level authorization summary
+    Key: ACCNTID (packed 6 bytes)    -- Account ID
+    Fields: credit/cash limits and balances, approved/declined counts and amounts
+    LCHILD: DBPAUTX0.PAUTINDX        -- Index pointer
+
+  PAUTDTL1 [CHILD of PAUTSUM0, 200 bytes]  -- Per-transaction authorization record
+    Key: PAUT9CTS (char 8 bytes)     -- Composite date/time (unique)
+    Fields: card number, auth type, expiry, response code, amounts,
+            merchant details, transaction ID, match status (P/D/E/M), fraud flag
+
+DBPAUTX0 (HIDAM Index Database):
+  PAUTINDX -- Indexes PAUTSUM0 by account ID for direct GU access
+
+PSBs:
+  PSBPAUTB -- BMP PSB; PCB offset +1 (online), +2 (batch)
+  PSBPAUTL -- Load PSB for database load/unload utilities
+```
+
+**DB2 Schema:**
+```sql
+-- Fraud tracking table (ddl/AUTHFRDS.ddl)
+CREATE TABLE CARDDEMO.AUTHFRDS (
+  CARD_NUM              CHAR(16)    NOT NULL,   -- Card PAN
+  AUTH_TS               TIMESTAMP   NOT NULL,   -- Authorization timestamp
+  AUTH_TYPE             CHAR(4),
+  CARD_EXPIRY_DATE      CHAR(4),
+  AUTH_ID_CODE          CHAR(6),
+  AUTH_RESP_CODE        CHAR(2),                -- '00'=Approved
+  AUTH_RESP_REASON      CHAR(4),
+  TRANSACTION_AMT       DECIMAL(12,2),
+  APPROVED_AMT          DECIMAL(12,2),
+  MERCHANT_ID           CHAR(15),
+  MERCHANT_NAME         VARCHAR(22),
+  MATCH_STATUS          CHAR(1),                -- P/D/E/M
+  AUTH_FRAUD            CHAR(1),                -- F=Fraud, R=Removed
+  FRAUD_RPT_DATE        DATE,
+  ACCT_ID               DECIMAL(11),
+  CUST_ID               DECIMAL(9),
+  PRIMARY KEY (CARD_NUM, AUTH_TS)
+);
+-- Index: CARDDEMO.XAUTHFRD on (CARD_NUM ASC, AUTH_TS DESC)
+```
+
+**MQ Interface:**
+- Input queue: `AWS.M2.CARDDEMO.PAUTH.REQUEST` — receives CSV authorization requests
+- Reply queue: `AWS.M2.CARDDEMO.PAUTH.REPLY` — sends approve/decline responses
+- Request fields: auth-date/time, card-num, auth-type, card-expiry, message-type, message-source, processing-code, transaction-amount, MCC, acquirer-country, POS-entry-mode, merchant details, transaction-ID
+- Response fields: card-num, transaction-ID, auth-ID-code, response-code, response-reason, approved-amount
 
 **Integration Points:**
-- **MQ:** Receives authorization requests via trigger; sends responses
-- **IMS DB:** Stores authorization records; supports segment reads and updates
-- **DB2:** Logs authorization audit records with SQL inserts
-- **VSAM:** Cross-references card/account data
+- **MQ:** Receives authorization requests via CICS trigger; sends approve/decline responses
+- **IMS DB:** Stores authorization summary (PAUTSUM0) and detail (PAUTDTL1) records using DL/I GU/GN/GNP/REPL/ISRT/DLET calls
+- **DB2:** AUTHFRDS table stores fraud-flagged records via SQL INSERT in COPAUS2C; requires DB2 plan bound for CPVD transaction
+- **VSAM:** ACCTFILE, CARDFILE, CUSTFILE, XREFFILE used for card/account validation during CP00
+
+**Authorization Decision Rules (evaluated in order):**
+1. Card fraud flag set in IMS → DECLINE (CARD-FRAUD)
+2. Merchant fraud flag → DECLINE (MERCHANT-FRAUD)
+3. Account inactive (ACCT-ACTIVE-STATUS ≠ 'Y') → DECLINE (ACCOUNT-CLOSED)
+4. Card inactive (CARD-ACTIVE-STATUS ≠ 'Y') → DECLINE (CARD-NOT-ACTIVE)
+5. Transaction amount > PA-CREDIT-LIMIT (IMS) → DECLINE (INSUFFICIENT-FUND)
+6. Transaction amount > ACCT-CREDIT-LIMIT (VSAM fallback) → DECLINE (INSUFFICIENT-FUND)
+- Response code `00` = Approved (approved amount = transaction amount)
+- Response code non-`00` = Declined (approved amount = 0)
+
+**Match Status Values:**
+- `P` = Pending (not yet matched to posted transaction)
+- `D` = Declined by authorization processor
+- `E` = Expired pending (set during CBPAUP0J batch purge)
+- `M` = Matched to a posted TRANFILE transaction
+
+**Batch Jobs:**
+- `CBPAUP0J` — Purges PAUTDTL1 segments older than P-EXPIRY-DAYS (JCL PARM) with status 'P'; adjusts PA-CREDIT-BALANCE; deletes empty PAUTSUM0 roots; issues IMS checkpoints for restart
+- `LOADPADB.JCL / UNLDPADB.JCL` — IMS database load and unload for data management
+- `DBPAUTP0.JCL` — Initial IMS database initialization
 
 **Business Rules:**
-- Authorization requests arrive via MQ trigger (CP00 transaction)
+- Authorization requests arrive via MQ trigger; CP00 processes up to 500 messages per invocation
 - Pending authorizations viewable in summary (CPVS) and detail (CPVD) screens
-- Detail screen updates IMS record and inserts DB2 audit row
-- Expired authorizations purged via CBPAUP0J batch job
-- This module requires IMS, DB2, and MQ to be configured
+- Fraud marking via CPVD updates both IMS (PAUTDTL1) and DB2 (AUTHFRDS) in same unit of work
+- Expired pending authorizations purged by CBPAUP0J; credit holds released on deletion
+- DB2 schema name in COPAUS2C and DDL scripts must be updated to match target environment
+- This module requires IMS, DB2, and MQ to be configured; base CardDemo must be deployed first
 
 **User Story Examples:**
-- As a cardholder, I want to view pending authorizations so I can see charges not yet posted
-- As an authorization system, I want to process incoming requests via MQ so authorizations are handled asynchronously
-- As a system operator, I want to purge expired authorizations so the IMS database stays clean
+- As a cardholder, I want to view pending authorizations so I can see charges not yet posted to my account
+- As a cardholder, I want to view authorization details so I can see the merchant and amount for a specific charge
+- As an authorization system, I want to process incoming MQ requests so charges are approved or declined in real time
+- As a fraud analyst, I want to mark a suspicious authorization as fraudulent so the account is protected from further charges
+- As a system operator, I want to purge expired authorizations nightly so the IMS database stays lean and credit holds are released
 
 ---
 
