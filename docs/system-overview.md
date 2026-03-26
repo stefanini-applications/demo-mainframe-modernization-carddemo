@@ -335,47 +335,66 @@ TRANSACTION-DETAIL-REPORT line fields:
 ### 7. User Management
 
 **ID:** `user-management`  
-**Purpose:** Administrative management of system users (list, add, update, delete)  
+**Purpose:** Administrative management of system users (list, add, update, delete) via CICS 3270 screens; exclusively available to Admin-type users  
 **Key Components:**
-- `COADM01C.cbl` — CICS program; Admin Menu (CA00 / COADM01)
-- `COUSR00C.cbl` — CICS program; list users (CU00 / COUSR00)
-- `COUSR01C.cbl` — CICS program; add user (CU01 / COUSR01)
-- `COUSR02C.cbl` — CICS program; update user (CU02 / COUSR02)
-- `COUSR03C.cbl` — CICS program; delete user (CU03 / COUSR03)
-- `CSUSR01Y.cpy` — SEC-USER-DATA structure
-- `CSMEN01.bms` — Main menu BMS map
+- `COADM01C.cbl` — CICS program; Admin Menu (CA00 / COADM01); routes to user management and optional DB2 transaction-type programs via a 6-option table defined in `COADM02Y.cpy`
+- `COUSR00C.cbl` — CICS program; list users (CU00 / COUSR00); paginated VSAM sequential browse, 10 users per page, with row selection for update (`U`) or delete (`D`)
+- `COUSR01C.cbl` — CICS program; add user (CU01 / COUSR01); validates all five required fields, writes new USRSEC record, handles duplicate-key error
+- `COUSR02C.cbl` — CICS program; update user (CU02 / COUSR02); reads USRSEC with exclusive UPDATE lock, allows field edits, rewrites updated record
+- `COUSR03C.cbl` — CICS program; delete user (CU03 / COUSR03); two-step confirmation before hard-deleting USRSEC record
+- `CSUSR01Y.cpy` — `SEC-USER-DATA` record layout (80 bytes including 23-byte filler)
+- `COADM02Y.cpy` — `CARDDEMO-ADMIN-MENU-OPTIONS` table with 6 admin menu entries (program names and display text)
 - `COADM01.bms` — Admin menu BMS map
+- `COUSR00.bms` — `COUSR01.bms` — `COUSR02.bms` — `COUSR03.bms` — BMS maps for each user management screen
+- `DUSRSECJ.jcl` — JCL job; creates and populates USRSEC VSAM KSDS via IEBGENER + IDCAMS REPRO (5 admin + 5 regular seed users)
 
 **CICS Transactions:**
 - `CA00` → Admin Menu
-- `CU00` → List Users
+- `CU00` → List Users (paginated, PF7/PF8 navigation)
 - `CU01` → Add User
 - `CU02` → Update User
 - `CU03` → Delete User
 
+**Public Interfaces:**
+- All interactions via CICS 3270 terminal (BMS maps); no REST or HTTP API
+- Inter-program communication via `CARDDEMO-COMMAREA` (COCOM01Y.cpy); selected User ID passed in `CDEMO-CU00-USR-SELECTED`; action flag (`U`/`D`) in `CDEMO-CU00-USR-SEL-FLG`
+
+**Dependencies:**
+- `authentication` module (prerequisite): `COSGN00C` must establish `CDEMO-USER-TYPE='A'` before any user-management screen is accessible; both modules share the USRSEC VSAM file
+- `transaction-types` module (optional): Admin Menu options 5–6 route to DB2-based programs; requires IBM DB2; guarded by PGMIDERR HANDLE CONDITION in COADM01C
+
 **Data Model:**
-```
-SEC-USER-DATA (USRSEC VSAM file, RECLN=80):
-  SEC-USR-ID      PIC X(08)   -- User ID (primary key, 8 chars)
+```cobol
+SEC-USER-DATA (USRSEC VSAM KSDS, RECLN=80, KEY=8 at offset 0):
+  SEC-USR-ID      PIC X(08)   -- User ID (primary key, 8 chars, left-justified)
   SEC-USR-FNAME   PIC X(20)   -- First name
   SEC-USR-LNAME   PIC X(20)   -- Last name
-  SEC-USR-PWD     PIC X(08)   -- Password (8 chars, plain text)
+  SEC-USR-PWD     PIC X(08)   -- Password (plain text, demo design)
   SEC-USR-TYPE    PIC X(01)   -- 'A'=Admin, 'U'=Regular User
+  SEC-USR-FILLER  PIC X(23)   -- Unused filler
 ```
 
+**VSAM File:** `AWS.M2.CARDDEMO.USRSEC.VSAM.KSDS` — KEYS(8,0), RECORDSIZE(80,80), CISZ(8192)
+
 **Business Rules:**
-- Only Admin users can access user management (CDEMO-USRTYP-ADMIN check in COMMAREA)
-- User ID must be unique in USRSEC file
-- User type determines available menu options (Admin Menu vs Main Menu)
-- Delete requires confirmation step
-- Password stored as plain text in USRSEC (characteristic of mainframe demo design)
-- Initial user security file loaded via DUSRSECJ batch job (IEBGENER)
+- Only Admin users can access user management (`CDEMO-USER-TYPE = 'A'` in COMMAREA); any program with `EIBCALEN = 0` redirects to signon
+- User ID uniqueness enforced by VSAM KSDS primary key; COUSR01C handles `DFHRESP(DUPKEY/DUPREC)` with a user-facing error message
+- User type value (`'A'` or `'U'`) controls menu routing for the entire session after signon
+- All five fields (First Name, Last Name, User ID, Password, User Type) are required on add; sequential validation with targeted cursor placement on the first blank field
+- Delete is a hard delete from USRSEC (no soft-delete or deactivation flag); requires two-step confirmation (view then ENTER)
+- Update and delete use `CICS READ ... UPDATE` for exclusive record locking before modification
+- Password stored as plain text in USRSEC (demo design; must be hashed in any production modernization)
+- List screen displays 10 users per page; page state preserved in COMMAREA (`CDEMO-CU00-USRID-FIRST/LAST`, `CDEMO-CU00-PAGE-NUM`)
+- `CDEMO-ADMIN-OPT-COUNT` in COADM02Y controls how many menu options are shown (set to 4 to hide optional DB2 options 5–6)
+- Initial USRSEC populated via DUSRSECJ JCL (IEBGENER in-stream → IDCAMS REPRO into VSAM); re-running resets all users to seed data
 
 **User Story Examples:**
 - As an administrator, I want to view all system users so I can audit access
 - As an administrator, I want to add a new user so they can access the system
+- As an administrator, I want to update a user's password so they can regain access
 - As an administrator, I want to update a user's type so their permissions are correct
 - As an administrator, I want to delete an inactive user so unauthorized access is prevented
+- As a system operator, I want to initialize the user security file so the application has default users
 
 ---
 
