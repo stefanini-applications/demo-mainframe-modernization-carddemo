@@ -50,6 +50,10 @@ app/bms/COBIL00.bms = billing
 
 app/cbl/CORPT00C.cbl = reports
 app/bms/CORPT00.bms = reports
+app/cpy-bms/CORPT00.CPY = reports
+app/cpy/COSTM01.CPY = reports, batch-processing
+app/jcl/TRANREPT.jcl = reports, batch-processing
+app/jcl/CREASTMT.JCL = reports, batch-processing
 
 app/cbl/COADM01C.cbl = user-management
 app/cbl/COUSR00C.cbl = user-management

@@ -294,41 +294,82 @@ TRAN-CAT-BAL-RECORD (TCATBALF, RECLN=50):
 **ID:** `reports`  
 **Purpose:** Generate and display transaction reports and account statements  
 **Key Components:**
-- `CORPT00C.cbl` — CICS program; report request/submit screen (CR00 / CORPT00)
-- `CBSTM03A.CBL` — Batch: statement generation (CREASTMT job)
-- `CBSTM03B.CBL` — Batch: statement detail processing
-- `CBTRN03C.cbl` — Batch: daily transaction report (TRANREPT job)
-- `CVTRA07Y.cpy` — Report data structures (REPORT-NAME-HEADER, TRANSACTION-DETAIL-REPORT)
+- `CORPT00C.cbl` — CICS program; report request/submit screen (CR00 / CORPT00); builds inline JCL and writes to JOBS Extra Partition TDQ to submit TRANREPT batch job
+- `CORPT00.bms` — BMS map (CORPT0A mapset); 3270 screen with report type selection (Monthly/Yearly/Custom), date entry fields, and confirmation prompt
+- `CBSTM03A.CBL` — Batch: statement orchestrator (CREASTMT job); iterates all accounts via XREFFILE, calls CBSTM03B for I/O; produces both plain-text and HTML output
+- `CBSTM03B.CBL` — Batch: file I/O subroutine called by CBSTM03A; handles TRNXFILE, XREFFILE, CUSTFILE, ACCTFILE open/close/read via parameter interface
+- `CBTRN03C.cbl` — Batch: daily transaction detail report (TRANREPT job); reads date-sorted TRANFILE, looks up type/category descriptions, writes 133-char fixed-width report with page/account/grand totals
+- `CVTRA07Y.cpy` — Report data structures (REPORT-NAME-HEADER, TRANSACTION-DETAIL-REPORT, REPORT-PAGE-TOTALS, REPORT-ACCOUNT-TOTALS, REPORT-GRAND-TOTALS)
+- `COSTM01.cpy` — TRNX-RECORD layout (composite key: card-number + tran-id) used by CBSTM03A/B for TRNXFILE access
+- `TRANREPT.jcl` — Standalone TRANREPT job: copies TRANSACT VSAM → GDG(+1), SORT-filters by date range, runs CBTRN03C, writes report to GDG
+- `CREASTMT.JCL` — Statement job: creates TRNXFILE VSAM (card+tran-id key), runs CBSTM03A, produces STATEMNT.PS (text) and STATEMNT.HTML output datasets
 
-**CICS Transaction:** `CR00` → Transaction Reports
+**CICS Transaction:** `CR00` → Transaction Reports (screen CORPT0A)
 
 **Report Types:**
-- **Daily Transaction Report (DALYREPT):** Summarizes transactions by account, type, and category within a date range; includes page totals, account totals, and grand total
-- **Account Statement (CREASTMT):** Full statement with transaction detail and totals per account
+- **Daily Transaction Report (DALYREPT):** Summarizes transactions by card/account, type, and category within a date range; includes page totals (every 20 lines), account totals, and grand total; output to GDG `AWS.M2.CARDDEMO.TRANREPT(+1)`
+- **Account Statement (CREASTMT):** Full statement per account with cardholder name, address, current balance, FICO score, and transaction summary; dual output — plain text (`STATEMNT.PS`) and HTML (`STATEMNT.HTML`)
+
+**Online ↔ Batch Integration (CICS TDQ Pattern):**
+- CORPT00C embeds full TRANREPT JCL in working storage (`JOB-DATA`, up to 1000 × 80-byte records)
+- Date parameters are interpolated into JCL SYMNAMES and DATEPARM DD at runtime
+- Each JCL record written to Extra Partition TDQ `JOBS` via `EXEC CICS WRITEQ TD`
+- z/OS Internal Reader picks up the JOBS TDQ and submits the batch job
+
+**Screen Fields (CORPT0A):**
+- `MONTHLY` / `YEARLY` / `CUSTOM` — report type selection (1-char unprotected fields)
+- `SDTMM`, `SDTDD`, `SDTYYYY` — start date (MM/DD/YYYY, enabled for Custom only)
+- `EDTMM`, `EDTDD`, `EDTYYYY` — end date (MM/DD/YYYY, enabled for Custom only)
+- `CONFIRM` — Y/N confirmation before job submission
+- `ERRMSG` — error/status display (line 23, RED attribute)
 
 **Report Output Structure:**
 ```
-TRANSACTION-DETAIL-REPORT line fields:
-  TRAN-REPORT-TRANS-ID    16 chars   -- Transaction ID
-  TRAN-REPORT-ACCOUNT-ID  11 chars   -- Account ID
-  TRAN-REPORT-TYPE-CD     2 chars    -- Type code
-  TRAN-REPORT-TYPE-DESC   15 chars   -- Type description
-  TRAN-REPORT-CAT-CD      4 digits   -- Category code
-  TRAN-REPORT-CAT-DESC    29 chars   -- Category description
-  TRAN-REPORT-SOURCE      10 chars   -- Source
-  TRAN-REPORT-AMT         formatted  -- Amount with sign
+TRANSACTION-DETAIL-REPORT line (133 chars):
+  TRAN-REPORT-TRANS-ID    PIC X(16)        -- Transaction ID
+  TRAN-REPORT-ACCOUNT-ID  PIC X(11)        -- Account ID (from XREFFILE)
+  TRAN-REPORT-TYPE-CD     PIC X(02)        -- Type code
+  TRAN-REPORT-TYPE-DESC   PIC X(15)        -- Type description (from TRANTYPE VSAM)
+  TRAN-REPORT-CAT-CD      PIC 9(04)        -- Category code
+  TRAN-REPORT-CAT-DESC    PIC X(29)        -- Category description (from TRANCATG VSAM)
+  TRAN-REPORT-SOURCE      PIC X(10)        -- Source system/channel
+  TRAN-REPORT-AMT         PIC -ZZZ,ZZZ,ZZZ.ZZ -- Amount with sign
+
+Totals lines:
+  REPORT-PAGE-TOTALS    → "Page Total"    + dots(86) + PIC +ZZZ,ZZZ,ZZZ.ZZ
+  REPORT-ACCOUNT-TOTALS → "Account Total" + dots(84) + PIC +ZZZ,ZZZ,ZZZ.ZZ
+  REPORT-GRAND-TOTALS   → "Grand Total"   + dots(86) + PIC +ZZZ,ZZZ,ZZZ.ZZ
 ```
 
+**VSAM File Dependencies:**
+
+| VSAM File | Used By | Purpose |
+|-----------|---------|---------|
+| TRANSACT.VSAM.KSDS | CBTRN03C (via GDG) | Transaction records (date-filtered, card-sorted) |
+| CARDXREF.VSAM.KSDS | CBTRN03C, CBSTM03B | Card → Account → Customer cross-reference |
+| TRANTYPE.VSAM.KSDS | CBTRN03C | Transaction type descriptions |
+| TRANCATG.VSAM.KSDS | CBTRN03C | Category descriptions (key: type-cd + cat-cd) |
+| ACCTDATA.VSAM.KSDS | CBSTM03B | Account balance, credit limit for statements |
+| CUSTDATA.VSAM.KSDS | CBSTM03B | Customer name and address for statement header |
+| TRXFL.VSAM.KSDS | CBSTM03B | Pre-built TRNXFILE (card+tran-id key) for statements |
+
 **Business Rules:**
-- Reports require start and end date input (YYYY-MM-DD format)
-- TRANREPT can be submitted from CICS (CORPT00C) or run as standalone JCL batch
-- Statement job (CREASTMT) processes all accounts sequentially
-- Report output written to SYSOUT (print) or GDG dataset
+- Reports require start and end date (YYYY-MM-DD); Monthly/Yearly dates auto-computed; Custom validated via CSUTLDTC subroutine
+- Confirmation (Y/N) required before TRANREPT job is submitted from CICS
+- CBTRN03C filters on `TRAN-PROC-TS(1:10)` (processing date, not transaction/purchase date)
+- Page size in CBTRN03C is fixed at 20 lines per page (WS-PAGE-SIZE = 20)
+- TRANREPT uses GDG versioning — each run creates `TRANREPT(+1)`; prior generations preserved for audit
+- CREASTMT overwrites STATEMNT.PS and STATEMNT.HTML on each run (no GDG versioning for statements)
+- CREASTMT processes all accounts/transactions without date range filtering
+- CORPT00C redirects to COSGN00C if EIBCALEN = 0 (unauthenticated access)
+- CBSTM03A intentionally uses ALTER/GO TO patterns as a modernization exercise target
 
 **User Story Examples:**
-- As a cardholder, I want to generate a transaction report for a date range so I can review spending
-- As an administrator, I want to run monthly statements so all customers receive billing summaries
-- As an auditor, I want daily transaction reports so I can reconcile posted amounts
+- As a cardholder, I want to generate a monthly transaction report from the CICS screen so I can review my current-month spending
+- As a cardholder, I want to enter a custom date range for my report so I can investigate charges in a specific period
+- As a system operator, I want to run the TRANREPT batch job for a date range so I can reconcile posted transaction totals
+- As an administrator, I want to run monthly statements so all customers receive billing summaries in text and HTML format
+- As an auditor, I want daily transaction reports stored in GDG so I can compare month-over-month posted amounts
 
 ---
 

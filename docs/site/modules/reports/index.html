@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="last-updated" content="2026-03-26T18:01:23Z">
     <title>Reports - User Story Development Guide | CardDemo</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -32,6 +33,10 @@
         table { width: 100%; border-collapse: collapse; margin: 12px 0; }
         th { background: #e8f5e9; color: #1b5e20; text-align: left; padding: 10px 12px; font-size: 0.9rem; }
         td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
+        .info-box { background: #e8f5e9; border-left: 4px solid #2e7d32; border-radius: 4px; padding: 12px 16px; margin: 10px 0; font-size: 0.93rem; }
+        .warn-box { background: #fff8e1; border-left: 4px solid #f9a825; border-radius: 4px; padding: 12px 16px; margin: 10px 0; font-size: 0.93rem; }
+        .flow-step { display: flex; align-items: flex-start; margin: 8px 0; }
+        .flow-num { background: #2e7d32; color: #fff; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; margin-right: 10px; flex-shrink: 0; margin-top: 2px; }
     </style>
 </head>
 <body>
@@ -43,116 +48,501 @@
             <span class="badge">CICS</span>
             <span class="badge">Batch</span>
             <span class="badge">COBOL</span>
+            <span class="badge">VSAM TRANFILE</span>
             <span class="badge">GDG Output</span>
             <span class="badge">Transaction: CR00</span>
         </div>
     </div>
 
+    <!-- ═══════════════════════════════════════════════════════ -->
     <div class="card">
         <h2>📋 Module Overview</h2>
-        <p><strong>Purpose:</strong> Generate and display transaction reports and account statements. Provides online report request (CORPT00C) and batch report generation (CBTRN03C for daily reports, CBSTM03A for statements).</p>
-        <p style="margin-top:10px"><strong>Business Context:</strong> Reports provide financial visibility for cardholders, operators, and auditors. The daily transaction report (DALYREPT) is a key reconciliation tool. Account statements provide customers with billing summaries. Reports can be submitted from online (CICS) or run as standalone batch jobs.</p>
+        <p><strong>Purpose:</strong> Generate and display transaction reports and account statements. Provides an online report request screen (CORPT00C / transaction CR00) and two distinct batch report pipelines: the daily transaction detail report (CBTRN03C / TRANREPT job) and the full account statement generator (CBSTM03A + CBSTM03B / CREASTMT job).</p>
+        <p style="margin-top:10px"><strong>Business Context:</strong> Reports provide financial visibility for cardholders, operators, and auditors. The daily transaction report (DALYREPT) is the primary reconciliation tool — it shows every posted transaction for a date range, grouped by account, with page, account, and grand totals. Account statements (CREASTMT) are the customer-facing billing documents: they include cardholder name, address, account balance, FICO score, and a transaction summary. Both plain-text and HTML-format statements are produced in a single batch run. Reports can be triggered from the CICS online screen (CR00) using an Extra Partition TDQ (JOBS), or submitted directly as standalone JCL jobs by operators.</p>
+
+        <h3>Report Types at a Glance</h3>
+        <table>
+            <tr><th>Report</th><th>Job / Program</th><th>Trigger</th><th>Output Format</th><th>Audience</th></tr>
+            <tr><td><strong>Daily Transaction Report</strong> (DALYREPT)</td><td>TRANREPT / CBTRN03C</td><td>CICS CR00 or JCL</td><td>Fixed-width 133-char lines (GDG)</td><td>Operators, Auditors</td></tr>
+            <tr><td><strong>Account Statement</strong> (CREASTMT)</td><td>CREASTMT / CBSTM03A</td><td>JCL batch only</td><td>Plain text + HTML (dual output)</td><td>Cardholders, Billing</td></tr>
+        </table>
+
         <h3>Key Components</h3>
         <table>
             <tr><th>Component</th><th>Type</th><th>Responsibility</th></tr>
-            <tr><td><code>CORPT00C.cbl</code></td><td>CICS (CR00)</td><td>Report request screen — submits TRANREPT or configures parameters</td></tr>
-            <tr><td><code>CBTRN03C.cbl</code></td><td>Batch (TRANREPT)</td><td>Daily transaction report — by account, type, category with totals</td></tr>
-            <tr><td><code>CBSTM03A.CBL</code></td><td>Batch (CREASTMT)</td><td>Statement generation — full account statement with all transactions</td></tr>
-            <tr><td><code>CBSTM03B.CBL</code></td><td>Batch</td><td>Statement detail processing (called by CBSTM03A)</td></tr>
-            <tr><td><code>CVTRA07Y.cpy</code></td><td>Copybook</td><td>Report header and detail line structures</td></tr>
+            <tr><td><code>CORPT00C.cbl</code></td><td>CICS program (CR00)</td><td>Online report request screen — validates date range, builds inline JCL, writes to JOBS TDQ to submit TRANREPT batch job</td></tr>
+            <tr><td><code>CORPT00.bms</code></td><td>BMS map (CORPT0A)</td><td>3270 screen: report type selection (Monthly/Yearly/Custom), start/end date entry, confirmation prompt</td></tr>
+            <tr><td><code>CBTRN03C.cbl</code></td><td>Batch (TRANREPT job)</td><td>Reads sorted TRANFILE, filters by date range, looks up type/category descriptions, writes 133-char report lines with page/account/grand totals</td></tr>
+            <tr><td><code>CBSTM03A.CBL</code></td><td>Batch (CREASTMT job)</td><td>Statement orchestrator — iterates all accounts via XREFFILE, calls CBSTM03B for I/O, writes plain-text and HTML statements</td></tr>
+            <tr><td><code>CBSTM03B.CBL</code></td><td>Batch subroutine</td><td>File I/O subroutine called by CBSTM03A — handles TRNXFILE, XREFFILE, CUSTFILE, ACCTFILE open/close/read operations via parameter interface</td></tr>
+            <tr><td><code>CVTRA07Y.cpy</code></td><td>Copybook</td><td>Report data structures: REPORT-NAME-HEADER, TRANSACTION-DETAIL-REPORT detail line, REPORT-PAGE-TOTALS, REPORT-ACCOUNT-TOTALS, REPORT-GRAND-TOTALS</td></tr>
+            <tr><td><code>COSTM01.cpy</code></td><td>Copybook</td><td>TRNX-RECORD layout used by CBSTM03A/B — composite key of card number + transaction ID for sorted VSAM access</td></tr>
+            <tr><td><code>TRANREPT.jcl</code></td><td>JCL</td><td>Standalone TRANREPT job: copies TRANSACT VSAM → GDG(+1), SORT-filters by date range, runs CBTRN03C, writes report to GDG</td></tr>
+            <tr><td><code>CREASTMT.JCL</code></td><td>JCL</td><td>Statement job: creates TRNXFILE VSAM keyed by card+tran-id, runs CBSTM03A, produces both .PS (text) and .HTML output datasets</td></tr>
         </table>
     </div>
 
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="card">
+        <h2>🏗️ Architectural Context</h2>
+        <p>The Reports module sits at the intersection of online CICS processing and backend batch execution. It demonstrates a key mainframe integration pattern: <em>CICS-to-batch job submission via Extra Partition TDQ</em>.</p>
+
+        <h3>Online ↔ Batch Integration Pattern</h3>
+        <pre>CICS (CR00 / CORPT00C)
+  │  User selects report type + date range
+  │  CORPT00C builds inline JCL (hardcoded in WORKING STORAGE as JOB-DATA)
+  │  Date parameters interpolated into JCL SYMNAMES and DATEPARM DD
+  │  Each 80-byte JCL record written to Extra Partition TDQ "JOBS"
+  ▼
+z/OS Internal Reader (INTRDR) — reads from JOBS TDQ
+  │  Receives JCL stream, submits as batch job
+  ▼
+TRANREPT Batch Job
+  STEP05R: SORT TRANSACT VSAM → filter by date → TRANSACT.DALY GDG(+1)
+  STEP10R: CBTRN03C reads sorted file → writes TRANREPT GDG(+1)</pre>
+
+        <h3>Module Dependency Diagram</h3>
+        <pre>reports
+  ├── depends on: transactions (TRANFILE is primary data source)
+  ├── depends on: accounts (ACCTFILE for statement balance/limit)
+  ├── depends on: TRANTYPE VSAM (type descriptions in CBTRN03C)
+  ├── depends on: TRANCATG VSAM (category descriptions in CBTRN03C)
+  ├── depends on: CUSTFILE (cardholder name/address for statements)
+  ├── depends on: XREFFILE (card→account→customer linkage for CREASTMT)
+  └── consumed by: batch-processing (GDG reports, auditing)</pre>
+
+        <h3>GDG (Generation Data Groups)</h3>
+        <div class="info-box">
+            <strong>TRANREPT GDG:</strong> <code>AWS.M2.CARDDEMO.TRANREPT(+1)</code> — each run creates a new generation, preserving all prior reports for audit.<br>
+            <strong>TRANSACT.DALY GDG:</strong> <code>AWS.M2.CARDDEMO.TRANSACT.DALY(+1)</code> — daily extract of transactions sorted by card number, used as CBTRN03C input.<br>
+            <strong>Statement output:</strong> <code>AWS.M2.CARDDEMO.STATEMNT.PS</code> (plain text) and <code>AWS.M2.CARDDEMO.STATEMNT.HTML</code> — recreated on each CREASTMT run.
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="card">
+        <h2>🖥️ Online Component: CORPT00C (Transaction CR00)</h2>
+        <h3>Screen Fields — CORPT00.bms (CORPT0A mapset)</h3>
+        <table>
+            <tr><th>BMS Field</th><th>Type</th><th>Position</th><th>Description</th></tr>
+            <tr><td><code>MONTHLY</code></td><td>UNPROT 1-char</td><td>(7,10)</td><td>Select Monthly report (current month first→last day)</td></tr>
+            <tr><td><code>YEARLY</code></td><td>UNPROT 1-char</td><td>(9,10)</td><td>Select Yearly report (Jan 01 → Dec 31 of current year)</td></tr>
+            <tr><td><code>CUSTOM</code></td><td>UNPROT 1-char</td><td>(11,10)</td><td>Select Custom date range (enables SDTMM/SDTDD/SDTYYYY and EDTMM/EDTDD/EDTYYYY)</td></tr>
+            <tr><td><code>SDTMM</code></td><td>NUM 2-char</td><td>(13,29)</td><td>Start date — Month (MM)</td></tr>
+            <tr><td><code>SDTDD</code></td><td>NUM 2-char</td><td>(13,34)</td><td>Start date — Day (DD)</td></tr>
+            <tr><td><code>SDTYYYY</code></td><td>NUM 4-char</td><td>(13,39)</td><td>Start date — Year (YYYY)</td></tr>
+            <tr><td><code>EDTMM</code></td><td>NUM 2-char</td><td>(14,29)</td><td>End date — Month (MM)</td></tr>
+            <tr><td><code>EDTDD</code></td><td>NUM 2-char</td><td>(14,34)</td><td>End date — Day (DD)</td></tr>
+            <tr><td><code>EDTYYYY</code></td><td>NUM 4-char</td><td>(14,39)</td><td>End date — Year (YYYY)</td></tr>
+            <tr><td><code>CONFIRM</code></td><td>UNPROT 1-char</td><td>(19,66)</td><td>Confirmation flag — enter Y to submit, N to cancel</td></tr>
+            <tr><td><code>ERRMSG</code></td><td>ASKIP BRT</td><td>(23,1)</td><td>Error/status message display (78 chars, RED)</td></tr>
+        </table>
+
+        <h3>CORPT00C Processing Logic</h3>
+        <div class="flow-step"><div class="flow-num">1</div><div>On first entry (CDEMO-PGM-REENTER = FALSE): display blank CORPT0A screen with cursor on MONTHLY field</div></div>
+        <div class="flow-step"><div class="flow-num">2</div><div>User selects report type. For Monthly/Yearly: dates are auto-computed using FUNCTION CURRENT-DATE and date arithmetic. For Custom: user enters MM/DD/YYYY in start and end date fields.</div></div>
+        <div class="flow-step"><div class="flow-num">3</div><div>On ENTER key: validate selected report type and date fields (all fields individually checked for spaces, numeric validity, range 1–12 months, 1–31 days). Date values validated via CALL 'CSUTLDTC' (date conversion utility).</div></div>
+        <div class="flow-step"><div class="flow-num">4</div><div>If CONFIRM field is empty, prompt user with "Please confirm to print the [type] report..." message. User must enter Y or N.</div></div>
+        <div class="flow-step"><div class="flow-num">5</div><div>On Y confirmation: PERFORM SUBMIT-JOB-TO-INTRDR. Iterates JOB-DATA array (up to 1000 × 80-byte JCL records), writing each to JOBS TDQ via EXEC CICS WRITEQ TD QUEUE('JOBS'). Stops at '/*EOF' sentinel.</div></div>
+        <div class="flow-step"><div class="flow-num">6</div><div>On success: display green "[Monthly/Yearly/Custom] report submitted for printing..." message. Screen resets for next request.</div></div>
+        <div class="flow-step"><div class="flow-num">7</div><div>PF3 → XCTL to COMEN01C (Main Menu). Any other key → invalid-key error message.</div></div>
+
+        <h3>Inline JCL Construction</h3>
+        <p>CORPT00C embeds the full TRANREPT JCL stream in <code>JOB-DATA</code> working storage. Date parameters are injected at runtime into two substitution points:</p>
+        <pre>JOB-DATA working storage excerpt (CORPT00C lines 81-127):
+  "//TRNRPT00 JOB 'TRAN REPORT',CLASS=A,MSGCLASS=0,"
+  "// NOTIFY=&amp;SYSUID"
+  "//JOBLIB JCLLIB ORDER=('AWS.M2.CARDDEMO.PROC')"
+  "//STEP10 EXEC PROC=TRANREPT"
+  "//STEP05R.SYMNAMES DD *"
+  "TRAN-CARD-NUM,263,16,ZD"
+  "TRAN-PROC-DT,305,10,CH"
+  PARM-START-DATE,C'[WS-START-DATE]'    ← date injected here
+  PARM-END-DATE,C'[WS-END-DATE]'        ← date injected here
+  "//STEP10R.DATEPARM DD *"
+  [WS-START-DATE] [WS-END-DATE]         ← also injected here
+  "/*EOF"</pre>
+        <div class="warn-box">
+            <strong>Note:</strong> The job name in the inline JCL is hardcoded as <code>TRNRPT00</code>, not the same as the standalone <code>TRANREPT</code> job. Both invoke the same <code>TRANREPT</code> procedure from <code>AWS.M2.CARDDEMO.PROC</code>.
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="card">
+        <h2>⚙️ Batch Component: CBTRN03C (TRANREPT Job)</h2>
+        <h3>File Dependencies</h3>
+        <table>
+            <tr><th>DD Name</th><th>VSAM / Dataset</th><th>Access</th><th>Purpose</th></tr>
+            <tr><td><code>TRANFILE</code></td><td>TRANSACT.DALY GDG(+1)</td><td>Sequential read</td><td>Date-filtered, card-sorted transaction records</td></tr>
+            <tr><td><code>CARDXREF</code></td><td>CARDXREF.VSAM.KSDS</td><td>Random by card number</td><td>Card → Account ID lookup for report grouping</td></tr>
+            <tr><td><code>TRANTYPE</code></td><td>TRANTYPE.VSAM.KSDS</td><td>Random by type code</td><td>Transaction type description (e.g. "Purchase", "Return")</td></tr>
+            <tr><td><code>TRANCATG</code></td><td>TRANCATG.VSAM.KSDS</td><td>Random by type+cat key</td><td>Transaction category description (e.g. "Grocery", "Travel")</td></tr>
+            <tr><td><code>DATEPARM</code></td><td>DATEPARM sequential</td><td>Sequential read</td><td>Single record: "YYYY-MM-DD YYYY-MM-DD" (start and end dates)</td></tr>
+            <tr><td><code>TRANREPT</code></td><td>TRANREPT GDG(+1)</td><td>Sequential write</td><td>133-char fixed-width report output</td></tr>
+        </table>
+
+        <h3>Processing Flow</h3>
+        <pre>PROCEDURE DIVISION:
+  0000-TRANFILE-OPEN      → open TRANSACT.DALY sequential input
+  0100-REPTFILE-OPEN      → open TRANREPT GDG(+1) output
+  0200-CARDXREF-OPEN      → open CARDXREF VSAM
+  0300-TRANTYPE-OPEN      → open TRANTYPE VSAM
+  0400-TRANCATG-OPEN      → open TRANCATG VSAM
+  0500-DATEPARM-OPEN      → open DATEPARM
+  0550-DATEPARM-READ      → read start/end dates into WS-START-DATE, WS-END-DATE
+
+  MAIN LOOP (PERFORM UNTIL END-OF-FILE = 'Y'):
+    1000-TRANFILE-GET-NEXT
+    Filter: TRAN-PROC-TS(1:10) must be >= WS-START-DATE AND <= WS-END-DATE
+    On new card number:
+      If not first time: 1120-WRITE-ACCOUNT-TOTALS
+      1500-A-LOOKUP-XREF     → get Account ID from XREFFILE
+    1500-B-LOOKUP-TRANTYPE   → get type description
+    1500-C-LOOKUP-TRANCATG   → get category description (key: type-cd + cat-cd)
+    1100-WRITE-TRANSACTION-REPORT
+      Move fields to TRANSACTION-DETAIL-REPORT from CVTRA07Y
+      Write 133-char line to TRANREPT
+      If WS-LINE-COUNTER >= WS-PAGE-SIZE (20 lines/page):
+        1110-WRITE-PAGE-TOTALS
+
+  End of file:
+    1120-WRITE-ACCOUNT-TOTALS (last account)
+    1110-WRITE-GRAND-TOTALS
+
+  9000–9500: Close all files</pre>
+
+        <h3>Date Filtering Detail</h3>
+        <div class="info-box">
+            CBTRN03C filters on <code>TRAN-PROC-TS(1:10)</code> (processing timestamp, first 10 characters = YYYY-MM-DD). The TRANREPT JCL SORT step pre-filters using INCLUDE COND on <code>TRAN-PROC-DT</code> (field at offset 305, length 10), so CBTRN03C operates on a pre-reduced dataset. Both filter conditions use the same date range from DATEPARM.
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="card">
+        <h2>📄 Batch Component: CBSTM03A / CBSTM03B (CREASTMT Job)</h2>
+        <h3>CBSTM03A — Statement Orchestrator</h3>
+        <p>CBSTM03A generates full account statements by iterating over all card+transaction combinations in the TRNXFILE VSAM (which CREASTMT.JCL pre-builds from TRANSACT by re-keying on card-number + tran-id). For each unique card, it retrieves customer and account data, formats statement lines, and writes both plain-text and HTML outputs.</p>
+
+        <h3>Dual Output Format</h3>
+        <table>
+            <tr><th>Output File</th><th>DD Name</th><th>Dataset</th><th>LRECL</th><th>Description</th></tr>
+            <tr><td>Plain text</td><td><code>STMTFILE</code></td><td>STATEMNT.PS</td><td>80</td><td>Fixed-width statement with ASCII box art and dollar amounts</td></tr>
+            <tr><td>HTML</td><td><code>HTMLFILE</code></td><td>STATEMNT.HTML</td><td>100</td><td>HTML table layout with inline styles, suitable for email/web</td></tr>
+        </table>
+
+        <h3>Plain-Text Statement Structure (STATEMENT-LINES in CBSTM03A)</h3>
+        <pre>ST-LINE0:  *** START OF STATEMENT ***
+ST-LINE1:  [Customer Name - 75 chars]
+ST-LINE2:  [Address Line 1]
+ST-LINE3:  [Address Line 2]
+ST-LINE4:  [Address Line 3 / City, State, ZIP]
+ST-LINE5:  ---- (separator)
+ST-LINE6:          Basic Details
+ST-LINE7:  Account ID         : [11-digit account number]
+ST-LINE8:  Current Balance    : [9(9).99- formatted]
+ST-LINE9:  FICO Score         : [3-digit score]
+ST-LINE10: ---- (separator)
+ST-LINE11:        TRANSACTION SUMMARY
+ST-LINE12: ---- (separator)
+ST-LINE13: Tran ID         | Tran Details (51 chars) | Tran Amount
+ST-LINE14: [16-char tran ID] [49-char desc]  $[Z(9).99-]
+ST-LINE14A:Total EXP:                           $[Z(9).99-]
+ST-LINE15: *** END OF STATEMENT ***</pre>
+
+        <h3>HTML Statement Structure (HTML-LINES in CBSTM03A)</h3>
+        <pre>HTML output uses inline-styled table layout:
+  &lt;!DOCTYPE html&gt;
+  &lt;html lang="en"&gt; &lt;head&gt; &lt;meta charset="utf-8"&gt;
+  &lt;title&gt;HTML Table Layout&lt;/title&gt; &lt;/head&gt;
+  &lt;body style="margin:0px;"&gt;
+  &lt;table align="center" frame="box" style="width:70%; font:12px Segoe UI..."&gt;
+    Bank header row (dark blue #1d1d96b3 background)
+    Bank name: "Bank of XYZ", 410 Terry Ave N, Seattle WA 99999
+    Basic Details section (orange #FFAF33)
+      Account ID, FICO Score
+    Transaction Summary section (#33FFD1 header)
+      Per-transaction rows: Tran ID | Tran Details | $Amount
+    Total row (green #33FF5E)
+  &lt;/table&gt;</pre>
+
+        <h3>CBSTM03B — File I/O Subroutine</h3>
+        <p>CBSTM03B is called by CBSTM03A using a parameter area (<code>WS-M03B-AREA</code>) with these fields:</p>
+        <pre>LK-M03B-DD    PIC X(08)  — DD name: 'TRNXFILE', 'XREFFILE', 'CUSTFILE', or 'ACCTFILE'
+LK-M03B-OPER  PIC X(01)  — Operation: O(pen), C(lose), R(ead), K(ey read), W(rite), Z(rewrite)
+LK-M03B-RC    PIC X(02)  — Return code (file status)
+LK-M03B-KEY   PIC X(25)  — Record key for keyed reads
+LK-M03B-FLDT  PIC X(1000) — Data field for record I/O</pre>
+        <div class="info-box">This subroutine pattern demonstrates mainframe "alter and GO TO" logic (using conditional PERFORMs with GO TO thru EXIT paragraphs). CBSTM03A opens all files via CBSTM03B before iteration and closes them after completion.</div>
+
+        <h3>CREASTMT JCL Steps</h3>
+        <table>
+            <tr><th>Step</th><th>Program</th><th>Action</th></tr>
+            <tr><td>DELDEF01</td><td>IDCAMS</td><td>Delete and redefine TRNXFL.VSAM.KSDS (card+tran keyed VSAM, KEYS(32,0), RECSIZE 350)</td></tr>
+            <tr><td>STEP010</td><td>SORT</td><td>Unload TRANSACT.VSAM.KSDS → sequential, rekeyed: card-num(263,16) + tran-id(1,16) as leading fields → TRXFL.SEQ</td></tr>
+            <tr><td>STEP020</td><td>IDCAMS REPRO</td><td>Load TRXFL.SEQ → TRXFL.VSAM.KSDS</td></tr>
+            <tr><td>STEP030</td><td>IEFBR14</td><td>Delete prior STATEMNT.HTML and STATEMNT.PS datasets</td></tr>
+            <tr><td>STEP040</td><td>CBSTM03A</td><td>Generate all statements: reads TRNXFILE+XREFFILE+CUSTFILE+ACCTFILE, writes STMTFILE+HTMLFILE</td></tr>
+        </table>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="card">
+        <h2>📐 Data Models</h2>
+        <h3>CVTRA07Y.cpy — Report Structures</h3>
+        <pre>01  REPORT-NAME-HEADER.
+    05  REPT-SHORT-NAME    PIC X(38) VALUE 'DALYREPT'
+    05  REPT-LONG-NAME     PIC X(41) VALUE 'Daily Transaction Report'
+    05  REPT-DATE-HEADER   PIC X(12) VALUE 'Date Range: '
+    05  REPT-START-DATE    PIC X(10)          ← populated at runtime
+    05  FILLER             PIC X(04) VALUE ' to '
+    05  REPT-END-DATE      PIC X(10)          ← populated at runtime
+
+01  TRANSACTION-DETAIL-REPORT.             ← 133-char output line
+    05  TRAN-REPORT-TRANS-ID    PIC X(16)   ← Transaction ID
+    05  FILLER                  PIC X(01) VALUE SPACES
+    05  TRAN-REPORT-ACCOUNT-ID  PIC X(11)   ← Account ID (from XREFFILE)
+    05  FILLER                  PIC X(01) VALUE SPACES
+    05  TRAN-REPORT-TYPE-CD     PIC X(02)   ← Type code
+    05  FILLER                  PIC X(01) VALUE '-'
+    05  TRAN-REPORT-TYPE-DESC   PIC X(15)   ← Type description (from TRANTYPE)
+    05  FILLER                  PIC X(01) VALUE SPACES
+    05  TRAN-REPORT-CAT-CD      PIC 9(04)   ← Category code
+    05  FILLER                  PIC X(01) VALUE '-'
+    05  TRAN-REPORT-CAT-DESC    PIC X(29)   ← Category description (from TRANCATG)
+    05  FILLER                  PIC X(01) VALUE SPACES
+    05  TRAN-REPORT-SOURCE      PIC X(10)   ← Source system/channel
+    05  FILLER                  PIC X(04) VALUE SPACES
+    05  TRAN-REPORT-AMT         PIC -ZZZ,ZZZ,ZZZ.ZZ   ← signed amount
+
+01  TRANSACTION-HEADER-1.                  ← column header line
+    (Transaction ID | Account ID | Transaction Type | Tran Category | Tran Source | Amount)
+01  TRANSACTION-HEADER-2  PIC X(133) VALUE ALL '-'  ← separator
+
+01  REPORT-PAGE-TOTALS.
+    05  FILLER              PIC X(11) VALUE 'Page Total'
+    05  FILLER              PIC X(86) VALUE ALL '.'
+    05  REPT-PAGE-TOTAL     PIC +ZZZ,ZZZ,ZZZ.ZZ
+
+01  REPORT-ACCOUNT-TOTALS.
+    05  FILLER              PIC X(13) VALUE 'Account Total'
+    05  FILLER              PIC X(84) VALUE ALL '.'
+    05  REPT-ACCOUNT-TOTAL  PIC +ZZZ,ZZZ,ZZZ.ZZ
+
+01  REPORT-GRAND-TOTALS.
+    05  FILLER              PIC X(11) VALUE 'Grand Total'
+    05  FILLER              PIC X(86) VALUE ALL '.'
+    05  REPT-GRAND-TOTAL    PIC +ZZZ,ZZZ,ZZZ.ZZ</pre>
+
+        <h3>COSTM01.cpy — Statement Transaction Layout (TRNX-RECORD)</h3>
+        <pre>01  TRNX-RECORD.
+    05  TRNX-KEY.
+        10  TRNX-CARD-NUM   PIC X(16)    ← Card number (primary sort key)
+        10  TRNX-ID         PIC X(16)    ← Transaction ID (secondary sort key)
+    05  TRNX-REST.
+        10  TRNX-TYPE-CD    PIC X(02)    ← Transaction type code
+        10  TRNX-CAT-CD     PIC 9(04)    ← Category code
+        10  TRNX-SOURCE     PIC X(10)    ← Source system
+        10  TRNX-DESC       PIC X(100)   ← Description
+        10  TRNX-AMT        PIC S9(09)V99← Amount (signed)
+        10  TRNX-MERCHANT-ID    PIC 9(09)
+        10  TRNX-MERCHANT-NAME  PIC X(50)
+        10  TRNX-MERCHANT-CITY  PIC X(50)
+        10  TRNX-MERCHANT-ZIP   PIC X(10)
+        10  TRNX-ORIG-TS    PIC X(26)    ← Original timestamp
+        10  TRNX-PROC-TS    PIC X(26)    ← Processing timestamp
+        10  FILLER          PIC X(20)</pre>
+
+        <h3>VSAM Files Accessed by Reports Module</h3>
+        <table>
+            <tr><th>VSAM File</th><th>Used By</th><th>Access Mode</th><th>Purpose</th></tr>
+            <tr><td>TRANFILE / TRANSACT.VSAM.KSDS</td><td>CBTRN03C</td><td>Sequential (pre-sorted by JCL)</td><td>Transaction records for report detail lines</td></tr>
+            <tr><td>CARDXREF / CARDXREF.VSAM.KSDS</td><td>CBTRN03C, CBSTM03B</td><td>Random by card number</td><td>Card → Account ID mapping</td></tr>
+            <tr><td>TRANTYPE / TRANTYPE.VSAM.KSDS</td><td>CBTRN03C</td><td>Random by type code (X(02))</td><td>Transaction type descriptions</td></tr>
+            <tr><td>TRANCATG / TRANCATG.VSAM.KSDS</td><td>CBTRN03C</td><td>Random by type+cat key</td><td>Transaction category descriptions</td></tr>
+            <tr><td>TRNXFILE / TRXFL.VSAM.KSDS</td><td>CBSTM03B</td><td>Sequential (card+tran key)</td><td>Pre-built sorted transaction VSAM for statements</td></tr>
+            <tr><td>XREFFILE / CARDXREF.VSAM.KSDS</td><td>CBSTM03B</td><td>Sequential</td><td>Card-account-customer cross-reference</td></tr>
+            <tr><td>CUSTFILE / CUSTDATA.VSAM.KSDS</td><td>CBSTM03B</td><td>Random by cust-id</td><td>Customer name and address for statement header</td></tr>
+            <tr><td>ACCTFILE / ACCTDATA.VSAM.KSDS</td><td>CBSTM03B</td><td>Random by acct-id</td><td>Account balance, credit limit, FICO score</td></tr>
+        </table>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="card">
+        <h2>📏 Business Rules</h2>
+        <ul>
+            <li><strong>Date range is mandatory for TRANREPT:</strong> All three report types (Monthly, Yearly, Custom) require a valid start and end date. Monthly/Yearly dates are auto-computed; Custom requires explicit MM/DD/YYYY entry.</li>
+            <li><strong>Custom date validation:</strong> Each date component (month, day, year) is validated individually — must be numeric, month 01–12, day 01–31, year 4 digits. Additionally, the date is validated as a calendar-valid date via CALL 'CSUTLDTC'.</li>
+            <li><strong>Confirmation required:</strong> The report is not submitted until the user explicitly enters 'Y' in the CONFIRM field. 'N' cancels and resets the screen. Any other value produces an error.</li>
+            <li><strong>TDQ write failure stops submission:</strong> If EXEC CICS WRITEQ TD to JOBS TDQ returns non-NORMAL response, the submission is aborted and an error message is displayed. Partial JCL already written to TDQ is not retracted.</li>
+            <li><strong>TRANREPT filters on processing timestamp:</strong> CBTRN03C uses <code>TRAN-PROC-TS(1:10)</code> for date range filtering — the processing date, not the original transaction date. Ensure the date range covers the posting/processing run date, not the purchase date.</li>
+            <li><strong>Page size fixed at 20 lines:</strong> CBTRN03C writes page totals after every 20 transaction detail lines (WS-PAGE-SIZE = 20).</li>
+            <li><strong>Account grouping depends on sort order:</strong> CBTRN03C groups transactions by card number (detects card number changes). Transactions must be pre-sorted by card number via the TRANREPT JCL SORT step before CBTRN03C runs.</li>
+            <li><strong>CREASTMT processes all accounts:</strong> No date range filter — all transactions in TRNXFILE are included in the statement. CREASTMT.JCL does not parameterize dates; every run produces statements for all card/transaction data in the VSAM.</li>
+            <li><strong>Statement outputs are overwritten each run:</strong> STEP030 of CREASTMT.JCL deletes prior STATEMNT.HTML and STATEMNT.PS before generating new ones. No GDG versioning for statement files.</li>
+            <li><strong>GDG base must exist:</strong> TRANREPT GDG base (<code>AWS.M2.CARDDEMO.TRANREPT</code>) must be defined via DEFGDGB JCL before the first TRANREPT run. Failure to define the base causes the job to abend on GDG allocation.</li>
+            <li><strong>CORPT00C requires COMMAREA:</strong> If EIBCALEN = 0 (no COMMAREA), CORPT00C transfers control back to COSGN00C (signon). Users must be authenticated before accessing reports.</li>
+        </ul>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
     <div class="card">
         <h2>🎯 User Story Development Guide</h2>
-        <h3>📝 Module-Specific US Templates</h3>
+        <h3>📝 Module-Specific Story Templates</h3>
         <ul>
-            <li><strong>Request report:</strong> As a cardholder, I want to request a transaction report for a date range so I can review my spending history</li>
-            <li><strong>Daily reconciliation:</strong> As a system operator, I want to run the daily TRANREPT report so I can reconcile posted transaction totals</li>
-            <li><strong>Monthly statement:</strong> As a system, I want to generate monthly statements for all accounts so customers receive billing summaries</li>
-            <li><strong>Account summary:</strong> As a cardholder, I want to see page totals and account totals on the report so I can quickly find my total charges</li>
-            <li><strong>Report history:</strong> As an auditor, I want access to prior report generations (via GDG) so I can compare month-over-month totals</li>
+            <li><strong>Request monthly report:</strong> As a cardholder, I want to request a monthly transaction report from the CICS screen (CR00) so I can review my spending for the current month</li>
+            <li><strong>Request custom date range:</strong> As a cardholder, I want to enter a custom date range (MM/DD/YYYY) and receive a filtered transaction report so I can investigate charges in a specific period</li>
+            <li><strong>Operator daily reconciliation:</strong> As a system operator, I want to run the TRANREPT batch job (CBTRN03C) for yesterday's date range so I can reconcile posted transaction totals</li>
+            <li><strong>Monthly statement generation:</strong> As a system administrator, I want to run the CREASTMT job so all customers receive billing summaries in both plain-text and HTML formats</li>
+            <li><strong>Report totals verification:</strong> As an auditor, I want page totals, account totals, and a grand total on the TRANREPT report so I can quickly verify the sum of all charges</li>
+            <li><strong>Historical report access:</strong> As an auditor, I want to access prior report generations via GDG so I can compare month-over-month transaction volumes</li>
+            <li><strong>Statement content review:</strong> As a cardholder, I want my statement to show my current balance, FICO score, and all transactions so I have a complete billing summary</li>
         </ul>
 
         <h3>⚡ Development Acceleration Factors</h3>
         <ul>
-            <li><strong>CVTRA07Y report structures:</strong> TRANSACTION-DETAIL-REPORT, page totals, account totals, grand total already defined</li>
-            <li><strong>GDG output:</strong> Report versioning (multiple generations) already configured via DEFGDGB JCL — no new infrastructure for history</li>
-            <li><strong>CICS-to-batch submission:</strong> CORPT00C pattern for submitting TRANREPT from online can be replicated for new report types</li>
-            <li><strong>CBTRN03C reads TRANFILE:</strong> Same VSAM access pattern as transaction list — known and reliable</li>
+            <li><strong>CVTRA07Y report structures:</strong> TRANSACTION-DETAIL-REPORT, REPORT-PAGE-TOTALS, REPORT-ACCOUNT-TOTALS, and REPORT-GRAND-TOTALS are all pre-defined — report field layout changes require only copybook modification</li>
+            <li><strong>GDG output already configured:</strong> Report versioning (multiple generations) is established via DEFGDGB JCL — no new infrastructure needed for historical report retention</li>
+            <li><strong>CICS-to-batch TDQ pattern:</strong> The CORPT00C inline JCL submission pattern can be replicated for any new batch report type without changing the CICS infrastructure</li>
+            <li><strong>Date arithmetic helpers:</strong> CORPT00C already demonstrates FUNCTION CURRENT-DATE, FUNCTION DATE-OF-INTEGER, and FUNCTION INTEGER-OF-DATE for computing month/year start and end dates</li>
+            <li><strong>Dual output already built:</strong> CBSTM03A produces both text and HTML in a single pass — extending to new output formats (CSV, JSON) requires only new HTML-LINES-style data structures</li>
+            <li><strong>CBSTM03B abstraction:</strong> The I/O subroutine pattern isolates file handling — adding a new file to statements requires only a new WHEN branch in CBSTM03B and corresponding records in CBSTM03A</li>
         </ul>
 
         <h3>📊 Complexity Guidelines</h3>
         <div class="complexity">
             <div class="complexity-card simple">
                 <strong>Simple (1–2 pts)</strong>
-                Add new column to existing report; change header text; modify sort order within existing CBTRN03C
+                <ul style="margin-top:6px">
+                    <li>Add/change column in TRANSACTION-DETAIL-REPORT layout</li>
+                    <li>Modify report header text or page size (WS-PAGE-SIZE)</li>
+                    <li>Change sort order within existing CBTRN03C</li>
+                    <li>Add bank name/address to statement header</li>
+                </ul>
             </div>
             <div class="complexity-card medium">
                 <strong>Medium (3–5 pts)</strong>
-                Add new report summary section (e.g. totals by category); add cardholder name to statement from CUSTFILE; implement date range filter for CREASTMT
+                <ul style="margin-top:6px">
+                    <li>Add new totals section (e.g. totals by transaction category)</li>
+                    <li>Add date range parameter to CREASTMT</li>
+                    <li>Merchant name/city on TRANREPT detail line</li>
+                    <li>New report type on CORPT00C screen (additional radio option)</li>
+                    <li>Pagination control: configurable page size</li>
+                </ul>
             </div>
             <div class="complexity-card complex">
                 <strong>Complex (5–8 pts)</strong>
-                Entirely new report type (new COBOL program + JCL); PDF output via FTPJCL/TXT2PDF integration; online report view (display report data in CICS screen); multi-currency reporting
+                <ul style="margin-top:6px">
+                    <li>Entirely new batch report program + JCL + GDG definition</li>
+                    <li>Online report viewer (display TRANREPT output in CICS)</li>
+                    <li>CSV/JSON export output format</li>
+                    <li>Multi-currency reporting with exchange rates</li>
+                    <li>Report delivery via MQ or email gateway</li>
+                </ul>
             </div>
         </div>
     </div>
 
+    <!-- ═══════════════════════════════════════════════════════ -->
     <div class="card">
-        <h2>🔧 Technical Foundation</h2>
-        <h3>TRANREPT Flow (CBTRN03C)</h3>
-        <pre>Input: Start date, end date (from CORPT00C or JCL parameters)
-  → Read TRANFILE sequentially
-  → Filter by TRAN-ORIG-TS within date range
-  → For each transaction:
-      Look up type description (TRANTYPE file)
-      Look up category description (TRANCATG file)
-  → Group by Account ID
-  → Write TRANSACTION-DETAIL-REPORT lines
-  → Accumulate page totals, account totals, grand total
-  → Write REPORT-PAGE-TOTALS, REPORT-ACCOUNT-TOTALS
-  → Write REPORT-GRAND-TOTALS at end
-  → Output to SYSOUT or GDG dataset</pre>
+        <h2>✅ Acceptance Criteria Examples</h2>
+        <div class="ac-example">
+            <strong>Online report request — Monthly:</strong><br>
+            Given an authenticated user on CR00 screen,<br>
+            When selecting "Monthly" and pressing ENTER without entering a confirmation,<br>
+            Then the screen prompts "Please confirm to print the Monthly report..." with a Y/N field.<br>
+            When entering 'Y' and pressing ENTER,<br>
+            Then JCL is written to JOBS TDQ and the screen shows "Monthly report submitted for printing..." in green.
+        </div>
+        <div class="ac-example">
+            <strong>Custom date validation:</strong><br>
+            Given the user selects "Custom" date range,<br>
+            When entering month 13 in SDTMM,<br>
+            Then an error "Start Date - Not a valid Month..." is displayed in red on line 23 and the cursor returns to SDTMM.<br>
+            When entering an invalid calendar date (e.g. 02/30/2022),<br>
+            Then CSUTLDTC returns a non-zero severity and "Start Date - Not a valid date..." is displayed.
+        </div>
+        <div class="ac-example">
+            <strong>TRANREPT batch content:</strong><br>
+            Given transactions exist with TRAN-PROC-TS within the specified date range,<br>
+            When CBTRN03C completes with RC=0,<br>
+            Then the report GDG contains one detail line per in-scope transaction,<br>
+            And each line includes the correct type description (from TRANTYPE) and category description (from TRANCATG),<br>
+            And amounts are formatted as -ZZZ,ZZZ,ZZZ.ZZ with correct sign.
+        </div>
+        <div class="ac-example">
+            <strong>Account total accuracy:</strong><br>
+            Given N transactions for card number C within the date range,<br>
+            When CBTRN03C processes the last transaction for C and switches to the next card,<br>
+            Then REPORT-ACCOUNT-TOTALS = algebraic sum of all TRAN-AMT values for C,<br>
+            And WS-ACCOUNT-TOTAL is reset to 0 for the next account group.
+        </div>
+        <div class="ac-example">
+            <strong>Grand total integrity:</strong><br>
+            When CBTRN03C completes,<br>
+            Then REPORT-GRAND-TOTALS equals the sum of all REPORT-ACCOUNT-TOTALS in the report,<br>
+            And the GDG allocation is successful (new generation created, RC=0).
+        </div>
+        <div class="ac-example">
+            <strong>Statement dual output:</strong><br>
+            When CREASTMT job completes with RC=0,<br>
+            Then AWS.M2.CARDDEMO.STATEMNT.PS exists and contains plain-text statements for all accounts in TRNXFILE,<br>
+            And AWS.M2.CARDDEMO.STATEMNT.HTML exists and contains valid HTML with &lt;!DOCTYPE html&gt; and table layout for all accounts,<br>
+            And each statement includes account ID, current balance, FICO score, and a transaction summary section.
+        </div>
+        <div class="ac-example">
+            <strong>No authentication — redirect to signon:</strong><br>
+            Given a user accesses CR00 without a valid COMMAREA (EIBCALEN = 0),<br>
+            When CORPT00C executes,<br>
+            Then the program performs XCTL to COSGN00C without displaying the report screen.
+        </div>
+    </div>
 
-        <h3>Report Output Structure</h3>
-        <pre>DALYREPT header line:
-  Report Name (38) + Long Name (41) + Date Range header (12)
-  + Start Date (10) + " to " + End Date (10)
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="card">
+        <h2>🔗 Dependencies Summary</h2>
+        <h3>Internal Module Dependencies</h3>
+        <table>
+            <tr><th>Module</th><th>Dependency Type</th><th>Details</th></tr>
+            <tr><td>authentication</td><td>Required prerequisite</td><td>CORPT00C checks EIBCALEN; unauthenticated access redirects to COSGN00C. COMMAREA must be valid.</td></tr>
+            <tr><td>transactions</td><td>Primary data source</td><td>TRANFILE (TRANSACT.VSAM.KSDS) provides all transaction records for both TRANREPT and CREASTMT</td></tr>
+            <tr><td>accounts</td><td>Statement data</td><td>ACCTFILE provides current balance, credit limit for statement generation (CBSTM03B)</td></tr>
+            <tr><td>batch-processing</td><td>Operational dependency</td><td>CLOSEFIL/OPENFIL not typically required for TRANREPT (reads GDG copy), but CREASTMT accesses live VSAM files</td></tr>
+        </table>
 
-Detail line (TRANSACTION-DETAIL-REPORT):
-  Trans ID (16) | Account ID (11) | Type+Desc (17) |
-  Cat+Desc (35) | Source (14) | Amount (signed, 16)
+        <h3>External / Infrastructure Dependencies</h3>
+        <table>
+            <tr><th>Component</th><th>Used By</th><th>Purpose</th></tr>
+            <tr><td>JOBS Extra Partition TDQ</td><td>CORPT00C</td><td>CICS transient data queue connected to z/OS internal reader for batch job submission</td></tr>
+            <tr><td>TRANTYPE.VSAM.KSDS</td><td>CBTRN03C</td><td>Transaction type code → description lookup (keyed by 2-char type code)</td></tr>
+            <tr><td>TRANCATG.VSAM.KSDS</td><td>CBTRN03C</td><td>Category description lookup (keyed by type-cd + cat-cd composite)</td></tr>
+            <tr><td>CSUTLDTC subroutine</td><td>CORPT00C</td><td>Date validation — validates YYYY-MM-DD format and calendar validity</td></tr>
+            <tr><td>TRANREPT GDG base</td><td>CBTRN03C</td><td>Must be pre-defined via DEFGDGB; accumulates versioned report outputs</td></tr>
+            <tr><td>REPROC procedure</td><td>TRANREPT.jcl</td><td>PROC in AWS.M2.CARDDEMO.PROC library used to copy and prepare transaction data</td></tr>
+            <tr><td>COCOM01Y.cpy</td><td>CORPT00C</td><td>CARDDEMO-COMMAREA — session state (user type, account context, navigation)</td></tr>
+            <tr><td>CVTRA05Y.cpy</td><td>CORPT00C, CBTRN03C</td><td>TRAN-RECORD layout for reading TRANFILE transaction records</td></tr>
+            <tr><td>CVACT03Y.cpy</td><td>CBTRN03C, CBSTM03A</td><td>CARD-XREF-RECORD layout for reading XREFFILE</td></tr>
+        </table>
+    </div>
 
-Totals lines:
-  REPORT-PAGE-TOTALS    → "Page Total" + dots + signed amount
-  REPORT-ACCOUNT-TOTALS → "Account Total" + dots + signed amount
-  REPORT-GRAND-TOTALS   → "Grand Total" + dots + signed amount</pre>
-
-        <h3>🔗 Dependencies</h3>
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="card">
+        <h2>⚠️ Known Issues and Tech Debt</h2>
         <ul>
-            <li><strong>transactions:</strong> TRANFILE is the primary data source for all reports</li>
-            <li><strong>TRANTYPE VSAM:</strong> Transaction type descriptions used in report detail lines</li>
-            <li><strong>TRANCATG VSAM:</strong> Transaction category descriptions used in report detail lines</li>
-            <li><strong>CUSTFILE:</strong> Customer name used in statement generation (CREASTMT)</li>
-            <li><strong>GDG setup:</strong> DEFGDGB JCL job must run before first report generation to define GDG bases</li>
+            <li><strong>Hardcoded job name:</strong> The CICS-submitted job is named <code>TRNRPT00</code> (embedded in CORPT00C JOB-DATA working storage). Changing the job name requires a recompile of CORPT00C.</li>
+            <li><strong>No online report viewer:</strong> TRANREPT output is batch-only; there is no CICS screen to display the report. A modernization effort would add an online view transaction that reads the GDG output and paginates it on 3270.</li>
+            <li><strong>Statement GDG not used:</strong> Unlike TRANREPT, statement output (STATEMNT.PS and STATEMNT.HTML) overwrites the previous run — no GDG versioning for customer statements. History is lost on each CREASTMT run.</li>
+            <li><strong>No statement date range:</strong> CREASTMT processes all transactions regardless of date. There is no parameter mechanism to restrict statements to a billing period in the current implementation.</li>
+            <li><strong>Partial TDQ writes on error:</strong> If CORPT00C encounters a TDQ write error mid-stream, partial JCL lines may already be in the JOBS queue. The internal reader may attempt to submit a malformed job. Error recovery is limited to the displayed error message.</li>
+            <li><strong>CBSTM03A uses ALTER/GO TO:</strong> The program intentionally demonstrates legacy COBOL patterns (ALTER and GO TO statements) as a modernization exercise target. These constructs complicate static analysis and refactoring.</li>
+            <li><strong>HTML bank name hardcoded:</strong> CBSTM03A HTML output contains hardcoded "Bank of XYZ" and "410 Terry Ave N, Seattle WA 99999" — not driven by any configurable parameter.</li>
         </ul>
     </div>
 
-    <div class="card">
-        <h2>✅ Acceptance Criteria Examples</h2>
-        <div class="ac-example"><strong>Report request from online:</strong><br>Given a signed-in user on the Report screen (CR00),<br>When entering a valid start and end date and pressing ENTER,<br>Then TRANREPT job is submitted and a "Report submitted" message is displayed</div>
-        <div class="ac-example"><strong>Daily report content:</strong><br>Given transactions exist within the specified date range,<br>When CBTRN03C completes with RC=0,<br>Then the output contains one detail line per transaction with correct type/category descriptions and amounts</div>
-        <div class="ac-example"><strong>Account totals accuracy:</strong><br>Given multiple transactions for a single account,<br>When CBTRN03C produces account totals,<br>Then REPORT-ACCOUNT-TOTALS equals the algebraic sum of all TRAN-AMT values for that account</div>
-        <div class="ac-example"><strong>Grand total accuracy:</strong><br>When CBTRN03C completes,<br>Then REPORT-GRAND-TOTALS equals the sum of all account totals in the report</div>
-        <div class="ac-example"><strong>No transactions in date range:</strong><br>Given no transactions exist within the requested date range,<br>When CBTRN03C runs,<br>Then the report contains only headers and a grand total of $0.00 with a "No transactions found" indicator</div>
-    </div>
-
-    <div class="footer">
+    <div class="footer" style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #444; color: #888; font-size: 0.85em;">
         <a href="../../index.html" class="nav-link">← Back to Index</a>
         <a href="../billing/index.html" class="nav-link">Billing</a>
         <a href="../user-management/index.html" class="nav-link">User Management →</a>
-        <p style="margin-top:10px"><em>Last updated: 2026-03-26 | CardDemo Documentation</em></p>
+        <p style="margin-top:10px">Last reviewed: 2026-03-26T18:01:23Z</p>
     </div>
 </div>
 </body>
