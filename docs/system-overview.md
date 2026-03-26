@@ -341,61 +341,97 @@ CC-WORK-AREAS (CVCRD01Y.cpy):
 ### 4. Transactions
 
 **ID:** `transactions`  
-**Purpose:** List, view, add, and batch-process credit card transactions  
+**Purpose:** List, view, add, and batch-process credit card transactions. Provides three CICS online screens (list, view, add) plus three batch programs for validation, posting, and report generation. Transaction data feeds the billing, reports, and interest-calculation pipelines.
+
 **Key Components:**
-- `COTRN00C.cbl` — CICS program; transaction list (CT00 / COTRN00)
-- `COTRN01C.cbl` — CICS program; transaction view/detail (CT01 / COTRN01)
-- `COTRN02C.cbl` — CICS program; add new transaction (CT02 / COTRN02)
-- `CBTRN01C.cbl` — Batch: transaction file processing/validation
-- `CBTRN02C.cbl` — Batch: transaction posting (POSTTRAN job)
-- `CBTRN03C.cbl` — Batch: transaction report generation (TRANREPT job, submitted from CICS)
-- `CVTRA05Y.cpy` — TRAN-RECORD data structure
-- `CVTRA01Y.cpy` — TRAN-CAT-BAL-RECORD structure
-- `CVTRA02Y.cpy` — DIS-GROUP-RECORD structure
+- `COTRN00C.cbl` — CICS program; paginated transaction list (CT00 / COTRN00); 10 rows/page; browses TRANFILE via AIX on TRAN-CARD-NUM using STARTBR/READNEXT/READPREV; PF7/PF8 scroll; 'S' to drill into CT01
+- `COTRN01C.cbl` — CICS program; transaction view/detail (CT01 / COTRN01); reads TRANSACT by TRAN-ID primary key; displays all TRAN-RECORD fields; PF5 returns to list
+- `COTRN02C.cbl` — CICS program; add new transaction (CT02 / COTRN02); validates card/account via CCXREF AIX; generates TRAN-ID via STARTBR HIGH-VALUES + READPREV + increment; PF4 copies last transaction
+- `CBTRN01C.cbl` — Batch: transaction file validation; reads DALYTRAN sequential; validates against CUSTFILE, XREFFILE, CARDFILE, ACCTFILE, TRANFILE
+- `CBTRN02C.cbl` — Batch: transaction posting (POSTTRAN job); reads DALYTRAN; validates via XREFFILE + ACCTFILE; writes to TRANFILE; updates ACCT-CURR-BAL in ACCTFILE and TRAN-CAT-BAL in TCATBALF; rejects to DALYREJS GDG
+- `CBTRN03C.cbl` — Batch: transaction report (TRANREPT job); reads date-filtered, card-sorted TRANFILE; joins TRANTYPE + TRANCATG for descriptions; writes 133-char formatted report lines with page/account/grand totals
+- `CVTRA05Y.cpy` — TRAN-RECORD data structure (350 bytes)
+- `CVTRA01Y.cpy` — TRAN-CAT-BAL-RECORD structure (50 bytes)
+- `CVTRA02Y.cpy` — DIS-GROUP-RECORD structure (50 bytes, used by INTCALC)
+- `CVTRA03Y.cpy` — TRAN-TYPE-RECORD (60 bytes; transaction type reference)
+- `CVTRA04Y.cpy` — TRAN-CAT-RECORD (60 bytes; category reference)
+- `CVTRA06Y.cpy` — DALYTRAN-RECORD (350 bytes; batch sequential input)
+- `CVTRA07Y.cpy` — Report layout structures (TRANSACTION-DETAIL-REPORT, totals)
 
 **CICS Transactions:**
-- `CT00` → Transaction List (paginated)
-- `CT01` → Transaction View (detail)
-- `CT02` → Transaction Add
+- `CT00` → Transaction List (paginated, AIX browse by TRAN-CARD-NUM)
+- `CT01` → Transaction View (direct read by TRAN-ID primary key)
+- `CT02` → Transaction Add (validates card+account, writes to TRANFILE)
+
+**Batch JCL Jobs:**
+| Job        | Program    | Input                  | Key Outputs                          |
+|------------|------------|------------------------|--------------------------------------|
+| `POSTTRAN` | CBTRN02C   | DALYTRAN sequential    | TRANFILE (write), ACCTFILE (rewrite), TCATBALF (rewrite), DALYREJS (rejects) |
+| `TRANREPT` | SORT + CBTRN03C | TRANSACT VSAM + date filter | TRANREPT GDG (133-char report) |
+| `COMBTRAN` | SORT + IDCAMS | TRANSACT.BKUP + SYSTRAN | TRANSACT VSAM (combined reload) |
+
+**VSAM Files:**
+| DD Name    | Dataset                              | Primary Key       | AIX              |
+|------------|--------------------------------------|-------------------|------------------|
+| TRANSACT   | AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS   | TRAN-ID X(16)     | TRAN-CARD-NUM    |
+| TCATBALF   | AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS   | Acct+Type+Cat     | —                |
+| DALYTRAN   | AWS.M2.CARDDEMO.DALYTRAN.PS          | — (sequential)    | —                |
+| DALYREJS   | AWS.M2.CARDDEMO.DALYREJS(+1)         | — (GDG reject)    | —                |
 
 **Data Model:**
 ```
-TRAN-RECORD (TRANFILE, RECLN=350):
-  TRAN-ID               PIC X(16)        -- Transaction ID (primary key)
-  TRAN-TYPE-CD          PIC X(02)        -- Transaction type code
-  TRAN-CAT-CD           PIC 9(04)        -- Transaction category code
-  TRAN-SOURCE           PIC X(10)        -- Source system/channel
-  TRAN-DESC             PIC X(100)       -- Description
-  TRAN-AMT              PIC S9(09)V99    -- Amount (signed)
-  TRAN-MERCHANT-ID      PIC 9(09)        -- Merchant ID
+TRAN-RECORD (TRANFILE, RECLN=350):                    -- CVTRA05Y.cpy
+  TRAN-ID               PIC X(16)        -- Transaction ID (primary key; system-generated sequential)
+  TRAN-TYPE-CD          PIC X(02)        -- Transaction type code (links to TRANTYPE VSAM)
+  TRAN-CAT-CD           PIC 9(04)        -- Transaction category code (links to TRANCATG VSAM)
+  TRAN-SOURCE           PIC X(10)        -- Source system / channel identifier
+  TRAN-DESC             PIC X(100)       -- Free-text description
+  TRAN-AMT              PIC S9(09)V99    -- Amount: negative=debit/charge, positive=credit/payment
+  TRAN-MERCHANT-ID      PIC 9(09)        -- Merchant identifier
   TRAN-MERCHANT-NAME    PIC X(50)        -- Merchant name
   TRAN-MERCHANT-CITY    PIC X(50)        -- Merchant city
-  TRAN-MERCHANT-ZIP     PIC X(10)        -- Merchant ZIP
-  TRAN-CARD-NUM         PIC X(16)        -- Associated card number (AIX key)
-  TRAN-ORIG-TS          PIC X(26)        -- Original timestamp
+  TRAN-MERCHANT-ZIP     PIC X(10)        -- Merchant ZIP code
+  TRAN-CARD-NUM         PIC X(16)        -- Associated card PAN (Alternate Index key)
+  TRAN-ORIG-TS          PIC X(26)        -- Original timestamp (YYYY-MM-DD HH:MM:SS.ssssss)
   TRAN-PROC-TS          PIC X(26)        -- Processing timestamp
 
-TRAN-CAT-BAL-RECORD (TCATBALF, RECLN=50):
-  TRANCAT-ACCT-ID       PIC 9(11)        -- Account ID (part of key)
-  TRANCAT-TYPE-CD       PIC X(02)        -- Type code (part of key)
-  TRANCAT-CD            PIC 9(04)        -- Category code (part of key)
-  TRAN-CAT-BAL          PIC S9(09)V99    -- Category balance
+TRAN-CAT-BAL-RECORD (TCATBALF, RECLN=50):             -- CVTRA01Y.cpy
+  TRAN-CAT-KEY:
+    TRANCAT-ACCT-ID     PIC 9(11)        -- Account ID (composite key part 1)
+    TRANCAT-TYPE-CD     PIC X(02)        -- Type code (composite key part 2)
+    TRANCAT-CD          PIC 9(04)        -- Category code (composite key part 3)
+  TRAN-CAT-BAL          PIC S9(09)V99    -- Running category balance for interest calculation
 ```
 
 **Business Rules:**
-- Transactions listed by Card Number (via TRANFILE AIX on TRAN-CARD-NUM)
-- POSTTRAN batch job (CBTRN02C) posts pending transactions and updates account balances
-- Transaction category balance (TCATBALF) updated during posting for interest calculation
-- Transaction report (TRANREPT) can be submitted from online (CORPT00C) or run as standalone batch
-- Amount sign: negative = debit/charge, positive = credit/payment
-- Transaction ID is system-generated 16-character unique key
-- Transaction type codes and category codes define interest rate group via DISCGRP file
+- Transactions listed by Card Number via TRANFILE AIX on TRAN-CARD-NUM; browse uses STARTBR GTEQ
+- POSTTRAN (CBTRN02C) posts DALYTRAN records: validates via XREFFILE, then updates ACCTFILE balance and TCATBALF category balance, then writes to TRANFILE; rejects written to DALYREJS GDG
+- POSTTRAN returns RC=8 when any rejects exist; DISPLAY outputs reject count to SYSOUT
+- Transaction category balance (TCATBALF) is keyed by Account+TypeCode+CategoryCode; read by INTCALC (CBACT04C) with DISCGRP interest rates to compute monthly interest
+- Amount sign: negative = debit/charge (reduces balance); positive = credit/payment (increases balance)
+- Transaction ID generated in CT02 via STARTBR HIGH-VALUES + READPREV + numeric increment; not concurrency-safe under high volume
+- COTRN02C accepts either Account ID or Card Number; resolves the other via CCXREF VSAM lookup
+- No online credit-limit check in CT02; credit limit validation only occurs in CBTRN02C batch posting
+- TRANREPT job uses SORT INCLUDE to filter by TRAN-PROC-TS date range before running CBTRN03C
+- POSTTRAN/TRANREPT require CLOSEFIL before run and OPENFIL after to coordinate with CICS file ownership
+- COMMAREA extension fields `CDEMO-CT00-INFO` / `CDEMO-CT01-INFO` carry pagination state (first/last TRAN-ID, page number, next-page flag) across CICS pseudo-conversational interactions
+- EIBCALEN=0 guard redirects unauthenticated direct transaction invocations to COSGN00C
+
+**Dependencies:**
+- **authentication** — COMMAREA must contain valid CDEMO-USER-ID and CDEMO-CARD-NUM; CT00/CT01/CT02 redirect to COSGN00C if no COMMAREA
+- **accounts** — ACCTFILE updated by POSTTRAN; ACCT-GROUP-ID links to DISCGRP for interest rates
+- **credit-cards** — XREFFILE / CARDFILE used by CBTRN01C validation and CT02 card-account resolution
+- **billing** (downstream) — COBIL00C writes positive transactions to TRANFILE feeding POSTTRAN
+- **reports** (downstream) — CORPT00C submits TRANREPT via extra-partition TDQ; CBSTM03A reads TRANFILE
+- **transaction-types** (optional) — TRANTYPE / TRANCATG VSAM reference data used in TRANREPT; optionally managed via DB2
 
 **User Story Examples:**
 - As a cardholder, I want to view my recent transactions so I can monitor spending
 - As a cardholder, I want to see transaction details including merchant name so I can verify charges
+- As a cardholder, I want to page through my transaction history so I can find older charges
 - As a cardholder, I want to add a transaction manually so I can record a purchase
 - As a system, I want to post batch transactions so account balances stay current
+- As an auditor, I want a daily transaction report so I can reconcile posted amounts
 
 ---
 

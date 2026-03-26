@@ -1,184 +1,917 @@
 <!DOCTYPE html>
-<html lang="en-US">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transactions - User Story Development Guide | CardDemo</title>
+    <meta name="last-updated" content="2026-03-26T18:01:14Z">
+    <title>transactions - Module Documentation | CardDemo</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; color: #212529; line-height: 1.6; }
-        .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
-        .header { background: linear-gradient(135deg, #b71c1c 0%, #c62828 100%); color: #fff; padding: 36px 32px; border-radius: 10px; margin-bottom: 28px; }
-        .header h1 { font-size: 2rem; margin-bottom: 8px; }
-        .header p { opacity: 0.85; font-size: 1.05rem; }
-        .badge { display: inline-block; background: rgba(255,255,255,0.2); border-radius: 4px; padding: 2px 10px; font-size: 0.8rem; margin-right: 8px; }
-        .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 28px; margin-bottom: 24px; }
-        h2 { font-size: 1.35rem; color: #b71c1c; border-bottom: 2px solid #ffebee; padding-bottom: 8px; margin-bottom: 18px; }
-        h3 { font-size: 1.1rem; color: #c62828; margin: 18px 0 10px; }
-        ul, ol { padding-left: 22px; }
-        li { margin-bottom: 6px; }
-        code { background: #f3f4f6; border-radius: 3px; padding: 2px 6px; font-size: 0.88rem; font-family: 'Courier New', monospace; }
-        pre { background: #1e1e2e; color: #cdd6f4; border-radius: 6px; padding: 18px; overflow-x: auto; font-size: 0.85rem; margin: 12px 0; }
-        .complexity { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 12px 0; }
-        .complexity-card { border-radius: 6px; padding: 14px; }
-        .simple { background: #e8f5e9; border-left: 4px solid #4caf50; }
-        .medium { background: #fff3e0; border-left: 4px solid #ff9800; }
-        .complex { background: #fce4ec; border-left: 4px solid #e91e63; }
-        .complexity-card strong { display: block; margin-bottom: 4px; }
-        .ac-example { background: #f1f8ff; border-left: 4px solid #0288d1; border-radius: 4px; padding: 12px 16px; margin: 10px 0; font-size: 0.93rem; }
-        .footer { text-align: center; padding: 20px; color: #6c757d; font-size: 0.9rem; }
-        .nav-link { display: inline-block; margin: 6px 8px 0 0; color: #b71c1c; text-decoration: none; font-size: 0.95rem; }
-        .nav-link:hover { text-decoration: underline; }
-        table { width: 100%; border-collapse: collapse; margin: 12px 0; }
-        th { background: #ffebee; color: #b71c1c; text-align: left; padding: 10px 12px; font-size: 0.9rem; }
-        td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
-        tr:hover td { background: #fafafa; }
+        body {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 { color: #4fc3f7; border-bottom: 2px solid #4fc3f7; padding-bottom: 10px; margin-bottom: 20px; }
+        h2 { color: #81c784; margin-top: 40px; margin-bottom: 12px; border-left: 4px solid #81c784; padding-left: 10px; }
+        h3 { color: #ffb74d; margin-top: 24px; margin-bottom: 8px; }
+        h4 { color: #f48fb1; margin-top: 16px; }
+        p { margin-bottom: 12px; }
+        code { background-color: #2d2d2d; padding: 2px 6px; border-radius: 3px; font-family: 'Courier New', monospace; font-size: 0.88em; color: #f8f8f2; }
+        pre { background-color: #2d2d2d; padding: 16px; border-radius: 6px; overflow-x: auto; border-left: 3px solid #4fc3f7; margin: 12px 0; }
+        pre code { background-color: transparent; padding: 0; font-size: 0.85em; }
+        a { color: #4fc3f7; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .nav { background-color: #222; padding: 10px 16px; border-radius: 6px; margin-bottom: 28px; }
+        .nav a { margin-right: 16px; font-size: 0.9em; }
+        .badge { display: inline-block; background-color: #1565c0; color: #fff; border-radius: 4px; padding: 2px 10px; font-size: 0.78em; margin-right: 6px; margin-bottom: 4px; }
+        .badge.batch { background-color: #6a1b9a; }
+        .badge.vsam  { background-color: #2e7d32; }
+        .badge.jcl   { background-color: #bf360c; }
+        table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 0.92em; }
+        th { background-color: #263238; color: #80cbc4; text-align: left; padding: 10px 12px; }
+        td { padding: 8px 12px; border-bottom: 1px solid #333; vertical-align: top; }
+        tr:hover td { background-color: #222; }
+        .rule-box { background-color: #1e3a2f; border-left: 4px solid #4caf50; padding: 12px 16px; border-radius: 4px; margin: 10px 0; }
+        .warn-box  { background-color: #3e2723; border-left: 4px solid #ff7043; padding: 12px 16px; border-radius: 4px; margin: 10px 0; }
+        .info-box  { background-color: #1a2a3a; border-left: 4px solid #42a5f5; padding: 12px 16px; border-radius: 4px; margin: 10px 0; }
+        .flow-step { background-color: #1e2a1e; border: 1px solid #388e3c; border-radius: 4px; padding: 10px 14px; margin: 6px 0; }
+        .flow-step span { color: #81c784; font-weight: bold; margin-right: 8px; }
+        ul { padding-left: 24px; margin-bottom: 12px; }
+        li { margin-bottom: 4px; }
+        .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #444; color: #888; font-size: 0.85em; }
+        @media (max-width: 700px) { .grid2 { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="header">
-        <h1>💸 Transactions</h1>
-        <p>User Story Development Guide — CardDemo Mainframe Application</p>
-        <div style="margin-top:12px">
-            <span class="badge">CICS</span>
-            <span class="badge">Batch</span>
-            <span class="badge">COBOL</span>
-            <span class="badge">VSAM TRANFILE</span>
-            <span class="badge">CT00 · CT01 · CT02</span>
-        </div>
-    </div>
 
-    <div class="card">
-        <h2>📋 Module Overview</h2>
-        <p><strong>Purpose:</strong> List, view, and manually add transactions online; post transactions in batch (POSTTRAN), generate reports (TRANREPT), and produce statements (CREASTMT).</p>
-        <p style="margin-top:10px"><strong>Business Context:</strong> Transactions represent all financial activity on a card. Transaction records feed account balance updates, interest calculations (via TCATBALF), and reporting. Batch posting is the critical nightly job that makes transactions permanent.</p>
-        <h3>Key Components</h3>
-        <table>
-            <tr><th>Component</th><th>Type</th><th>Responsibility</th></tr>
-            <tr><td><code>COTRN00C.cbl</code></td><td>CICS (CT00)</td><td>Transaction list — paginated by card number</td></tr>
-            <tr><td><code>COTRN01C.cbl</code></td><td>CICS (CT01)</td><td>Transaction detail view — read-only</td></tr>
-            <tr><td><code>COTRN02C.cbl</code></td><td>CICS (CT02)</td><td>Add new transaction to TRANFILE</td></tr>
-            <tr><td><code>CBTRN01C.cbl</code></td><td>Batch</td><td>Transaction validation/pre-processing</td></tr>
-            <tr><td><code>CBTRN02C.cbl</code></td><td>Batch (POSTTRAN)</td><td>Post transactions — updates ACCTFILE + TCATBALF</td></tr>
-            <tr><td><code>CBTRN03C.cbl</code></td><td>Batch (TRANREPT)</td><td>Daily transaction report generation</td></tr>
-            <tr><td><code>CBSTM03A.CBL</code></td><td>Batch (CREASTMT)</td><td>Full account statement generation</td></tr>
-            <tr><td><code>CVTRA05Y.cpy</code></td><td>Copybook</td><td>TRAN-RECORD structure (RECLN=350)</td></tr>
-            <tr><td><code>CVTRA01Y.cpy</code></td><td>Copybook</td><td>TRAN-CAT-BAL-RECORD structure</td></tr>
-        </table>
-    </div>
+<div class="nav">
+    <a href="../../index.html">← Back to Index</a>
+    <a href="../accounts/">Accounts</a>
+    <a href="../billing/">Billing</a>
+    <a href="../reports/">Reports</a>
+    <a href="../batch-processing/">Batch Processing</a>
+</div>
 
-    <div class="card">
-        <h2>🎯 User Story Development Guide</h2>
-        <h3>📝 Module-Specific US Templates</h3>
+<h1>💸 transactions</h1>
+<p>
+    <span class="badge">CICS Online</span>
+    <span class="badge batch">Batch JCL</span>
+    <span class="badge vsam">VSAM TRANFILE</span>
+    <span class="badge vsam">VSAM TCATBALF</span>
+    <span class="badge">CT00 · CT01 · CT02</span>
+    <span class="badge jcl">POSTTRAN · TRANREPT</span>
+</p>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2>Overview</h2>
+<p>
+    The <strong>transactions</strong> module provides full lifecycle management of credit card transactions
+    within the CardDemo mainframe application. It encompasses three CICS online screens for listing,
+    viewing, and adding transactions; three batch programs for validation, posting, and reporting;
+    and a suite of JCL jobs that orchestrate batch processing. All transaction data is persisted in
+    the VSAM KSDS file <code>TRANFILE</code> with a 16-character transaction ID as the primary key
+    and an Alternate Index (AIX) on card number for efficient per-card lookups.
+</p>
+
+<div class="info-box">
+    <strong>Module ID:</strong> <code>transactions</code><br>
+    <strong>CICS Transactions:</strong> CT00 (list) · CT01 (view) · CT02 (add)<br>
+    <strong>Batch Jobs:</strong> POSTTRAN · TRANREPT · COMBTRAN<br>
+    <strong>Primary VSAM:</strong> TRANFILE (RECLN=350) + TCATBALF (RECLN=50)<br>
+    <strong>Entry Point:</strong> Main Menu (COMEN01C/CM00) → CT00 (COTRN00C)
+</div>
+
+ --><!-- ══════════════
+<h2>Architectural Context</h2>
+
+<p>
+    CardDemo uses a classic CICS 3270 terminal architecture. Each CICS transaction has a corresponding
+    BMS map definition (screen layout) and a COBOL program. Session state is passed between transactions
+    via the <code>CARDDEMO-COMMAREA</code> (defined in <code>COCOM01Y.cpy</code>). The transactions
+    module sits in the centre of the application — it depends on accounts and credit-cards for
+    context, and it feeds billing, reports, and batch-processing.
+</p>
+
+<h3>Module Dependency Context</h3>
+<pre><code>authentication
+    └── accounts ──────────────── (provides ACCT-ID / CARD-NUM context)
+            └── credit-cards ──── (XREFFILE cross-reference)
+                    └── transactions ──┬── billing
+                                       ├── reports
+                                       └── batch-processing</code></pre>
+
+<h3>Online vs. Batch Architecture</h3>
+<div class="grid2">
+    <div>
+        <h4>Online (CICS)</h4>
         <ul>
-            <li><strong>View transaction list:</strong> As a cardholder, I want to view my recent transactions so I can monitor for unauthorized charges</li>
-            <li><strong>View transaction detail:</strong> As a cardholder, I want to see merchant name, city, and amount so I can verify individual charges</li>
-            <li><strong>Add transaction:</strong> As a cardholder, I want to add a manual transaction entry so I have a record of a purchase made offline</li>
-            <li><strong>Filter transactions:</strong> As a cardholder, I want to filter transactions by date range so I can review a specific period</li>
-            <li><strong>Batch posting:</strong> As a system, I want to run nightly POSTTRAN so account balances are updated with all processed transactions</li>
-            <li><strong>Transaction report:</strong> As a system operator, I want to generate the daily transaction report so I can reconcile financial totals</li>
-        </ul>
-
-        <h3>⚡ Development Acceleration Factors</h3>
-        <ul>
-            <li><strong>TRANFILE AIX on TRAN-CARD-NUM:</strong> Alternate index already exists — transaction list by card is efficient and ready to use</li>
-            <li><strong>CVTRA05Y copybook:</strong> Full TRAN-RECORD structure defined — new fields follow established pattern</li>
-            <li><strong>POSTTRAN batch template:</strong> CBTRN02C handles all balance updates — extend for new transaction types without redesign</li>
-            <li><strong>COMBTRAN SORT job:</strong> Combines transaction files before posting — supports multi-source transaction feeds</li>
-        </ul>
-
-        <h3>📊 Complexity Guidelines</h3>
-        <div class="complexity">
-            <div class="complexity-card simple">
-                <strong>Simple (1–2 pts)</strong>
-                Add merchant field to detail view; change sort order of list; display transaction amount with color coding
-            </div>
-            <div class="complexity-card medium">
-                <strong>Medium (3–5 pts)</strong>
-                Add date range filter to transaction list; add transaction category description lookup; add total amount display to list screen
-            </div>
-            <div class="complexity-card complex">
-                <strong>Complex (5–8 pts)</strong>
-                New transaction type with different posting logic in CBTRN02C; transaction reversal/void capability; real-time balance update (bypassing batch); new TRANFILE field requiring RECLN change
-            </div>
-        </div>
-    </div>
-
-    <div class="card">
-        <h2>🔧 Technical Foundation</h2>
-        <h3>Transaction List Flow</h3>
-        <pre>Entry: CARD-NUM in COMMAREA (from Card or Account module)
-  → Read TRANFILE (AIX key = TRAN-CARD-NUM) sequentially
-  → Paginate results (PF7=scroll up, PF8=scroll down)
-  → Display: TRAN-ID, TRAN-TYPE-CD, TRAN-AMT, TRAN-ORIG-TS
-  → User selects transaction → TRAN-ID to COMMAREA
-  → Navigate to Transaction Detail (CT01)</pre>
-
-        <h3>Transaction Add Flow</h3>
-        <pre>Entry: CT02 transaction, CARD-NUM in COMMAREA
-  → Display blank COTRN02 screen
-  → User enters: type, category, amount, merchant info, description
-  → Validate: amount format, type/category codes, card exists
-  → Generate TRAN-ID (system-assigned unique key)
-  → Set TRAN-ORIG-TS = current timestamp
-  → WRITE to TRANFILE
-  → Display confirmation</pre>
-
-        <h3>POSTTRAN Batch Flow (CBTRN02C)</h3>
-        <pre>Read TRANFILE sequentially (unposted transactions)
-  For each transaction:
-    → Read XREFFILE (key=TRAN-CARD-NUM) → get ACCT-ID
-    → Read ACCTFILE (key=ACCT-ID) for current balance
-    → Update ACCT-CURR-BAL += TRAN-AMT
-    → Update ACCT-CURR-CYC-DEBIT or ACCT-CURR-CYC-CREDIT
-    → Construct TRAN-CAT-KEY (ACCT-ID + TYPE + CAT)
-    → Read/update TCATBALF for category balance
-    → Set TRAN-PROC-TS = processing timestamp
-    → REWRITE TRANFILE (mark as posted)</pre>
-
-        <h3>Data Model</h3>
-        <pre>TRAN-RECORD (TRANFILE, RECLN=350):
-  TRAN-ID              PIC X(16)        ← Primary key
-  TRAN-TYPE-CD         PIC X(02)        ← e.g. 'SA' (sale), 'CR' (credit)
-  TRAN-CAT-CD          PIC 9(04)        ← Category for interest grouping
-  TRAN-SOURCE          PIC X(10)        ← Source system
-  TRAN-DESC            PIC X(100)       ← Description
-  TRAN-AMT             PIC S9(09)V99    ← Negative=debit, Positive=credit
-  TRAN-MERCHANT-ID     PIC 9(09)
-  TRAN-MERCHANT-NAME   PIC X(50)
-  TRAN-MERCHANT-CITY   PIC X(50)
-  TRAN-MERCHANT-ZIP    PIC X(10)
-  TRAN-CARD-NUM        PIC X(16)        ← AIX key
-  TRAN-ORIG-TS         PIC X(26)        ← Original timestamp
-  TRAN-PROC-TS         PIC X(26)        ← Set on POSTTRAN run</pre>
-
-        <h3>🔗 Dependencies</h3>
-        <ul>
-            <li><strong>credit-cards:</strong> CARD-NUM in COMMAREA required for transaction list filter</li>
-            <li><strong>accounts:</strong> POSTTRAN updates ACCTFILE — account module data affected by every posting run</li>
-            <li><strong>TRANFILE AIX:</strong> TRAN-CARD-NUM alternate index must be defined and built (TRANIDX JCL job)</li>
-            <li><strong>TCATBALF:</strong> POSTTRAN updates category balances — feeds interest calculation (INTCALC)</li>
-            <li><strong>CLOSEFIL/OPENFIL:</strong> POSTTRAN requires CICS files closed before run</li>
+            <li>COBOL programs compiled as CICS modules</li>
+            <li>BMS maps define 3270 terminal screens</li>
+            <li>COMMAREA carries state between transactions</li>
+            <li>VSAM files accessed via <code>EXEC CICS READ/WRITE/STARTBR</code></li>
+            <li>Real-time, pseudo-conversational design</li>
         </ul>
     </div>
-
-    <div class="card">
-        <h2>✅ Acceptance Criteria Examples</h2>
-        <div class="ac-example"><strong>Transaction list — shows recent transactions:</strong><br>Given a card with transactions in TRANFILE,<br>When navigating to Transaction List (CT00),<br>Then transactions are displayed in reverse chronological order with ID, type code, amount, and date</div>
-        <div class="ac-example"><strong>Transaction detail:</strong><br>Given a selected transaction ID,<br>When navigating to Transaction Detail (CT01),<br>Then merchant name, city, ZIP, description, type code, category, and amount are all displayed</div>
-        <div class="ac-example"><strong>Add transaction — success:</strong><br>Given a valid card in COMMAREA and all required fields entered,<br>When submitting Transaction Add (CT02),<br>Then a new TRAN-RECORD is written to TRANFILE with a system-generated TRAN-ID and current timestamp</div>
-        <div class="ac-example"><strong>Add transaction — validation failure:</strong><br>Given an invalid amount format or missing required field,<br>When pressing ENTER on CT02,<br>Then the screen redisplays with field-level error and no TRANFILE write occurs</div>
-        <div class="ac-example"><strong>POSTTRAN batch — success:</strong><br>Given unposted transactions in TRANFILE,<br>When CBTRN02C completes with RC=0,<br>Then each account's ACCT-CURR-BAL is updated; TRAN-PROC-TS is set on all processed records; TCATBALF balances reflect totals</div>
-        <div class="ac-example"><strong>Pagination:</strong><br>Given more than one page of transactions,<br>When pressing PF8 (scroll down) or PF7 (scroll up),<br>Then the next/previous page of transactions is displayed without data loss</div>
+    <div>
+        <h4>Batch (JCL)</h4>
+        <ul>
+            <li>Standard COBOL with OPEN/READ/WRITE verbs</li>
+            <li>DALYTRAN sequential file as batch input</li>
+            <li>CICS files must be CLOSED before batch updates</li>
+            <li>Reject records written to DALYREJS GDG</li>
+            <li>Report output to GDG datasets (TRANREPT)</li>
+        </ul>
     </div>
+</div>
 
-    <div class="footer">
-        <a href="../../index.html" class="nav-link">← Back to Index</a>
-        <a href="../credit-cards/index.html" class="nav-link">Credit Cards</a>
-        <a href="../billing/index.html" class="nav-link">Billing →</a>
-        <p style="margin-top:10px"><em>Last updated: 2026-03-26 | CardDemo Documentation</em></p>
-    </div>
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2>Key Components</h2>
+
+<h3>Online CICS Programs</h3>
+<table>
+    <tr>
+        <th>Program</th><th>Transaction</th><th>BMS Map</th><th>Function</th>
+    </tr>
+    <tr>
+        <td><code>COTRN00C.cbl</code></td>
+        <td><code>CT00</code></td>
+        <td><code>COTRN00 / COTRN0A</code></td>
+        <td>Paginated transaction list — 10 rows per page; browse via TRANFILE AIX (TRAN-CARD-NUM);
+            PF7 scroll back, PF8 scroll forward; select row with 'S' to drill into CT01</td>
+    </tr>
+    <tr>
+        <td><code>COTRN01C.cbl</code></td>
+        <td><code>CT01</code></td>
+        <td><code>COTRN01 / COTRN1A</code></td>
+        <td>Transaction view/detail — reads TRANSACT by TRAN-ID (primary key); displays all
+            TRAN-RECORD fields; PF5 returns to list (CT00), PF3 back to main menu</td>
+    </tr>
+    <tr>
+        <td><code>COTRN02C.cbl</code></td>
+        <td><code>CT02</code></td>
+        <td><code>COTRN02 / COTRN2A</code></td>
+        <td>Add new transaction — validates card/account via CCXREF AIX; auto-generates TRAN-ID
+            (last ID + 1 via READPREV); writes to TRANSACT; PF4 copies last transaction data</td>
+    </tr>
+</table>
+
+<h3>Batch Programs</h3>
+<table>
+    <tr>
+        <th>Program</th><th>JCL Job</th><th>Function</th>
+    </tr>
+    <tr>
+        <td><code>CBTRN01C.cbl</code></td>
+        <td>—</td>
+        <td>Transaction file validation — reads DALYTRAN sequential; validates each record against
+            CUSTFILE, XREFFILE, CARDFILE, ACCTFILE, and TRANFILE; reports errors</td>
+    </tr>
+    <tr>
+        <td><code>CBTRN02C.cbl</code></td>
+        <td><code>POSTTRAN</code></td>
+        <td>Daily transaction posting — reads DALYTRAN; validates via XREFFILE and ACCTFILE;
+            writes accepted records to TRANFILE; updates ACCT-CURR-BAL and TRAN-CAT-BAL in
+            TCATBALF; writes rejects to DALYREJS GDG</td>
+    </tr>
+    <tr>
+        <td><code>CBTRN03C.cbl</code></td>
+        <td><code>TRANREPT</code></td>
+        <td>Daily transaction report — reads sorted TRANFILE (filtered by date range); looks up
+            CARDXREF, TRANTYPE, TRANCATG for descriptions; writes formatted 133-char report lines
+            with page/account/grand totals to TRANREPT GDG</td>
+    </tr>
+</table>
+
+<h3>Related CICS Program</h3>
+<table>
+    <tr>
+        <th>Program</th><th>Transaction</th><th>Function</th>
+    </tr>
+    <tr>
+        <td><code>CORPT00C.cbl</code></td>
+        <td><code>CR00</code></td>
+        <td>Report request screen — submits TRANREPT batch job from CICS using extra-partition
+            TDQ; user enters start/end dates; belongs to <a href="../reports/">reports</a> module</td>
+    </tr>
+</table>
+
+ --><!-- ═══════════════════════════════════════════
+<h2>Data Models</h2>
+
+<h3>TRAN-RECORD — TRANFILE (RECLN=350)</h3>
+<p>Copybook: <code>app/cpy/CVTRA05Y.cpy</code></p>
+<pre><code>01  TRAN-RECORD.
+    05  TRAN-ID               PIC X(16)        *> Primary key — system-generated, sequential
+    05  TRAN-TYPE-CD          PIC X(02)        *> Transaction type (links to TRANTYPE VSAM)
+    05  TRAN-CAT-CD           PIC 9(04)        *> Category code (links to TRANCATG VSAM)
+    05  TRAN-SOURCE           PIC X(10)        *> Source system / channel identifier
+    05  TRAN-DESC             PIC X(100)       *> Free-text description
+    05  TRAN-AMT              PIC S9(09)V99    *> Amount: negative=debit, positive=credit
+    05  TRAN-MERCHANT-ID      PIC 9(09)        *> Merchant identifier
+    05  TRAN-MERCHANT-NAME    PIC X(50)        *> Merchant name
+    05  TRAN-MERCHANT-CITY    PIC X(50)        *> Merchant city
+    05  TRAN-MERCHANT-ZIP     PIC X(10)        *> Merchant ZIP code
+    05  TRAN-CARD-NUM         PIC X(16)        *> Associated card PAN — Alternate Index key
+    05  TRAN-ORIG-TS          PIC X(26)        *> Original timestamp (YYYY-MM-DD HH:MM:SS.ssssss)
+    05  TRAN-PROC-TS          PIC X(26)        *> Processing timestamp
+    05  FILLER                PIC X(20)</code></pre>
+
+<h3>TRAN-CAT-BAL-RECORD — TCATBALF (RECLN=50)</h3>
+<p>Copybook: <code>app/cpy/CVTRA01Y.cpy</code></p>
+<pre><code>01  TRAN-CAT-BAL-RECORD.
+    05  TRAN-CAT-KEY.
+        10  TRANCAT-ACCT-ID   PIC 9(11)        *> Account ID component of composite key
+        10  TRANCAT-TYPE-CD   PIC X(02)        *> Transaction type code component
+        10  TRANCAT-CD        PIC 9(04)        *> Category code component
+    05  TRAN-CAT-BAL          PIC S9(09)V99    *> Running balance for this account/type/category
+    05  FILLER                PIC X(22)</code></pre>
+
+<h3>DIS-GROUP-RECORD — DISCGRP (RECLN=50)</h3>
+<p>Copybook: <code>app/cpy/CVTRA02Y.cpy</code> — used by interest calculation (INTCALC batch)</p>
+<pre><code>01  DIS-GROUP-RECORD.
+    05  DIS-GROUP-KEY.
+        10  DIS-ACCT-GROUP-ID PIC X(10)        *> Account group ID (from ACCT-GROUP-ID)
+        10  DIS-TRAN-TYPE-CD  PIC X(02)        *> Transaction type code
+        10  DIS-TRAN-CAT-CD   PIC 9(04)        *> Category code
+    05  DIS-INT-RATE          PIC S9(04)V99    *> Interest rate for this group/type/category
+    05  FILLER                PIC X(28)</code></pre>
+
+<h3>DALYTRAN-RECORD — DALYTRAN (RECLN=350, Sequential)</h3>
+<p>Copybook: <code>app/cpy/CVTRA06Y.cpy</code> — batch input file for POSTTRAN job</p>
+<pre><code>01  DALYTRAN-RECORD.
+    05  DALYTRAN-ID           PIC X(16)
+    05  DALYTRAN-TYPE-CD      PIC X(02)
+    05  DALYTRAN-CAT-CD       PIC 9(04)
+    05  DALYTRAN-SOURCE       PIC X(10)
+    05  DALYTRAN-DESC         PIC X(100)
+    05  DALYTRAN-AMT          PIC S9(09)V99
+    05  DALYTRAN-MERCHANT-ID  PIC 9(09)
+    05  DALYTRAN-MERCHANT-NAME PIC X(50)
+    05  DALYTRAN-MERCHANT-CITY PIC X(50)
+    05  DALYTRAN-MERCHANT-ZIP  PIC X(10)
+    05  DALYTRAN-CARD-NUM      PIC X(16)       *> Links to XREFFILE for account lookup
+    05  DALYTRAN-ORIG-TS       PIC X(26)
+    05  DALYTRAN-PROC-TS       PIC X(26)
+    05  FILLER                 PIC X(20)</code></pre>
+
+<h3>Reference / Lookup Data Structures</h3>
+<p>Copybooks: <code>CVTRA03Y.cpy</code> (TRAN-TYPE-RECORD), <code>CVTRA04Y.cpy</code> (TRAN-CAT-RECORD)</p>
+<pre><code>01  TRAN-TYPE-RECORD.                             *> CVTRA03Y — TRANTYPE VSAM (RECLN=60)
+    05  TRAN-TYPE             PIC X(02)           *> 2-char type code (e.g. 'SA', 'RE')
+    05  TRAN-TYPE-DESC        PIC X(50)           *> Human-readable description
+    05  FILLER                PIC X(08)
+
+01  TRAN-CAT-RECORD.                              *> CVTRA04Y — TRANCATG VSAM (RECLN=60)
+    05  TRAN-CAT-KEY.
+        10  TRAN-TYPE-CD      PIC X(02)
+        10  TRAN-CAT-CD       PIC 9(04)
+    05  TRAN-CAT-TYPE-DESC    PIC X(50)
+    05  FILLER                PIC X(04)</code></pre>
+
+<h3>Report Data Structures — CVTRA07Y.cpy</h3>
+<pre><code>01  TRANSACTION-DETAIL-REPORT.                    *> One output line per transaction
+    05  TRAN-REPORT-TRANS-ID    PIC X(16)
+    05  FILLER                  PIC X(01) VALUE SPACES
+    05  TRAN-REPORT-ACCOUNT-ID  PIC X(11)
+    05  FILLER                  PIC X(01) VALUE SPACES
+    05  TRAN-REPORT-TYPE-CD     PIC X(02)
+    05  FILLER                  PIC X(01) VALUE '-'
+    05  TRAN-REPORT-TYPE-DESC   PIC X(15)
+    05  FILLER                  PIC X(01) VALUE SPACES
+    05  TRAN-REPORT-CAT-CD      PIC 9(04)
+    05  FILLER                  PIC X(01) VALUE '-'
+    05  TRAN-REPORT-CAT-DESC    PIC X(29)
+    05  FILLER                  PIC X(01) VALUE SPACES
+    05  TRAN-REPORT-SOURCE      PIC X(10)
+    05  FILLER                  PIC X(04) VALUE SPACES
+    05  TRAN-REPORT-AMT         PIC -ZZZ,ZZZ,ZZZ.ZZ</code></pre>
+
+ --><!-- ═════════════════════
+<h2>VSAM File Inventory</h2>
+<table>
+    <tr>
+        <th>DD Name</th><th>Dataset (z/OS)</th><th>Type</th><th>Primary Key</th><th>AIX</th><th>Access</th>
+    </tr>
+    <tr>
+        <td><code>TRANSACT</code></td>
+        <td><code>AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS</code></td>
+        <td>VSAM KSDS</td>
+        <td>TRAN-ID X(16)</td>
+        <td>TRAN-CARD-NUM X(16)</td>
+        <td>CICS + Batch</td>
+    </tr>
+    <tr>
+        <td><code>TCATBALF</code></td>
+        <td><code>AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS</code></td>
+        <td>VSAM KSDS</td>
+        <td>Acct+Type+Cat</td>
+        <td>—</td>
+        <td>Batch POSTTRAN + INTCALC</td>
+    </tr>
+    <tr>
+        <td><code>XREFFILE / CCXREF</code></td>
+        <td><code>AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS</code></td>
+        <td>VSAM KSDS</td>
+        <td>XREF-CARD-NUM X(16)</td>
+        <td>XREF-ACCT-ID 9(11)</td>
+        <td>CICS (CT02) + Batch</td>
+    </tr>
+    <tr>
+        <td><code>ACCTFILE</code></td>
+        <td><code>AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS</code></td>
+        <td>VSAM KSDS</td>
+        <td>ACCT-ID 9(11)</td>
+        <td>ACCT-CARD-NUM</td>
+        <td>Batch POSTTRAN (REWRITE)</td>
+    </tr>
+    <tr>
+        <td><code>DALYTRAN</code></td>
+        <td><code>AWS.M2.CARDDEMO.DALYTRAN.PS</code></td>
+        <td>Sequential PS</td>
+        <td>—</td>
+        <td>—</td>
+        <td>Batch input only</td>
+    </tr>
+    <tr>
+        <td><code>DALYREJS</code></td>
+        <td><code>AWS.M2.CARDDEMO.DALYREJS(+1)</code></td>
+        <td>Sequential GDG</td>
+        <td>—</td>
+        <td>—</td>
+        <td>Batch reject output</td>
+    </tr>
+    <tr>
+        <td><code>TRANREPT</code></td>
+        <td><code>AWS.M2.CARDDEMO.TRANREPT(+1)</code></td>
+        <td>Sequential GDG</td>
+        <td>—</td>
+        <td>—</td>
+        <td>Report output (133 LRECL)</td>
+    </tr>
+</table>
+
+ --><!-- ════════
+<h2>CICS Transaction Interface</h2>
+
+<p>The 3270 terminal interface uses BMS maps. There are no REST or HTTP APIs in this module.</p>
+
+<h3>Screen / Transaction Catalog</h3>
+<table>
+    <tr>
+        <th>Transaction ID</th><th>Program</th><th>Mapset</th><th>Map</th><th>Function</th>
+    </tr>
+    <tr>
+        <td><code>CT00</code></td>
+        <td><code>COTRN00C</code></td>
+        <td><code>COTRN00</code></td>
+        <td><code>COTRN0A</code></td>
+        <td>Transaction list — 10 rows, paginated by card number</td>
+    </tr>
+    <tr>
+        <td><code>CT01</code></td>
+        <td><code>COTRN01C</code></td>
+        <td><code>COTRN01</code></td>
+        <td><code>COTRN1A</code></td>
+        <td>Transaction detail view — all fields of one TRAN-RECORD</td>
+    </tr>
+    <tr>
+        <td><code>CT02</code></td>
+        <td><code>COTRN02C</code></td>
+        <td><code>COTRN02</code></td>
+        <td><code>COTRN2A</code></td>
+        <td>Add transaction new validates + writes to TRANSACT VSAM</td> 
+    </tr>
+</table>
+
+<h3>Navigation Key Map</h3>
+<table>
+    <tr><th>Key</th><th>Screen</th><th>Action</th></tr>
+    <tr><td><code>ENTER</code></td><td>All</td><td>Submit / Process input</td></tr>
+    <tr><td><code>PF3</code></td><td>CT00, CT01, CT02</td><td>Return to Main Menu (COMEN01C)</td></tr>
+    <tr><td><code>PF4</code></td><td>CT01</td><td>Clear current screen fields</td></tr>
+    <tr><td><code>PF4</code></td><td>CT02</td><td>Clear fields; copy last transaction data</td></tr>
+    <tr><td><code>PF5</code></td><td>CT01</td><td>Return to transaction list (CT00 / COTRN00C)</td></tr>
+    <tr><td><code>PF7</code></td><td>CT00</td><td>Scroll backwards (previous page)</td></tr>
+    <tr><td><code>PF8</code></td><td>CT00</td><td>Scroll forward (next page)</td></tr>
+    <tr><td><code>S</code> in SEL col</td><td>CT00</td><td>Select transaction row → navigate to CT01</td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2>Processing Flows</h2>
+
+<h3>CT00 — Transaction List (COTRN00C)</h3>
+<div class="flow-step"><span>1.</span> On first entry: read COMMAREA to get <code>CDEMO-CARD-NUM</code> (current card context)</div>
+<div class="flow-step"><span>2.</span> Execute <code>EXEC CICS STARTBR DATASET('TRANSACT') RIDFLD(TRAN-CARD-NUM) GTEQ</code> on the AIX</div>
+<div class="flow-step"><span>3.</span> Loop <code>READNEXT</code> up to 10 records for the current page; track first/last TRAN-ID in COMMAREA (<code>CDEMO-CT00-TRNID-FIRST</code>, <code>CDEMO-CT00-TRNID-LAST</code>)</div>
+<div class="flow-step"><span>4.</span> Peek at the (N+1)th record to set <code>CDEMO-CT00-NEXT-PAGE-FLG</code>; execute <code>ENDBR</code></div>
+<div class="flow-step"><span>5.</span> PF8 (forward): restart STARTBR at <code>TRNID-LAST</code>, skip one, read next 10</div>
+<div class="flow-step"><span>6.</span> PF7 (backward): STARTBR at <code>TRNID-FIRST</code>, loop <code>READPREV</code> 10 records</div>
+<div class="flow-step"><span>7.</span> 'S' selection: XCTL to COTRN01C with selected TRAN-ID in <code>CDEMO-CT00-TRN-SELECTED</code></div>
+
+<h3>CT01 — Transaction View (COTRN01C)</h3>
+<div class="flow-step"><span>1.</span> On entry from CT00: <code>CDEMO-CT01-TRN-SELECTED</code> contains the TRAN-ID to display</div>
+<div class="flow-step"><span>2.</span> Execute <code>EXEC CICS READ DATASET('TRANSACT') INTO(TRAN-RECORD) RIDFLD(TRAN-ID) UPDATE</code></div>
+<div class="flow-step"><span>3.</span> Format TRAN-AMT as <code>+99999999.99</code> and populate all BMS map output fields</div>
+<div class="flow-step"><span>4.</span> ENTER key: re-execute READ for the TRAN-ID entered in the input field</div>
+<div class="flow-step"><span>5.</span> PF5: XCTL back to COTRN00C (transaction list)</div>
+<div class="flow-step"><span>6.</span> PF3: XCTL to COMEN01C or the previous program from COMMAREA</div>
+
+<h3>CT02 — Add Transaction (COTRN02C)</h3>
+<div class="flow-step"><span>1.</span> User enters Account ID or Card Number (one field populates the other via XREFFILE lookup)</div>
+<div class="flow-step"><span>2.</span> Validate: type code, category code, amount, merchant fields are all non-blank/valid</div>
+<div class="flow-step"><span>3.</span> <code>MOVE HIGH-VALUES TO TRAN-ID</code> → <code>STARTBR</code> → <code>READPREV</code> → <code>ENDBR</code> to get the last TRAN-ID</div>
+ move back to <code>TRAN-ID</code> (character)</div>
+<div class="flow-step"><span>5.</span> Build TRAN-RECORD from screen input; set <code>TRAN-ORIG-TS</code> and <code>TRAN-PROC-TS</code> from current timestamp</div>
+<div class="flow-step"><span>6.</span> <code>EXEC CICS WRITE DATASET('TRANSACT') FROM(TRAN-RECORD) RIDFLD(TRAN-ID)</code></div>
+<div class="flow-step"><span>7.</span> On success: display confirmation; on DUPREC: regenerate ID and retry</div>
+
+<h3>POSTTRAN Batch (CBTRN02C)</h3>
+<div class="flow-step"><span>1.</span> Open all files: DALYTRAN (input), TRANFILE (VSAM), XREFFILE, DALYREJS (reject output), ACCTFILE, TCATBALF</div>
+<div class="flow-step"><span>2.</span> Loop: <code>READ DALYTRAN-FILE INTO DALYTRAN-RECORD</code> until end-of-file</div>
+<div class="flow-step"><span>3.</span> <strong>1500-VALIDATE-TRAN:</strong> READ XREFFILE by DALYTRAN-CARD-NUM → get XREF-ACCT-ID; READ ACCTFILE by ACCT-ID → check credit limit (<code>ACCT-CURR-CYC-CREDIT</code>)</div>
+<div class="flow-step"><span>4.</span> <strong>2000-POST-TRANSACTION:</strong> generate DB2 timestamp; call 2700-UPDATE-TCATBAL; call 2800-UPDATE-ACCOUNT-REC; call 2900-WRITE-TRANSACTION-FILE</div>
+<div class="flow-step"><span>5.</span> <strong>2700-UPDATE-TCATBAL:</strong> READ-UPDATE TCATBALF; ADD DALYTRAN-AMT TO TRAN-CAT-BAL; REWRITE</div>
+<div class="flow-step"><span>6.</span> <strong>2800-UPDATE-ACCOUNT-REC:</strong> ADD DALYTRAN-AMT TO ACCT-CURR-BAL; REWRITE ACCTFILE record</div>
+<div class="flow-step"><span>7.</span> <strong>2900-WRITE-TRANSACTION-FILE:</strong> WRITE TRANFILE record; on duplicate: increment ID and retry</div>
+<div class="flow-step"><span>8.</span> On validation failure: WRITE reject record to DALYREJS; increment WS-REJECT-COUNT</div>
+<div class="flow-step"><span>9.</span> DISPLAY reject count; if &gt; 0 set RC=8</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2>JCL Jobs</h2>
+
+<h3>POSTTRAN.jcl — Daily Transaction Posting</h3>
+<pre><code>//POSTTRAN JOB 'POSTTRAN',CLASS=A,MSGCLASS=0,NOTIFY=&SYSUID
+//STEP15 EXEC PGM=CBTRN02C
+//STEPLIB  DD DISP=SHR,DSN=AWS.M2.CARDDEMO.LOADLIB
+//TRANFILE DD DISP=SHR,DSN=AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS
+//DALYTRAN DD DISP=SHR,DSN=AWS.M2.CARDDEMO.DALYTRAN.PS
+//XREFFILE DD DISP=SHR,DSN=AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS
+//DALYREJS DD DISP=(NEW,CATLG,DELETE),
+//         DCB=(RECFM=F,LRECL=430,BLKSIZE=0),
+//         DSN=AWS.M2.CARDDEMO.DALYREJS(+1)
+//ACCTFILE DD DISP=SHR,DSN=AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS
+//TCATBALF DD DISP=SHR,DSN=AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS</code></pre>
+
+<h3>TRANREPT.jcl — Daily Transaction Report (multi-step)</h3>
+<pre><code>//STEP05R EXEC PROC=REPROC   *> Unload TRANFILE to sequential backup (+1 GDG)
+
+//STEP05R EXEC PGM=SORT      *> Filter by date range and sort by TRAN-CARD-NUM
+INCLUDE COND=(TRAN-PROC-DT,GE,PARM-START-DATE,AND,TRAN-PROC-DT,LE,PARM-END-DATE)
+SORT    FIELDS=(TRAN-CARD-NUM,A)
+*> Output: AWS.M2.CARDDEMO.TRANSACT.DALY(+1)
+
+//STEP10R EXEC PGM=CBTRN03C  *> Format and produce report
+//TRANFILE DD ...TRANSACT.DALY(+1)    *> Sorted, date-filtered input
+//CARDXREF DD ...CARDXREF.VSAM.KSDS   *> Account lookup
+//TRANTYPE DD ...TRANTYPE.VSAM.KSDS   *> Type descriptions
+//TRANCATG DD ...TRANCATG.VSAM.KSDS   *> Category descriptions
+//DATEPARM DD ...DATEPARM              *> Date parameter file
+//TRANREPT DD ...CARDDEMO.TRANREPT(+1) *> Output report (GDG, LRECL=133)</code></pre>
+
+<h3>COMBTRAN.jcl — Combine Transactions</h3>
+<pre><code>//STEP05R EXEC PGM=SORT      *> Merge TRANSACT.BKUP(0) and SYSTRAN(0), sort by TRAN-ID
+SORT FIELDS=(TRAN-ID,A)
+*> Output: AWS.M2.CARDDEMO.TRANSACT.COMBINED(+1)
+
+//STEP10  EXEC PGM=IDCAMS    *> REPRO combined file into TRANSACT VSAM KSDS
+   REPRO INFILE(TRANSACT) OUTFILE(TRANVSAM)</code></pre>
+
+<h3>Supporting JCL Jobs</h3>
+<table>
+    <tr><th>Job</th><th>Function</th></tr>
+    <tr><td><code>TRANFILE.jcl</code></td><td>Define and load TRANSACT VSAM KSDS from source data</td></tr>
+    <tr><td><code>TRANIDX.jcl</code></td><td>Build Alternate Index (AIX) on TRAN-CARD-NUM and define path</td></tr>
+    <tr><td><code>TRANBKP.jcl</code></td><td>Backup TRANSACT VSAM to GDG sequential dataset</td></tr>
+    <tr><td><code>TRANCATG.jcl</code></td><td>Load TRANCATG VSAM (transaction category reference data)</td></tr>
+    <tr><td><code>TRANTYPE.jcl</code></td><td>Load TRANTYPE VSAM (transaction type reference data)</td></tr>
+    <tr><td><code>REPTFILE.jcl</code></td><td>Define report output GDG base datasets</td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2>Business Rules</h2>
+
+<div class="rule-box">
+    <strong>Transaction ID Generation:</strong> COTRN02C generates the next TRAN-ID by reading the
+    last record in TRANFILE (<code>STARTBR HIGH-VALUES + READPREV</code>), converting to numeric,
+    adding 1, and converting back. This is a sequential counter in VSAM key order.
+</div>
+
+<div class="rule-box">
+    <strong>Amount Sign Convention:</strong> Negative amounts (<code>TRAN-AMT &lt; 0</code>) represent
+    charges/debits (reduce account balance). Positive amounts represent credits/payments (increase
+    account balance). The POSTTRAN job adds <code>DALYTRAN-AMT</code> directly to <code>ACCT-CURR-BAL</code>.
+</div>
+
+<div class="rule-box">
+    <strong>Card-Account Linkage:</strong> COTRN02C accepts either an Account ID or Card Number.
+    If Account ID is entered, it reads CCXREF using the AIX (<code>XREF-ACCT-ID</code>) to find the
+    card number. If Card Number is entered, it reads CCXREF by primary key to find the Account ID.
+    Both lookups use <code>EXEC CICS READ DATASET('CCXREF')</code>.
+</div>
+
+<div class="rule-box">
+    <strong>Transaction List Scope:</strong> CT00 (COTRN00C) lists transactions for the card number
+    stored in <code>CDEMO-CARD-NUM</code> in the COMMAREA. The TRANFILE AIX on <code>TRAN-CARD-NUM</code>
+    is used for the browse (<code>STARTBR</code>). Transactions for other cards are not visible.
+</div>
+
+<div class="rule-box">
+    <strong>Category Balance Update:</strong> POSTTRAN (CBTRN02C) maintains the TCATBALF file,
+    which stores running balances per Account+TypeCode+CategoryCode. These are read by the INTCALC
+    batch job (CBACT04C) together with DISCGRP interest rates to compute monthly interest per group.
+</div>
+
+<div class="rule-box">
+    <strong>Reject Handling:</strong> Transactions that fail POSTTRAN validation (invalid card in
+    XREFFILE, or account not found) are written to the <code>DALYREJS</code> GDG dataset (LRECL=430,
+    includes reject reason trailer). The batch job returns RC=8 when any rejects exist.
+</div>
+
+<div class="rule-box">
+    <strong>Date Range Filtering:</strong> The TRANREPT job uses a SORT INCLUDE on
+    <code>TRAN-PROC-TS(305,10)</code> against date parameters from the <code>DATEPARM</code> file.
+    The date format is <code>YYYY-MM-DD</code> (character comparison). The CORPT00C online screen
+    allows the user to provide the date range which is written to the TDQ.
+</div>
+
+<div class="warn-box">
+    <strong>CICS File Close Requirement:</strong> POSTTRAN (CBTRN02C) directly updates TRANFILE,
+    ACCTFILE, and TCATBALF. These VSAM files must be closed in CICS via the CLOSEFIL job before
+    POSTTRAN runs, and reopened via OPENFIL after completion. Running POSTTRAN while CICS has the
+    files open risks data corruption and VSAM file status errors.
+</div>
+
+<div class="warn-box">
+    <strong>No Credit-Limit Enforcement at Add-Time:</strong> COTRN02C does not check the credit
+    limit before writing a transaction. Credit limit validation occurs in CBTRN02C (POSTTRAN batch)
+    during the 1500-VALIDATE-TRAN paragraph. Online transaction adds can therefore temporarily
+    exceed the credit limit until batch posting runs.
+</div>
+
+ --><!-- ════════════════
+<h2>Dependencies</h2>
+
+<h3>Internal Module Dependencies</h3>
+<table>
+    <tr><th>Module</th><th>Dependency Type</th><th>Details</th></tr>
+    <tr>
+        <td><a href="../authentication/">authentication</a></td>
+        <td>Required — session</td>
+        <td>COMMAREA must contain valid <code>CDEMO-USER-ID</code> and <code>CDEMO-CARD-NUM</code>;
+            transactions module will XCTL to COSGN00C if EIBCALEN=0</td>
+    </tr>
+    <tr>
+        <td><a href="../accounts/">accounts</a></td>
+        <td>Required — data</td>
+        <td>ACCTFILE is updated by POSTTRAN batch; ACCT-GROUP-ID determines interest rate via DISCGRP.
+            Online add (CT02) uses XREFFILE to resolve Account↔Card linkage</td>
+    </tr>
+    <tr>
+        <td><a href="../credit-cards/">credit-cards</a></td>
+        <td>Required — data</td>
+        <td>CARDFILE and XREFFILE used by CBTRN01C validation; TRAN-CARD-NUM AIX depends on valid
+            card numbers in CARDFILE</td>
+    </tr>
+    <tr>
+        <td><a href="../billing/">billing</a></td>
+        <td>Downstream</td>
+        <td>Bill payments (COBIL00C) write positive transactions to TRANFILE, feeding POSTTRAN</td>
+    </tr>
+    <tr>
+        <td><a href="../reports/">reports</a></td>
+        <td>Downstream</td>
+        <td>CORPT00C submits TRANREPT via TDQ; CBSTM03A statement generation reads TRANFILE</td>
+    </tr>
+    <tr>
+        <td><a href="../batch-processing/">batch-processing</a></td>
+        <td>Shared programs</td>
+        <td>CBTRN01C, CBTRN02C, CBTRN03C are also catalogued under batch-processing module</td>
+    </tr>
+    <tr>
+        <td><a href="../transaction-types/">transaction-types</a> (optional)</td>
+        <td>Reference data</td>
+        <td>TRANTYPE and TRANCATG VSAM files contain type/category descriptions used in TRANREPT;
+            optionally managed via DB2 in the transaction-types module</td>
+    </tr>
+</table>
+
+<h3>External / System Dependencies</h3>
+<table>
+    <tr><th>Dependency</th><th>Purpose</th></tr>
+    <tr><td>CICS TS</td><td>Transaction manager for all CT00/CT01/CT02 programs; file OPEN/CLOSE control</td></tr>
+    <tr><td>VSAM KSDS + AIX</td><td>TRANFILE primary + alternate index; TCATBALF, XREFFILE, ACCTFILE</td></tr>
+    <tr><td>JES2 / z/OS Batch</td><td>JCL execution environment for POSTTRAN, TRANREPT, COMBTRAN</td></tr>
+    <tr><td>DFSORT / SYNCSORT</td><td>SORT utility used in TRANREPT to filter and sort transactions by date/card</td></tr>
+    <tr><td>IDCAMS</td><td>REPRO step in COMBTRAN to load combined dataset into VSAM KSDS</td></tr>
+    <tr><td>GDG (Generation Data Groups)</td><td>Versioned output for DALYREJS and TRANREPT; retains prior generations for audit</td></tr>
+    <tr><td>Extra-Partition TDQ</td><td>CORPT00C submits TRANREPT JCL via TDQ for online-initiated batch execution</td></tr>
+</table>
+
+ --><!-- ════════════════════════════════════════════════════════════
+<h2>Copybook Reference</h2>
+<table>
+    <tr><th>Copybook</th><th>Path</th><th>Key Structure</th><th>Used By</th></tr>
+    <tr>
+        <td><code>CVTRA05Y</code></td>
+        <td><code>app/cpy/CVTRA05Y.cpy</code></td>
+        <td>TRAN-RECORD (350 bytes)</td>
+        <td>COTRN00C, COTRN01C, COTRN02C, CBTRN02C, CBTRN03C</td>
+    </tr>
+    <tr>
+        <td><code>CVTRA01Y</code></td>
+        <td><code>app/cpy/CVTRA01Y.cpy</code></td>
+        <td>TRAN-CAT-BAL-RECORD (50 bytes)</td>
+        <td>CBTRN02C (POSTTRAN), CBACT04C (INTCALC)</td>
+    </tr>
+    <tr>
+        <td><code>CVTRA02Y</code></td>
+        <td><code>app/cpy/CVTRA02Y.cpy</code></td>
+        <td>DIS-GROUP-RECORD (50 bytes)</td>
+        <td>CBACT04C (INTCALC interest calculation)</td>
+    </tr>
+    <tr>
+        <td><code>CVTRA03Y</code></td>
+        <td><code>app/cpy/CVTRA03Y.cpy</code></td>
+        <td>TRAN-TYPE-RECORD (60 bytes)</td>
+        <td>CBTRN03C (report type lookups)</td>
+    </tr>
+    <tr>
+        <td><code>CVTRA04Y</code></td>
+        <td><code>app/cpy/CVTRA04Y.cpy</code></td>
+        <td>TRAN-CAT-RECORD (60 bytes)</td>
+        <td>CBTRN03C (report category lookups)</td>
+    </tr>
+    <tr>
+        <td><code>CVTRA06Y</code></td>
+        <td><code>app/cpy/CVTRA06Y.cpy</code></td>
+        <td>DALYTRAN-RECORD (350 bytes)</td>
+        <td>CBTRN01C, CBTRN02C (batch input)</td>
+    </tr>
+    <tr>
+        <td><code>CVTRA07Y</code></td>
+        <td><code>app/cpy/CVTRA07Y.cpy</code></td>
+        <td>Report layout structures</td>
+        <td>CBTRN03C (report output)</td>
+    </tr>
+    <tr>
+        <td><code>COCOM01Y</code></td>
+        <td><code>app/cpy/COCOM01Y.cpy</code></td>
+        <td>CARDDEMO-COMMAREA + CT00/CT01 navigation fields</td>
+        <td>All CICS programs</td>
+    </tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2>Usage Examples</h2>
+
+<h3>Example 1: CICS Browse (COTRN00C excerpt)</h3>
+<pre><code>       STARTBR-TRANSACT-FILE.
+           EXEC CICS STARTBR
+                DATASET   (WS-TRANSACT-FILE)      *> 'TRANSACT'
+                RIDFLD    (TRAN-CARD-NUM)          *> Start at card number (AIX)
+                GTEQ
+                RESP      (WS-RESP-CD)
+                RESP2     (WS-REAS-CD)
+           END-EXEC.
+
+       READNEXT-TRANSACT-FILE.
+           EXEC CICS READNEXT
+                DATASET   (WS-TRANSACT-FILE)
+                INTO      (TRAN-RECORD)
+                LENGTH    (LENGTH OF TRAN-RECORD)
+                RIDFLD    (TRAN-ID)               *> Updated by CICS on each read
+                RESP      (WS-RESP-CD)
+                RESP2     (WS-REAS-CD)
+           END-EXEC.
+           EVALUATE WS-RESP-CD
+               WHEN DFHRESP(NORMAL)   CONTINUE
+               WHEN DFHRESP(ENDFILE)  SET TRANSACT-EOF TO TRUE
+               WHEN OTHER             SET ERR-FLG-ON TO TRUE
+           END-EVALUATE.</code></pre>
+
+<h3>Example 2: Write New Transaction (COTRN02C excerpt)</h3>
+<pre><code>       ADD-TRANSACTION.
+           *> Step 1: Determine next TRAN-ID
+           MOVE HIGH-VALUES TO TRAN-ID
+           PERFORM STARTBR-TRANSACT-FILE
+           PERFORM READPREV-TRANSACT-FILE      *> Gets the last record
+           PERFORM ENDBR-TRANSACT-FILE
+           MOVE TRAN-ID     TO WS-TRAN-ID-N   *> Convert X(16) to 9(16)
+           ADD 1 TO WS-TRAN-ID-N
+           MOVE WS-TRAN-ID-N TO TRAN-ID       *> New sequential key
+
+           *> Step 2: Build record from screen input
+           MOVE CARDNINI  OF COTRN2AI TO TRAN-CARD-NUM
+           MOVE TTYPCDI   OF COTRN2AI TO TRAN-TYPE-CD
+           MOVE TCATCDI   OF COTRN2AI TO TRAN-CAT-CD
+           MOVE TRNAMTI   OF COTRN2AI TO TRAN-AMT
+           MOVE FUNCTION CURRENT-DATE  TO WS-TIMESTAMP
+           MOVE WS-TIMESTAMP TO TRAN-ORIG-TS
+                               TRAN-PROC-TS
+
+           *> Step 3: Write to VSAM
+           EXEC CICS WRITE
+                DATASET   (WS-TRANSACT-FILE)
+                FROM      (TRAN-RECORD)
+                LENGTH    (LENGTH OF TRAN-RECORD)
+                RIDFLD    (TRAN-ID)
+                RESP      (WS-RESP-CD)
+           END-EXEC.</code></pre>
+
+<h3>Example 3: POSTTRAN Batch Balance Update (CBTRN02C excerpt)</h3>
+<pre><code>       2800-UPDATE-ACCOUNT-REC.
+           *> Read account with update lock
+           READ ACCOUNT-FILE INTO ACCOUNT-RECORD
+               KEY IS WS-ACCT-ID
+               INVALID KEY
+                   DISPLAY 'ACCOUNT NOT FOUND: ' WS-ACCT-ID
+                   PERFORM 9999-ABEND-PROGRAM
+           END-READ.
+
+           *> Apply transaction amount to balance
+           ADD DALYTRAN-AMT TO ACCT-CURR-BAL      *> Negative for charges, positive for credits
+
+           *> Update debit/credit cycle accumulators
+           IF DALYTRAN-AMT < ZEROS
+               ADD DALYTRAN-AMT TO ACCT-CURR-CYC-DEBIT
+           ELSE
+               ADD DALYTRAN-AMT TO ACCT-CURR-CYC-CREDIT
+           END-IF.
+
+           REWRITE FD-ACCTFILE-REC FROM ACCOUNT-RECORD
+               INVALID KEY
+                   DISPLAY 'ERROR REWRITING ACCOUNT: ' WS-ACCT-ID
+                   PERFORM 9999-ABEND-PROGRAM
+           END-REWRITE.</code></pre>
+
+<h3>Example 4: TRANREPT Report Line Construction (CBTRN03C pattern)</h3>
+<pre><code>       *> CBTRN03C reads sorted TRANFILE, looks up type/category descriptions,
+       *> then writes 133-char formatted lines using CVTRA07Y report structure.
+
+       READ TRANTYPE-FILE INTO TRAN-TYPE-RECORD
+           KEY IS TRAN-TYPE-CD
+       READ TRANCATG-FILE INTO TRAN-CAT-RECORD
+           KEY IS TRAN-CAT-KEY        *> TRAN-TYPE-CD + TRAN-CAT-CD composite
+
+       MOVE TRAN-ID            TO TRAN-REPORT-TRANS-ID
+       MOVE WS-ACCT-ID         TO TRAN-REPORT-ACCOUNT-ID
+       MOVE TRAN-TYPE-CD       TO TRAN-REPORT-TYPE-CD
+       MOVE TRAN-TYPE-DESC     TO TRAN-REPORT-TYPE-DESC
+       MOVE TRAN-CAT-CD        TO TRAN-REPORT-CAT-CD
+       MOVE TRAN-CAT-TYPE-DESC TO TRAN-REPORT-CAT-DESC
+       MOVE TRAN-SOURCE        TO TRAN-REPORT-SOURCE
+       MOVE TRAN-AMT           TO TRAN-REPORT-AMT    *> Edited: -ZZZ,ZZZ,ZZZ.ZZ
+
+       WRITE REPORT-RECORD FROM TRANSACTION-DETAIL-REPORT</code></pre>
+
+ --><!-- ═══════════════════════════════
+<h2>User Story Templates</h2>
+
+<h3>Online Transaction Stories</h3>
+<table>
+    <tr><th>Story</th><th>Complexity</th><th>Programs / Files</th></tr>
+    <tr>
+        <td>As a cardholder, I want to view my recent transactions so I can monitor spending</td>
+        <td>Simple (1–2 pts)</td>
+        <td>COTRN00C, TRANFILE AIX</td>
+    </tr>
+    <tr>
+        <td>As a cardholder, I want to see transaction details including merchant name so I can verify charges</td>
+        <td>Simple (1–2 pts)</td>
+        <td>COTRN01C, TRANFILE primary read</td>
+    </tr>
+    <tr>
+        <td>As a cardholder, I want to page through my transaction history so I can find older charges</td>
+        <td>Medium (3–5 pts)</td>
+        <td>COTRN00C, STARTBR/READNEXT/READPREV, COMMAREA pagination state</td>
+    </tr>
+    <tr>
+        <td>As a cardholder, I want to add a manual transaction so I can record a purchase</td>
+        <td>Medium (3–5 pts)</td>
+        <td>COTRN02C, CCXREF lookup, TRANFILE WRITE</td>
+    </tr>
+    <tr>
+        <td>As a cardholder, I want the system to pre-fill the card number when I add a transaction so data entry is faster</td>
+        <td>Simple (1–2 pts)</td>
+        <td>COTRN02C, COMMAREA CDEMO-CARD-NUM</td>
+    </tr>
+</table>
+
+<h3>Batch Processing Stories</h3>
+<table>
+    <tr><th>Story</th><th>Complexity</th><th>Programs / Files</th></tr>
+    <tr>
+        <td>As a system, I want to post batch transactions so account balances stay current</td>
+        <td>Complex (5–8 pts)</td>
+        <td>CBTRN02C, DALYTRAN, TRANFILE, ACCTFILE, TCATBALF, DALYREJS, POSTTRAN.jcl</td>
+    </tr>
+    <tr>
+        <td>As a system operator, I want to validate daily transactions before posting so invalid records are identified</td>
+        <td>Medium (3–5 pts)</td>
+        <td>CBTRN01C, DALYTRAN, CUSTFILE, XREFFILE, CARDFILE, ACCTFILE</td>
+    </tr>
+    <tr>
+        <td>As an auditor, I want a daily transaction report so I can reconcile posted amounts</td>
+        <td>Medium (3–5 pts)</td>
+        <td>CBTRN03C, TRANREPT.jcl, TRANTYPE, TRANCATG, TRANREPT GDG</td>
+    </tr>
+    <tr>
+        <td>As a system operator, I want to submit a transaction report from the online screen so I can request it without JCL access</td>
+        <td>Medium (3–5 pts)</td>
+        <td>CORPT00C, extra-partition TDQ, TRANREPT.jcl</td>
+    </tr>
+</table>
+
+<h3>Acceptance Criteria Patterns</h3>
+<div class="info-box">
+    <strong>Transaction List (CT00):</strong><br>
+    ✔ Displays up to 10 transactions for the current card from TRANFILE AIX<br>
+    ✔ PF7 / PF8 scroll to previous / next page without losing position<br>
+    ✔ Entering 'S' in selection column navigates to CT01 for that transaction<br>
+    ✔ Other selection values display "Invalid selection. Valid value is S"<br>
+    ✔ PF3 returns to Main Menu
+</div>
+<div class="info-box">
+    <strong>Transaction Add (CT02):</strong><br>
+    ✔ Type code, category code, amount, merchant name are all required<br>
+    ✔ Either Account ID or Card Number must be provided; system resolves the other via XREFFILE<br>
+    ✔ On success: transaction ID displayed, confirmation message shown<br>
+    ✔ On VSAM DUPREC: system retries with incremented ID<br>
+    ✔ PF4 copies the last-entered transaction data for quick re-entry
+</div>
+<div class="info-box">
+    <strong>POSTTRAN Batch:</strong><br>
+    ✔ All DALYTRAN records are either posted to TRANFILE or written to DALYREJS<br>
+    ✔ ACCT-CURR-BAL updated for each accepted transaction<br>
+    ✔ TRAN-CAT-BAL updated in TCATBALF for each type/category combination<br>
+    ✔ Job completes RC=0 when 0 rejects; RC=8 when any rejects exist<br>
+    ✔ DISPLAY statement outputs reject count to SYSOUT
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2>Development Guidelines</h2>
+
+<h3>Patterns Used in This Module</h3>
+<ul>
+    <li><strong>Pseudo-conversational CICS:</strong> Each screen interaction ends with
+        <code>EXEC CICS RETURN TRANSID(WS-TRANID) COMMAREA(CARDDEMO-COMMAREA)</code> — state is
+        carried in COMMAREA, not in working storage across interactions.</li>
+    <li><strong>COMMAREA Extension Fields:</strong> CT00 and CT01 each add a private navigation block
+        to COMMAREA (<code>CDEMO-CT00-INFO</code>, <code>CDEMO-CT01-INFO</code>) to track pagination
+        state and selected transaction IDs.</li>
+    <li><strong>GTEQ Browse:</strong> AIX browse starts at or after the card number using GTEQ.
+        Programs loop READNEXT until the TRAN-CARD-NUM in the returned record no longer matches the
+        target card number.</li>
+    <li><strong>EIBCALEN Guard:</strong> All CICS programs check <code>IF EIBCALEN = 0</code> at
+        entry and redirect to COSGN00C if no COMMAREA is present — preventing direct transaction
+        invocation without a session.</li>
+    <li><strong>Error Flag Pattern:</strong> <code>WS-ERR-FLG</code> (88-level <code>ERR-FLG-ON</code>)
+        is set on any error; downstream paragraphs check this flag before proceeding.</li>
+    <li><strong>High-Values ID Generation:</strong> CT02 uses MOVE HIGH-VALUES to TRAN-ID before
+        STARTBR to position at the end of the KSDS, then READPREV to get the last record.</li>
+</ul>
+
+<h3>Tech Debt &amp; Modernisation Notes</h3>
+<div class="warn-box">
+    <ul>
+        <li><strong>Sequential ID generation:</strong> Using STARTBR/READPREV to generate the next
+            transaction ID is not concurrency-safe under high CICS transaction volumes. A modernised
+            design should use a DB2 sequence or UUID.</li>
+        <li><strong>No online credit-limit check:</strong> CT02 does not enforce credit limits;
+            validation only occurs during POSTTRAN batch. Consider adding an online check against
+            ACCTFILE during CT02 validation.</li>
+        <li><strong>CICS file close dependency:</strong> Batch jobs updating TRANFILE require
+            CLOSEFIL/OPENFIL coordination. A modernised design would use VSAM RLS (Record Level
+            Sharing) to allow concurrent CICS and batch access.</li>
+        <li><strong>Plain-text timestamps:</strong> TRAN-ORIG-TS / TRAN-PROC-TS are PIC X(26)
+            character strings. A modernised DB would use native TIMESTAMP types.</li>
+    </ul>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<h2>Performance Notes</h2>
+<table>
+    <tr><th>Operation</th><th>Budget</th><th>Notes</th></tr>
+    <tr><td>CT00 page display (CICS)</td><td>&lt; 2 seconds</td><td>10 READNEXT via AIX</td></tr>
+    <tr><td>VSAM AIX browse (STARTBR)</td><td>&lt; 20 ms</td><td>Alternate index path lookup</td></tr>
+    <tr><td>VSAM primary key READ</td><td>&lt; 10 ms</td><td>CT01 direct read by TRAN-ID</td></tr>
+    <tr><td>POSTTRAN batch job</td><td>&lt; 1 hour window</td><td>Sequential DALYTRAN; random ACCTFILE/TCATBALF updates</td></tr>
+    <tr><td>TRANREPT job</td><td>&lt; 30 minutes</td><td>Includes SORT step before CBTRN03C</td></tr>
+</table>
+
+<footer>
+    Last reviewed: 2026-03-26T18:01:14Z
+    &nbsp;|&nbsp;
+    Module: <strong>transactions</strong>
+    &nbsp;|&nbsp;
+    Project: <a href="../../index.html">CardDemo Mainframe</a>
+</footer>
+
 </div>
 </body>
 </html>
