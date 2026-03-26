@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accounts - User Story Development Guide | CardDemo</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; color: #212529; line-height: 1.6; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+        .header { background: linear-gradient(135deg, #004d40 0%, #00695c 100%); color: #fff; padding: 36px 32px; border-radius: 10px; margin-bottom: 28px; }
+        .header h1 { font-size: 2rem; margin-bottom: 8px; }
+        .header p { opacity: 0.85; font-size: 1.05rem; }
+        .badge { display: inline-block; background: rgba(255,255,255,0.2); border-radius: 4px; padding: 2px 10px; font-size: 0.8rem; margin-right: 8px; }
+        .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 28px; margin-bottom: 24px; }
+        h2 { font-size: 1.35rem; color: #004d40; border-bottom: 2px solid #e0f2f1; padding-bottom: 8px; margin-bottom: 18px; }
+        h3 { font-size: 1.1rem; color: #00695c; margin: 18px 0 10px; }
+        ul, ol { padding-left: 22px; }
+        li { margin-bottom: 6px; }
+        code { background: #f3f4f6; border-radius: 3px; padding: 2px 6px; font-size: 0.88rem; font-family: 'Courier New', monospace; }
+        pre { background: #1e1e2e; color: #cdd6f4; border-radius: 6px; padding: 18px; overflow-x: auto; font-size: 0.85rem; margin: 12px 0; }
+        .complexity { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 12px 0; }
+        .complexity-card { border-radius: 6px; padding: 14px; }
+        .simple { background: #e8f5e9; border-left: 4px solid #4caf50; }
+        .medium { background: #fff3e0; border-left: 4px solid #ff9800; }
+        .complex { background: #fce4ec; border-left: 4px solid #e91e63; }
+        .complexity-card strong { display: block; margin-bottom: 4px; }
+        .ac-example { background: #f1f8ff; border-left: 4px solid #0288d1; border-radius: 4px; padding: 12px 16px; margin: 10px 0; font-size: 0.93rem; }
+        .footer { text-align: center; padding: 20px; color: #6c757d; font-size: 0.9rem; }
+        .nav-link { display: inline-block; margin: 6px 8px 0 0; color: #004d40; text-decoration: none; font-size: 0.95rem; }
+        .nav-link:hover { text-decoration: underline; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+        th { background: #e0f2f1; color: #004d40; text-align: left; padding: 10px 12px; font-size: 0.9rem; }
+        td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
+        tr:hover td { background: #fafafa; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🏦 Accounts</h1>
+        <p>User Story Development Guide — CardDemo Mainframe Application</p>
+        <div style="margin-top:12px">
+            <span class="badge">CICS</span>
+            <span class="badge">Batch</span>
+            <span class="badge">COBOL</span>
+            <span class="badge">VSAM ACCTFILE</span>
+            <span class="badge">CAVW · CAUP</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>📋 Module Overview</h2>
+        <p><strong>Purpose:</strong> View and update credit card account details online; run interest calculations and data extract/reporting in batch.</p>
+        <p style="margin-top:10px"><strong>Business Context:</strong> The account is the central financial entity. All cards, transactions, billing, and interest are linked to an account. The account record holds balance, credit limit, and group ID for interest rate determination.</p>
+        <h3>Key Components</h3>
+        <table>
+            <tr><th>Component</th><th>Type</th><th>Responsibility</th></tr>
+            <tr><td><code>COACTVWC.cbl</code></td><td>CICS (CAVW)</td><td>Display account details — read-only view</td></tr>
+            <tr><td><code>COACTUPC.cbl</code></td><td>CICS (CAUP)</td><td>Update account fields (ZIP, group, status)</td></tr>
+            <tr><td><code>CBACT01C.cbl</code></td><td>Batch</td><td>Account data validation and processing</td></tr>
+            <tr><td><code>CBACT02C.cbl</code></td><td>Batch</td><td>Account copy/extract operations</td></tr>
+            <tr><td><code>CBACT03C.cbl</code></td><td>Batch</td><td>Account extract processing</td></tr>
+            <tr><td><code>CBACT04C.cbl</code></td><td>Batch (INTCALC)</td><td>Interest calculation — reads TCATBALF + DISCGRP, updates ACCTFILE</td></tr>
+            <tr><td><code>CVACT01Y.cpy</code></td><td>Copybook</td><td>ACCOUNT-RECORD structure (RECLN=300)</td></tr>
+            <tr><td><code>CVACT02Y.cpy</code></td><td>Copybook</td><td>CARD-RECORD structure</td></tr>
+            <tr><td><code>CVACT03Y.cpy</code></td><td>Copybook</td><td>CARD-XREF-RECORD structure</td></tr>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>🎯 User Story Development Guide</h2>
+        <h3>📝 Module-Specific US Templates</h3>
+        <ul>
+            <li><strong>View account:</strong> As a cardholder, I want to view my account balance, credit limit, and status so I know my current financial position</li>
+            <li><strong>Update address:</strong> As a cardholder, I want to update my billing ZIP code so my address on file is accurate</li>
+            <li><strong>View cycle data:</strong> As a cardholder, I want to see current cycle credits and debits so I can track my billing cycle activity</li>
+            <li><strong>Interest calc:</strong> As a system, I want to calculate monthly interest per account-group-type-category so balances reflect accrued interest</li>
+            <li><strong>Account status:</strong> As an administrator, I want to change an account's active status so access can be suspended when needed</li>
+        </ul>
+
+        <h3>⚡ Development Acceleration Factors</h3>
+        <ul>
+            <li><strong>CVACT01Y copybook:</strong> Account record structure already defined — no redesign needed for standard account fields</li>
+            <li><strong>XREFFILE lookup:</strong> Card-to-Account-to-Customer cross-reference already exists — multi-entity lookups are a single VSAM read chain</li>
+            <li><strong>CBACT04C template:</strong> Interest calculation follows established TCATBALF × DISCGRP pattern — extend for new rate types</li>
+            <li><strong>View/Update separation:</strong> CAVW (read-only) and CAUP (update) already separate — can evolve independently</li>
+        </ul>
+
+        <h3>📊 Complexity Guidelines</h3>
+        <div class="complexity">
+            <div class="complexity-card simple">
+                <strong>Simple (1–2 pts)</strong>
+                Add new display field to account view screen; change field order in BMS map; add read-only field to update screen
+            </div>
+            <div class="complexity-card medium">
+                <strong>Medium (3–5 pts)</strong>
+                Add new updatable account field with validation; modify interest formula for a new rate tier; add customer info display to account view (requires XREF + CUST read)
+            </div>
+            <div class="complexity-card complex">
+                <strong>Complex (5–8 pts)</strong>
+                Add new account field requiring VSAM RECLN change (triggers file redefinition + all batch programs); new interest tier requiring DISCGRP schema change; account history/audit trail (new VSAM file)
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🔧 Technical Foundation</h2>
+        <h3>Account Lookup Flow</h3>
+        <pre>Entry point: Card number in COMMAREA (from previous screen)
+  → Read XREFFILE (key=CARD-NUM) → get ACCT-ID + CUST-ID
+  → Read ACCTFILE (key=ACCT-ID)  → ACCOUNT-RECORD
+  → Read CUSTFILE (key=CUST-ID)  → CUSTOMER-RECORD
+  → Display on COACTVW screen</pre>
+
+        <h3>Interest Calculation Flow (CBACT04C)</h3>
+        <pre>Read TCATBALF sequentially (all account/type/category combos)
+  For each record:
+    → Read XREFFILE (AIX by ACCT-ID) → get CARD-NUM
+    → Read ACCTFILE (key=ACCT-ID)    → get ACCT-GROUP-ID
+    → Read DISCGRP (key=GROUP+TYPE+CAT) → get DIS-INT-RATE
+    → Compute interest = TRAN-CAT-BAL × DIS-INT-RATE
+    → Update ACCTFILE: ACCT-CURR-BAL += interest</pre>
+
+        <h3>Data Model (key fields)</h3>
+        <pre>ACCOUNT-RECORD (ACCTFILE, RECLN=300):
+  ACCT-ID                 PIC 9(11)      ← Primary key
+  ACCT-ACTIVE-STATUS      PIC X(01)      ← Y/N
+  ACCT-CURR-BAL           PIC S9(10)V99  ← Current balance
+  ACCT-CREDIT-LIMIT       PIC S9(10)V99
+  ACCT-CASH-CREDIT-LIMIT  PIC S9(10)V99
+  ACCT-OPEN-DATE          PIC X(10)      ← YYYY-MM-DD
+  ACCT-EXPIRAION-DATE     PIC X(10)
+  ACCT-CURR-CYC-CREDIT    PIC S9(10)V99  ← Cycle credits (payments)
+  ACCT-CURR-CYC-DEBIT     PIC S9(10)V99  ← Cycle debits (charges)
+  ACCT-ADDR-ZIP           PIC X(10)
+  ACCT-GROUP-ID           PIC X(10)      ← Links to DISCGRP interest rates</pre>
+
+        <h3>🔗 Dependencies</h3>
+        <ul>
+            <li><strong>authentication:</strong> COMMAREA must contain valid CDEMO-USER-ID before account access</li>
+            <li><strong>ACCTFILE VSAM:</strong> Primary account data store — must be loaded before online use</li>
+            <li><strong>XREFFILE VSAM:</strong> Required for card-to-account lookup chain</li>
+            <li><strong>CUSTFILE VSAM:</strong> Customer name displayed on account view screen</li>
+            <li><strong>TCATBALF + DISCGRP:</strong> Required by CBACT04C interest calculation job</li>
+            <li><strong>CLOSEFIL/OPENFIL JCL:</strong> Batch account jobs require CICS file closure first</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>✅ Acceptance Criteria Examples</h2>
+        <div class="ac-example"><strong>Account view — success:</strong><br>Given a signed-in cardholder with a valid account,<br>When navigating to Account View (CAVW),<br>Then current balance, credit limit, expiry date, and active status are displayed from ACCTFILE; customer name displayed from CUSTFILE</div>
+        <div class="ac-example"><strong>Account update — ZIP code:</strong><br>Given a signed-in cardholder on Account Update (CAUP),<br>When entering a valid 5-digit ZIP and pressing ENTER,<br>Then ACCT-ADDR-ZIP in ACCTFILE is updated and a success message is displayed</div>
+        <div class="ac-example"><strong>Account update — validation failure:</strong><br>Given an invalid input (non-numeric ZIP, blank required field),<br>When pressing ENTER,<br>Then the screen redisplays with a field-level error message and no VSAM update occurs</div>
+        <div class="ac-example"><strong>Interest calculation (INTCALC batch):</strong><br>Given TCATBALF and DISCGRP are populated,<br>When CBACT04C runs to completion (RC=0),<br>Then each account's ACCT-CURR-BAL is increased by computed interest; TCATBALF record count matches input</div>
+        <div class="ac-example"><strong>Inactive account:</strong><br>Given an account with ACCT-ACTIVE-STATUS = 'N',<br>When viewing the account,<br>Then the status field displays 'Inactive' and transaction add/payment options are disabled</div>
+    </div>
+
+    <div class="footer">
+        <a href="../../index.html" class="nav-link">← Back to Index</a>
+        <a href="../authentication/index.html" class="nav-link">Authentication</a>
+        <a href="../credit-cards/index.html" class="nav-link">Credit Cards →</a>
+        <p style="margin-top:10px"><em>Last updated: 2026-03-26 | CardDemo Documentation</em></p>
+    </div>
+</div>
+</body>
+</html>

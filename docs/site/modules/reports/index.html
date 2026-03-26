@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - User Story Development Guide | CardDemo</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; color: #212529; line-height: 1.6; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+        .header { background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%); color: #fff; padding: 36px 32px; border-radius: 10px; margin-bottom: 28px; }
+        .header h1 { font-size: 2rem; margin-bottom: 8px; }
+        .header p { opacity: 0.85; font-size: 1.05rem; }
+        .badge { display: inline-block; background: rgba(255,255,255,0.2); border-radius: 4px; padding: 2px 10px; font-size: 0.8rem; margin-right: 8px; }
+        .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 28px; margin-bottom: 24px; }
+        h2 { font-size: 1.35rem; color: #1b5e20; border-bottom: 2px solid #e8f5e9; padding-bottom: 8px; margin-bottom: 18px; }
+        h3 { font-size: 1.1rem; color: #2e7d32; margin: 18px 0 10px; }
+        ul, ol { padding-left: 22px; }
+        li { margin-bottom: 6px; }
+        code { background: #f3f4f6; border-radius: 3px; padding: 2px 6px; font-size: 0.88rem; font-family: 'Courier New', monospace; }
+        pre { background: #1e1e2e; color: #cdd6f4; border-radius: 6px; padding: 18px; overflow-x: auto; font-size: 0.85rem; margin: 12px 0; }
+        .complexity { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 12px 0; }
+        .complexity-card { border-radius: 6px; padding: 14px; }
+        .simple { background: #e8f5e9; border-left: 4px solid #4caf50; }
+        .medium { background: #fff3e0; border-left: 4px solid #ff9800; }
+        .complex { background: #fce4ec; border-left: 4px solid #e91e63; }
+        .complexity-card strong { display: block; margin-bottom: 4px; }
+        .ac-example { background: #f1f8ff; border-left: 4px solid #0288d1; border-radius: 4px; padding: 12px 16px; margin: 10px 0; font-size: 0.93rem; }
+        .footer { text-align: center; padding: 20px; color: #6c757d; font-size: 0.9rem; }
+        .nav-link { display: inline-block; margin: 6px 8px 0 0; color: #1b5e20; text-decoration: none; font-size: 0.95rem; }
+        .nav-link:hover { text-decoration: underline; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+        th { background: #e8f5e9; color: #1b5e20; text-align: left; padding: 10px 12px; font-size: 0.9rem; }
+        td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>📊 Reports</h1>
+        <p>User Story Development Guide — CardDemo Mainframe Application</p>
+        <div style="margin-top:12px">
+            <span class="badge">CICS</span>
+            <span class="badge">Batch</span>
+            <span class="badge">COBOL</span>
+            <span class="badge">GDG Output</span>
+            <span class="badge">Transaction: CR00</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>📋 Module Overview</h2>
+        <p><strong>Purpose:</strong> Generate and display transaction reports and account statements. Provides online report request (CORPT00C) and batch report generation (CBTRN03C for daily reports, CBSTM03A for statements).</p>
+        <p style="margin-top:10px"><strong>Business Context:</strong> Reports provide financial visibility for cardholders, operators, and auditors. The daily transaction report (DALYREPT) is a key reconciliation tool. Account statements provide customers with billing summaries. Reports can be submitted from online (CICS) or run as standalone batch jobs.</p>
+        <h3>Key Components</h3>
+        <table>
+            <tr><th>Component</th><th>Type</th><th>Responsibility</th></tr>
+            <tr><td><code>CORPT00C.cbl</code></td><td>CICS (CR00)</td><td>Report request screen — submits TRANREPT or configures parameters</td></tr>
+            <tr><td><code>CBTRN03C.cbl</code></td><td>Batch (TRANREPT)</td><td>Daily transaction report — by account, type, category with totals</td></tr>
+            <tr><td><code>CBSTM03A.CBL</code></td><td>Batch (CREASTMT)</td><td>Statement generation — full account statement with all transactions</td></tr>
+            <tr><td><code>CBSTM03B.CBL</code></td><td>Batch</td><td>Statement detail processing (called by CBSTM03A)</td></tr>
+            <tr><td><code>CVTRA07Y.cpy</code></td><td>Copybook</td><td>Report header and detail line structures</td></tr>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>🎯 User Story Development Guide</h2>
+        <h3>📝 Module-Specific US Templates</h3>
+        <ul>
+            <li><strong>Request report:</strong> As a cardholder, I want to request a transaction report for a date range so I can review my spending history</li>
+            <li><strong>Daily reconciliation:</strong> As a system operator, I want to run the daily TRANREPT report so I can reconcile posted transaction totals</li>
+            <li><strong>Monthly statement:</strong> As a system, I want to generate monthly statements for all accounts so customers receive billing summaries</li>
+            <li><strong>Account summary:</strong> As a cardholder, I want to see page totals and account totals on the report so I can quickly find my total charges</li>
+            <li><strong>Report history:</strong> As an auditor, I want access to prior report generations (via GDG) so I can compare month-over-month totals</li>
+        </ul>
+
+        <h3>⚡ Development Acceleration Factors</h3>
+        <ul>
+            <li><strong>CVTRA07Y report structures:</strong> TRANSACTION-DETAIL-REPORT, page totals, account totals, grand total already defined</li>
+            <li><strong>GDG output:</strong> Report versioning (multiple generations) already configured via DEFGDGB JCL — no new infrastructure for history</li>
+            <li><strong>CICS-to-batch submission:</strong> CORPT00C pattern for submitting TRANREPT from online can be replicated for new report types</li>
+            <li><strong>CBTRN03C reads TRANFILE:</strong> Same VSAM access pattern as transaction list — known and reliable</li>
+        </ul>
+
+        <h3>📊 Complexity Guidelines</h3>
+        <div class="complexity">
+            <div class="complexity-card simple">
+                <strong>Simple (1–2 pts)</strong>
+                Add new column to existing report; change header text; modify sort order within existing CBTRN03C
+            </div>
+            <div class="complexity-card medium">
+                <strong>Medium (3–5 pts)</strong>
+                Add new report summary section (e.g. totals by category); add cardholder name to statement from CUSTFILE; implement date range filter for CREASTMT
+            </div>
+            <div class="complexity-card complex">
+                <strong>Complex (5–8 pts)</strong>
+                Entirely new report type (new COBOL program + JCL); PDF output via FTPJCL/TXT2PDF integration; online report view (display report data in CICS screen); multi-currency reporting
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🔧 Technical Foundation</h2>
+        <h3>TRANREPT Flow (CBTRN03C)</h3>
+        <pre>Input: Start date, end date (from CORPT00C or JCL parameters)
+  → Read TRANFILE sequentially
+  → Filter by TRAN-ORIG-TS within date range
+  → For each transaction:
+      Look up type description (TRANTYPE file)
+      Look up category description (TRANCATG file)
+  → Group by Account ID
+  → Write TRANSACTION-DETAIL-REPORT lines
+  → Accumulate page totals, account totals, grand total
+  → Write REPORT-PAGE-TOTALS, REPORT-ACCOUNT-TOTALS
+  → Write REPORT-GRAND-TOTALS at end
+  → Output to SYSOUT or GDG dataset</pre>
+
+        <h3>Report Output Structure</h3>
+        <pre>DALYREPT header line:
+  Report Name (38) + Long Name (41) + Date Range header (12)
+  + Start Date (10) + " to " + End Date (10)
+
+Detail line (TRANSACTION-DETAIL-REPORT):
+  Trans ID (16) | Account ID (11) | Type+Desc (17) |
+  Cat+Desc (35) | Source (14) | Amount (signed, 16)
+
+Totals lines:
+  REPORT-PAGE-TOTALS    → "Page Total" + dots + signed amount
+  REPORT-ACCOUNT-TOTALS → "Account Total" + dots + signed amount
+  REPORT-GRAND-TOTALS   → "Grand Total" + dots + signed amount</pre>
+
+        <h3>🔗 Dependencies</h3>
+        <ul>
+            <li><strong>transactions:</strong> TRANFILE is the primary data source for all reports</li>
+            <li><strong>TRANTYPE VSAM:</strong> Transaction type descriptions used in report detail lines</li>
+            <li><strong>TRANCATG VSAM:</strong> Transaction category descriptions used in report detail lines</li>
+            <li><strong>CUSTFILE:</strong> Customer name used in statement generation (CREASTMT)</li>
+            <li><strong>GDG setup:</strong> DEFGDGB JCL job must run before first report generation to define GDG bases</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>✅ Acceptance Criteria Examples</h2>
+        <div class="ac-example"><strong>Report request from online:</strong><br>Given a signed-in user on the Report screen (CR00),<br>When entering a valid start and end date and pressing ENTER,<br>Then TRANREPT job is submitted and a "Report submitted" message is displayed</div>
+        <div class="ac-example"><strong>Daily report content:</strong><br>Given transactions exist within the specified date range,<br>When CBTRN03C completes with RC=0,<br>Then the output contains one detail line per transaction with correct type/category descriptions and amounts</div>
+        <div class="ac-example"><strong>Account totals accuracy:</strong><br>Given multiple transactions for a single account,<br>When CBTRN03C produces account totals,<br>Then REPORT-ACCOUNT-TOTALS equals the algebraic sum of all TRAN-AMT values for that account</div>
+        <div class="ac-example"><strong>Grand total accuracy:</strong><br>When CBTRN03C completes,<br>Then REPORT-GRAND-TOTALS equals the sum of all account totals in the report</div>
+        <div class="ac-example"><strong>No transactions in date range:</strong><br>Given no transactions exist within the requested date range,<br>When CBTRN03C runs,<br>Then the report contains only headers and a grand total of $0.00 with a "No transactions found" indicator</div>
+    </div>
+
+    <div class="footer">
+        <a href="../../index.html" class="nav-link">← Back to Index</a>
+        <a href="../billing/index.html" class="nav-link">Billing</a>
+        <a href="../user-management/index.html" class="nav-link">User Management →</a>
+        <p style="margin-top:10px"><em>Last updated: 2026-03-26 | CardDemo Documentation</em></p>
+    </div>
+</div>
+</body>
+</html>
