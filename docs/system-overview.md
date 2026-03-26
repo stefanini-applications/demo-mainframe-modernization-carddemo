@@ -159,41 +159,88 @@ CARD-XREF-RECORD (XREFFILE, RECLN=50):
 ### 3. Credit Cards
 
 **ID:** `credit-cards`  
-**Purpose:** List, view, and update credit card information linked to an account  
+**Purpose:** List, view, and update credit card information linked to an account. Enables cardholders to browse cards by account, inspect full card details, and modify mutable attributes (embossed name, active status, expiry date) with optimistic concurrency protection.
+
 **Key Components:**
-- `COCRDLIC.cbl` — CICS program; list cards for an account (CCLI / COCRDLI)
-- `COCRDSLC.cbl` — CICS program; view credit card details (CCDL / COCRDSL)
-- `COCRDUPC.cbl` — CICS program; update credit card record (CCUP / COCRDUP)
-- `CVCRD01Y.cpy` — CC-WORK-AREAS (card navigation work area)
-- `CVACT02Y.cpy` — CARD-RECORD data structure
+- `COCRDLIC.cbl` — CICS program (1,459 lines); list cards for an account with pagination (CCLI / COCRDLI)
+- `COCRDSLC.cbl` — CICS program (887 lines); view credit card details, read-only (CCDL / COCRDSL)
+- `COCRDUPC.cbl` — CICS program (1,560 lines); update credit card record with two-phase confirmation and optimistic locking (CCUP / COCRDUP)
+- `CVCRD01Y.cpy` — CC-WORK-AREAS (card navigation work area: AID keys, next program/map pointers, error/return messages, account/card/customer IDs)
+- `CVACT02Y.cpy` — CARD-RECORD data structure (CARDFILE, RECLN=150)
+- `CVACT03Y.cpy` — CARD-XREF-RECORD data structure (XREFFILE — card-account-customer linkage)
+- `COCOM01Y.cpy` — CARDDEMO-COMMAREA shared session communication area
+- `CSSETATY.cpy` — BMS attribute byte constants shared with all online modules
+- `CSLKPCDY.cpy` — Shared lookup code tables used in field validation
+
+**BMS Maps:**
+- `COCRDLI.bms` — Card list screen (7 selectable rows with card number, account, status, expiry)
+- `COCRDSL.bms` — Card detail screen (full read-only card record display)
+- `COCRDUP.bms` — Card update screen (editable: name, status, expiry month/year/day)
 
 **CICS Transactions:**
-- `CCLI` → Credit Card List
-- `CCDL` → Credit Card View/Detail
-- `CCUP` → Credit Card Update
+- `CCLI` → Credit Card List (paginated, PF7/PF8 navigation)
+- `CCDL` → Credit Card View/Detail (read-only)
+- `CCUP` → Credit Card Update (two-phase: validate on ENTER, commit on PF5)
 
 **Data Model:**
 ```
 CARD-RECORD (CARDFILE, RECLN=150):
-  CARD-NUM              PIC X(16)    -- Card number (primary key)
-  CARD-ACCT-ID          PIC 9(11)    -- Linked account ID
-  CARD-CVV-CD           PIC 9(03)    -- CVV security code
-  CARD-EMBOSSED-NAME    PIC X(50)    -- Name on card
-  CARD-EXPIRAION-DATE   PIC X(10)    -- Expiry date YYYY-MM-DD
-  CARD-ACTIVE-STATUS    PIC X(01)    -- 'Y'=Active, 'N'=Inactive
+  CARD-NUM              PIC X(16)    -- Card number / 16-digit PAN (primary key)
+  CARD-ACCT-ID          PIC 9(11)    -- Linked account ID (also AIX key: ACCT-PATH)
+  CARD-CVV-CD           PIC 9(03)    -- CVV security code (plain text, demo only)
+  CARD-EMBOSSED-NAME    PIC X(50)    -- Name printed on card face (editable)
+  CARD-EXPIRAION-DATE   PIC X(10)    -- Expiry date YYYY-MM-DD (editable)
+  CARD-ACTIVE-STATUS    PIC X(01)    -- 'Y'=Active, 'N'=Inactive (editable)
+  FILLER                PIC X(59)    -- Padding to RECLN=150
+
+CC-WORK-AREAS (CVCRD01Y.cpy):
+  CCARD-AID             PIC X(5)     -- AID key (ENTER / PFKxx / CLEAR)
+  CCARD-NEXT-PROG       PIC X(8)     -- Target program for XCTL
+  CCARD-NEXT-MAPSET     PIC X(7)     -- Target BMS mapset
+  CCARD-NEXT-MAP        PIC X(7)     -- Target BMS map
+  CCARD-ERROR-MSG       PIC X(75)    -- Error message for screen display
+  CC-ACCT-ID            PIC X(11)    -- Current account ID
+  CC-CARD-NUM           PIC X(16)    -- Current card number
+  CC-CUST-ID            PIC X(09)    -- Current customer ID
 ```
 
+**Processing Flows:**
+- **Card List:** COCRDLIC reads CARDFILE via CARD-ACCT-ID AIX using VSAM BROWSE (STARTBR/READNEXT/ENDBR). Displays up to 7 cards per page. User selects one row with 'S' (view) or 'U' (update); selected card number is stored in `CDEMO-CARD-NUM` in COMMAREA and program XCTLs to COCRDSLC or COCRDUPC.
+- **Card Detail:** COCRDSLC reads CARDFILE by primary key (card number) or falls back to ACCT-PATH AIX when card number is zero. Read-only display.
+- **Card Update:** COCRDUPC implements a two-phase update: Phase 1 (ENTER) validates all fields and shows confirmation prompt; Phase 2 (PF5) acquires exclusive VSAM READ UPDATE lock, checks for concurrent modification via paragraph 9300-CHECK-CHANGE-IN-REC, then issues EXEC CICS REWRITE if no conflict.
+
 **Business Rules:**
-- Card list filtered by Account ID stored in COMMAREA
-- Card number is 16-digit, must match XREFFILE for valid card-account-customer linkage
-- Card status can be toggled Active/Inactive via update screen
-- Embossed name may differ from customer legal name
-- CVV stored in plain text (design characteristic for demo environment)
+- Card list filtered by `CDEMO-ACCT-ID` in COMMAREA for regular users; admin users (`CDEMO-USER-TYPE='A'`) can browse all cards
+- Card list shows maximum 7 rows per page; PF7=previous page, PF8=next page
+- Only one card selection allowed per page submission; multiple selections produce an error
+- Card number is 16-digit PAN; must be numeric if provided on update screen
+- Card status toggles between 'Y' (Active) and 'N' (Inactive) — only accepted values
+- Embossed name must be non-blank and contain only alphabetic characters and spaces
+- Expiry month must be 1–12; expiry year must be 1950–2099; day is accepted without calendar validation
+- If submitted update values match current DB values, no write is performed ("No change detected")
+- Optimistic locking: concurrent modification is detected by comparing locked record with values shown at fetch time; on conflict, screen is refreshed with latest values
+- CVV is preserved from the locked DB read and not modifiable via the update screen
+- Embossed name may differ from customer legal name on file in CUSTFILE
+
+**Dependencies:**
+- `authentication` — must succeed before any credit-cards transaction; provides `CDEMO-USER-ID` and `CDEMO-USER-TYPE`
+- `accounts` — provides `CDEMO-ACCT-ID` in COMMAREA as the CARDFILE AIX filter key
+- `transactions` (downstream) — reads `CDEMO-CARD-NUM` set by this module to look up transactions
+- CARDFILE VSAM KSDS — must have CARD-ACCT-ID alternate index (ACCT-PATH) defined and active
+- XREFFILE VSAM KSDS — card-account-customer cross-reference used for validation in COCRDSLC/COCRDUPC
+
+**Error Handling:**
+- All VSAM I/O errors produce a structured message: `"File Error: {op} on {file} returned RESP {n},RESP2 {n}"`
+- Validation errors are surfaced simultaneously (all errors shown on one screen re-send)
+- COCRDSLC and COCRDUPC register CICS ABEND handlers that send a plain-text error screen and return cleanly
 
 **User Story Examples:**
 - As a cardholder, I want to see all cards on my account so I know which are active
 - As a cardholder, I want to view my card's expiration date so I can plan for renewal
 - As a cardholder, I want to deactivate a lost card so unauthorized charges are prevented
+- As a cardholder, I want to correct the embossed name on my card so it reflects my legal name
+- As an administrator, I want to list all cards across all accounts so I can audit active and inactive cards
+- As a system, I want concurrent card updates to be safely handled so card data is never corrupted
 
 ---
 

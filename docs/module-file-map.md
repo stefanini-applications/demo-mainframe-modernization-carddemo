@@ -25,6 +25,9 @@ app/bms/COCRDLI.bms = credit-cards
 app/bms/COCRDSL.bms = credit-cards
 app/bms/COCRDUP.bms = credit-cards
 app/cpy/CVCRD01Y.cpy = credit-cards
+app/cpy-bms/COCRDLI.CPY = credit-cards
+app/cpy-bms/COCRDSL.CPY = credit-cards
+app/cpy-bms/COCRDUP.CPY = credit-cards
 
 app/cbl/COTRN00C.cbl = transactions
 app/cbl/COTRN01C.cbl = transactions
