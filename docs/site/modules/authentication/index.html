@@ -1,146 +1,881 @@
 <!DOCTYPE html>
-<html lang="en-US">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Authentication - User Story Development Guide | CardDemo</title>
+    <meta name="last-updated" content="2026-03-26T18:00:16Z">
+    <title>authentication - Module Documentation | CardDemo</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; color: #212529; line-height: 1.6; }
-        .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
-        .header { background: linear-gradient(135deg, #1a237e 0%, #283593 100%); color: #fff; padding: 36px 32px; border-radius: 10px; margin-bottom: 28px; }
-        .header h1 { font-size: 2rem; margin-bottom: 8px; }
-        .header p { opacity: 0.85; font-size: 1.05rem; }
-        .badge { display: inline-block; background: rgba(255,255,255,0.2); border-radius: 4px; padding: 2px 10px; font-size: 0.8rem; margin-right: 8px; }
-        .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 28px; margin-bottom: 24px; }
-        h2 { font-size: 1.35rem; color: #1a237e; border-bottom: 2px solid #e8eaf6; padding-bottom: 8px; margin-bottom: 18px; }
-        h3 { font-size: 1.1rem; color: #283593; margin: 18px 0 10px; }
-        ul, ol { padding-left: 22px; }
-        li { margin-bottom: 6px; }
-        code { background: #f3f4f6; border-radius: 3px; padding: 2px 6px; font-size: 0.88rem; font-family: 'Courier New', monospace; }
-        pre { background: #1e1e2e; color: #cdd6f4; border-radius: 6px; padding: 18px; overflow-x: auto; font-size: 0.85rem; margin: 12px 0; }
-        .complexity { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 12px 0; }
-        .complexity-card { border-radius: 6px; padding: 14px; }
-        .simple { background: #e8f5e9; border-left: 4px solid #4caf50; }
-        .medium { background: #fff3e0; border-left: 4px solid #ff9800; }
-        .complex { background: #fce4ec; border-left: 4px solid #e91e63; }
-        .complexity-card strong { display: block; margin-bottom: 4px; }
-        .ac-example { background: #f1f8ff; border-left: 4px solid #0288d1; border-radius: 4px; padding: 12px 16px; margin: 10px 0; font-size: 0.93rem; }
-        .footer { text-align: center; padding: 20px; color: #6c757d; font-size: 0.9rem; }
-        .nav-link { display: inline-block; margin: 6px 8px 0 0; color: #1a237e; text-decoration: none; font-size: 0.95rem; }
-        .nav-link:hover { text-decoration: underline; }
-        table { width: 100%; border-collapse: collapse; margin: 12px 0; }
-        th { background: #e8eaf6; color: #1a237e; text-align: left; padding: 10px 12px; font-size: 0.9rem; }
-        td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
-        tr:hover td { background: #fafafa; }
+        body { background-color: #1a1a1a; color: #e0e0e0; font-family: Segoe UI, Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; max-width: 1200px; margin: 0 auto; padding: 20px; }
+        h1 { color: #4fc3f7; border-bottom: 2px solid #4fc3f7; padding-bottom: 10px; margin-bottom: 20px; font-size: 2rem; }
+        h2 { color: #81c784; margin-top: 36px; margin-bottom: 14px; font-size: 1.35rem; border-left: 4px solid #81c784; padding-left: 12px; }
+        h3 { color: #ffb74d; margin-top: 20px; margin-bottom: 10px; font-size: 1.1rem; }
+        h4 { color: #ce93d8; margin-top: 16px; margin-bottom: 8px; font-size: 1rem; }
+        p { margin-bottom: 12px; }
+        ul, ol { padding-left: 24px; margin-bottom: 12px; }
+        li { margin-bottom: 5px; }
+        code { background-color: #2d2d2d; color: #f8f8f2; padding: 2px 6px; border-radius: 3px; font-family: Courier New, Consolas, monospace; font-size: 0.88em; }
+        pre { background-color: #2d2d2d; color: #f8f8f2; padding: 18px; border-radius: 6px; overflow-x: auto; font-family: Courier New, Consolas, monospace; font-size: 0.85em; margin: 14px 0; border-left: 3px solid #4fc3f7; }
+        a { color: #4fc3f7; text-decoration: none; }
+        a:hover { text-decoration: underline; color: #81d4fa; }
+        nav { margin-bottom: 24px; padding: 10px 0; border-bottom: 1px solid #333; }
+        .badge { display: inline-block; background: #2d2d2d; color: #4fc3f7; border: 1px solid #4fc3f7; border-radius: 12px; padding: 2px 10px; font-size: 0.78rem; margin-right: 6px; margin-bottom: 4px; }
+        .badge-green { color: #81c784; border-color: #81c784; }
+        .badge-orange { color: #ffb74d; border-color: #ffb74d; }
+        table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 0.9em; }
+        th { background-color: #2d2d2d; color: #81c784; text-align: left; padding: 10px 14px; border-bottom: 2px solid #444; }
+        td { padding: 9px 14px; border-bottom: 1px solid #2d2d2d; vertical-align: top; }
+        tr:hover td { background-color: #242424; }
+        .section { margin-bottom: 32px; }
+        .callout { background-color: #1e2a1e; border-left: 4px solid #81c784; padding: 14px 18px; border-radius: 4px; margin: 14px 0; }
+        .callout-warn { background-color: #2a1e00; border-left: 4px solid #ffb74d; }
+        .callout-info { background-color: #0d1f2d; border-left: 4px solid #4fc3f7; }
+        .callout-error { background-color: #2a0d0d; border-left: 4px solid #ef5350; }
+        .flow-step { background-color: #242424; border-radius: 6px; padding: 10px 16px; margin: 6px 0; border-left: 3px solid #4fc3f7; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 14px 0; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin: 14px 0; }
+        .card { background-color: #222; border-radius: 8px; padding: 16px; border: 1px solid #333; }
+        .card-green { border-color: #81c784; }
+        .card-orange { border-color: #ffb74d; }
+        .card-red { border-color: #ef5350; }
+        .card strong { display: block; margin-bottom: 6px; color: #e0e0e0; }
+        .ac-item { background-color: #1e2533; border-left: 4px solid #0288d1; border-radius: 4px; padding: 12px 16px; margin: 10px 0; font-size: 0.92em; }
+        .ac-item strong { color: #4fc3f7; display: block; margin-bottom: 4px; }
+        .toc { background-color: #222; border-radius: 8px; padding: 18px 22px; margin-bottom: 28px; border: 1px solid #333; }
+        .toc ul { list-style: none; padding-left: 0; }
+        .toc li { margin-bottom: 4px; padding-left: 12px; }
+        .toc a { color: #81c784; }
+        footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #444; color: #888; font-size: 0.85em; text-align: center; }
+        @media (max-width: 700px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="header">
-        <h1>🔐 Authentication</h1>
-        <p>User Story Development Guide — CardDemo Mainframe Application</p>
-        <div style="margin-top:12px">
-            <span class="badge">CICS</span>
-            <span class="badge">COBOL</span>
-            <span class="badge">VSAM</span>
-            <span class="badge">Transaction: CC00</span>
-        </div>
+<div class="container" style="padding: 20px;">
+    <nav>
+        <a href="../../index.html">&#8592; Back to Index</a>
+        &nbsp;|&nbsp;
+        <a href="../accounts/index.html">Accounts &#8594;</a>
+    </nav>
+
+    <h1>&#128272; Authentication</h1>
+    <div style="margin-bottom: 20px;">
+        <span class="badge">CICS Online</span>
+        <span class="badge badge-green">COBOL</span>
+        <span class="badge badge-green">VSAM</span>
+        <span class="badge badge-orange">Transaction: CC00</span>
+        <span class="badge badge-orange">Program: COSGN00C</span>
+        <span class="badge">Module ID: authentication</span>
     </div>
 
-    <div class="card">
-        <h2>📋 Module Overview</h2>
-        <p><strong>Purpose:</strong> Handles user signon and session initialization. Validates credentials against the USRSEC VSAM file and routes users to the appropriate menu based on their user type (Admin or Regular).</p>
-        <p style="margin-top:10px"><strong>Business Context:</strong> Entry point for all CardDemo functions. Every user interaction begins here. User type determined at login controls all subsequent navigation and access privileges.</p>
-        <h3>Key Components</h3>
+    <div class="toc">
+        <h3 style="color:#4fc3f7; margin-top:0; margin-bottom:10px;">Contents</h3>
+        <ul>
+            <li><a href="#overview">1. Overview and Purpose</a></li>
+            <li><a href="#architecture">2. Architectural Context</a></li>
+            <li><a href="#components">3. Key Components</a></li>
+            <li><a href="#dependencies">4. Dependencies</a></li>
+            <li><a href="#apis">5. CICS Transaction Interface</a></li>
+            <li><a href="#data-models">6. Data Models</a></li>
+            <li><a href="#business-rules">7. Business Rules</a></li>
+            <li><a href="#processing-flow">8. Processing Flow</a></li>
+            <li><a href="#screen-layout">9. Screen Layout (BMS)</a></li>
+            <li><a href="#code-examples">10. Code Examples</a></li>
+            <li><a href="#config">11. Configuration and Environment</a></li>
+            <li><a href="#dev-guide">12. Development Guidelines</a></li>
+            <li><a href="#user-stories">13. User Stories and Acceptance Criteria</a></li>
+            <li><a href="#risks">14. Risks and Tech Debt</a></li>
+        </ul>
+    </div>
+
+    <div class="section" id="overview">
+        <h2>1. Overview and Purpose</h2>
+        <p>
+            The <strong>Authentication</strong> module is the entry point for all CardDemo application interactions.
+            It implements user signon and session initialization for the CardDemo mainframe credit card management
+            application running under IBM CICS (Customer Information Control System) on z/OS.
+        </p>
+        <p>
+            Every user, whether a regular cardholder or a system administrator, must authenticate through this module
+            before accessing any other function. Upon successful authentication, the module initializes the shared
+            session state (COMMAREA) that all downstream CICS programs rely upon for navigation and access control.
+        </p>
+        <div class="callout callout-info">
+            <strong>Architectural Significance:</strong> Authentication is a prerequisite for all other modules.
+            No end-to-end test of any feature can succeed without authentication working correctly.
+            The <code>CDEMO-USER-TYPE</code> value set here controls role-based navigation throughout
+            the entire application.
+        </div>
+        <h3>Module Responsibilities</h3>
+        <ul>
+            <li>Display the 3270 signon screen (COSGN00) to the terminal operator</li>
+            <li>Accept User ID (up to 8 characters) and Password (up to 8 characters) input</li>
+            <li>Validate credentials by performing a keyed read against the USRSEC VSAM KSDS file</li>
+            <li>Initialize CARDDEMO-COMMAREA with the authenticated user identity and role</li>
+            <li>Route authenticated users to the appropriate menu: Main Menu (regular) or Admin Menu (admin)</li>
+            <li>Display contextual error messages for invalid credentials, missing fields, or unexpected keys</li>
+            <li>Provide a clean exit path via PF3 with a thank-you message</li>
+        </ul>
+    </div>
+
+    <div class="section" id="architecture">
+        <h2>2. Architectural Context</h2>
+        <p>
+            CardDemo is a mainframe OLTP application using CICS for online transaction processing and VSAM
+            for persistent data storage. The authentication module follows the standard CardDemo screen/program
+            pattern: a BMS map defines the 3270 terminal screen layout, and a COBOL program contains all
+            processing logic. Communication between programs uses the CICS COMMAREA mechanism.
+        </p>
+        <div class="grid-2">
+            <div class="card">
+                <strong>Online Layer (CICS)</strong>
+                <ul>
+                    <li>Transaction ID: <code>CC00</code></li>
+                    <li>Program: <code>COSGN00C</code></li>
+                    <li>Screen mapset: <code>COSGN00</code>, map: <code>COSGN0A</code></li>
+                    <li>Interface: IBM 3270 terminal (no REST/HTTP)</li>
+                    <li>Model: Pseudo-conversational</li>
+                </ul>
+            </div>
+            <div class="card">
+                <strong>Data Layer (VSAM)</strong>
+                <ul>
+                    <li>File: <code>USRSEC</code> (KSDS, RECLN=80)</li>
+                    <li>Primary key: <code>SEC-USR-ID</code> PIC X(08)</li>
+                    <li>Access method: Direct keyed READ only</li>
+                    <li>No Alternate Index required</li>
+                    <li>Pre-loaded via DUSRSECJ JCL job</li>
+                </ul>
+            </div>
+        </div>
+        <h3>Position in Application Flow</h3>
+        <pre>Terminal Operator
+    |
+    v  enters CC00 or cold start
++------------------+
+|   COSGN00C       |  &lt;-- authentication module
+|   (CC00 / CC00)  |
++--------+---------+
+         |
+         | CDEMO-USER-TYPE = 'U'  -----&gt;  COMEN01C (CM00)  Main Menu
+         |
+         | CDEMO-USER-TYPE = 'A'  -----&gt;  COADM01C (CA00)  Admin Menu</pre>
+        <h3>Session State Propagation</h3>
+        <p>
+            Authentication is the only module that creates the session. All other modules consume the
+            COMMAREA values set here. The COMMAREA is passed via <code>EXEC CICS XCTL COMMAREA</code>
+            and <code>EXEC CICS RETURN COMMAREA</code>, maintaining session continuity across all
+            subsequent transactions.
+        </p>
+        <pre>CARDDEMO-COMMAREA fields populated by authentication:
+  CDEMO-FROM-TRANID  = 'CC00'      (source transaction)
+  CDEMO-FROM-PROGRAM = 'COSGN00C'  (source program)
+  CDEMO-USER-ID      = entered User ID (uppercased)
+  CDEMO-USER-TYPE    = 'A' or 'U'  (drives all menu routing)
+  CDEMO-PGM-CONTEXT  = 0           (fresh entry context)</pre>
+    </div>
+
+    <div class="section" id="components">
+        <h2>3. Key Components</h2>
         <table>
-            <tr><th>Component</th><th>Type</th><th>Responsibility</th></tr>
-            <tr><td><code>COSGN00C.cbl</code></td><td>CICS Program</td><td>Signon validation logic, USRSEC file read, COMMAREA initialization</td></tr>
-            <tr><td><code>COSGN00.bms</code></td><td>BMS Map</td><td>3270 signon screen layout (User ID + Password fields)</td></tr>
-            <tr><td><code>CSUSR01Y.cpy</code></td><td>Copybook</td><td>SEC-USER-DATA structure (ID, name, password, type)</td></tr>
-            <tr><td><code>COCOM01Y.cpy</code></td><td>Copybook</td><td>CARDDEMO-COMMAREA — shared session state passed between programs</td></tr>
+            <thead>
+                <tr><th>File</th><th>Type</th><th>Responsibility</th><th>Path</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>COSGN00C.cbl</code></td>
+                    <td>CICS COBOL Program</td>
+                    <td>Core signon logic: receives map input, validates credentials against USRSEC, initializes COMMAREA, transfers control to appropriate menu program via XCTL</td>
+                    <td><code>app/cbl/COSGN00C.cbl</code></td>
+                </tr>
+                <tr>
+                    <td><code>COSGN00.bms</code></td>
+                    <td>BMS Map Definition</td>
+                    <td>Defines the 3270 signon screen (24x80): header fields (TRNNAME, TITLE01/02, CURDATE, CURTIME, APPLID, SYSID), input fields (USERID, PASSWD), and error message area (ERRMSG)</td>
+                    <td><code>app/bms/COSGN00.bms</code></td>
+                </tr>
+                <tr>
+                    <td><code>CSUSR01Y.cpy</code></td>
+                    <td>COBOL Copybook</td>
+                    <td>Defines SEC-USER-DATA: VSAM USRSEC record structure with user ID, first/last name, password, user type, and 23-byte filler (total RECLN=80)</td>
+                    <td><code>app/cpy/CSUSR01Y.cpy</code></td>
+                </tr>
+                <tr>
+                    <td><code>COCOM01Y.cpy</code></td>
+                    <td>COBOL Copybook</td>
+                    <td>Defines CARDDEMO-COMMAREA: shared communication area carrying session state (user ID, user type, program context, customer/account/card info) across all CICS programs</td>
+                    <td><code>app/cpy/COCOM01Y.cpy</code></td>
+                </tr>
+                <tr>
+                    <td><code>COMEN01C.cbl</code></td>
+                    <td>CICS Program (downstream)</td>
+                    <td>Main Menu for regular users (CM00). Authentication XCTLs here when CDEMO-USER-TYPE = 'U'</td>
+                    <td><code>app/cbl/COMEN01C.cbl</code></td>
+                </tr>
+                <tr>
+                    <td><code>COADM01C.cbl</code></td>
+                    <td>CICS Program (downstream)</td>
+                    <td>Admin Menu (CA00). Authentication XCTLs here when CDEMO-USER-TYPE = 'A'</td>
+                    <td><code>app/cbl/COADM01C.cbl</code></td>
+                </tr>
+            </tbody>
+        </table>
+        <h3>Supporting Copybooks</h3>
+        <table>
+            <thead><tr><th>Copybook</th><th>Purpose</th></tr></thead>
+            <tbody>
+                <tr><td><code>COTTL01Y.cpy</code></td><td>Screen title constants (CCDA-TITLE01, CCDA-TITLE02)</td></tr>
+                <tr><td><code>CSDAT01Y.cpy</code></td><td>Date/time working storage structure for header display (WS-CURDATE-DATA, WS-CURTIME-*)</td></tr>
+                <tr><td><code>CSMSG01Y.cpy</code></td><td>Standard message constants: CCDA-MSG-THANK-YOU, CCDA-MSG-INVALID-KEY</td></tr>
+                <tr><td><code>DFHAID</code></td><td>CICS system copybook: AID key constants (DFHENTER, DFHPF3, etc.)</td></tr>
+                <tr><td><code>DFHBMSCA</code></td><td>CICS BMS attribute character constants</td></tr>
+            </tbody>
         </table>
     </div>
 
-    <div class="card">
-        <h2>🎯 User Story Development Guide</h2>
-        <h3>📝 Module-Specific US Templates</h3>
+    <div class="section" id="dependencies">
+        <h2>4. Dependencies</h2>
+        <h3>Internal Module Dependencies</h3>
+        <table>
+            <thead><tr><th>Dependency</th><th>Direction</th><th>Description</th></tr></thead>
+            <tbody>
+                <tr><td><code>accounts</code></td><td>Downstream</td><td>COMEN01C (CM00 Main Menu) requires CDEMO-USER-TYPE = 'U' set by authentication</td></tr>
+                <tr><td><code>user-management</code></td><td>Downstream</td><td>COADM01C (CA00 Admin Menu) requires CDEMO-USER-TYPE = 'A' set by authentication</td></tr>
+                <tr><td>All modules</td><td>Downstream</td><td>All modules read CDEMO-USER-ID and CDEMO-USER-TYPE from COMMAREA initialized here</td></tr>
+            </tbody>
+        </table>
+        <h3>VSAM File Dependencies</h3>
+        <table>
+            <thead><tr><th>File DD Name</th><th>VSAM Type</th><th>Access Mode</th><th>Pre-populated By</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td><code>USRSEC</code></td>
+                    <td>KSDS, RECLN=80</td>
+                    <td>READ only (direct keyed)</td>
+                    <td>DUSRSECJ JCL job (IEBGENER). Ongoing maintenance: COUSR01C/02C/03C</td>
+                </tr>
+            </tbody>
+        </table>
+        <h3>CICS System Dependencies</h3>
         <ul>
-            <li><strong>Cardholder login:</strong> As a cardholder, I want to sign in with my user ID and password so I can access my account functions</li>
-            <li><strong>Admin login:</strong> As an administrator, I want to sign in with admin credentials so I am routed to the admin menu</li>
-            <li><strong>Invalid login:</strong> As a cardholder, I want to receive a clear error message when my credentials are wrong so I know to retry</li>
-            <li><strong>Session exit:</strong> As a user, I want to press PF3 to exit the application so I can safely end my session</li>
-            <li><strong>Password policy:</strong> As an administrator, I want user passwords to be at least N characters so security standards are met</li>
+            <li><code>DFHAID</code>: CICS-supplied copybook for AID key constants</li>
+            <li><code>DFHBMSCA</code>: CICS-supplied copybook for BMS attribute characters</li>
+            <li>CICS BMS (Basic Mapping Support): for 3270 screen send/receive operations</li>
+            <li>CICS ASSIGN command: retrieves APPLID and SYSID for screen header display</li>
         </ul>
-
-        <h3>⚡ Development Acceleration Factors</h3>
-        <ul>
-            <li><strong>COMMAREA pattern:</strong> Session state already structured in COCOM01Y — reuse for new screens without redesign</li>
-            <li><strong>USRSEC KSDS:</strong> Direct keyed access by user ID — fast, no additional index needed for basic auth</li>
-            <li><strong>PF key handling:</strong> Standard DFHAID / EIBAID pattern used across all CICS programs — consistent to implement</li>
-            <li><strong>User type routing:</strong> CDEMO-USER-TYPE already propagated — conditional routing logic minimal</li>
-        </ul>
-
-        <h3>📊 Complexity Guidelines</h3>
-        <div class="complexity">
-            <div class="complexity-card simple">
-                <strong>Simple (1–2 pts)</strong>
-                Update error message text; change screen field labels; add password masking attribute to BMS map
-            </div>
-            <div class="complexity-card medium">
-                <strong>Medium (3–5 pts)</strong>
-                Add account lockout after N failed attempts; add last-login timestamp to USRSEC record; implement session timeout
-            </div>
-            <div class="complexity-card complex">
-                <strong>Complex (5–8 pts)</strong>
-                Implement password hashing (requires utility program + USRSEC schema change); add RACF integration for external auth; support multi-factor authentication
-            </div>
+        <div class="callout callout-warn">
+            <strong>Startup Prerequisite:</strong> The USRSEC VSAM file must exist and be loaded with at least
+            one valid user record before this module can function. Run DUSRSECJ JCL to initialize the user
+            security file from seed data.
         </div>
     </div>
 
-    <div class="card">
-        <h2>🔧 Technical Foundation</h2>
-        <h3>Processing Flow</h3>
-        <pre>User types UserID + Password on COSGN00 screen
-  → ENTER key triggers CC00 transaction
-  → COSGN00C reads USRSEC VSAM (key = User ID)
-  → Compares SEC-USR-PWD with entered password
-  → On match: populates CARDDEMO-COMMAREA
-      CDEMO-USER-ID = entered User ID
-      CDEMO-USER-TYPE = 'A' (admin) or 'U' (user)
-  → Routes to CM00 (Main Menu) or CA00 (Admin Menu)
-  → On failure: redisplays signon screen with error</pre>
+    <div class="section" id="apis">
+        <h2>5. CICS Transaction Interface</h2>
+        <p>
+            CardDemo uses CICS 3270 terminal transactions as its interface. There are no REST or HTTP APIs.
+            The interface is a transaction ID entered at the terminal, combined with BMS map input fields.
+        </p>
+        <h3>Transaction CC00 Summary</h3>
+        <table>
+            <thead><tr><th>Attribute</th><th>Value</th></tr></thead>
+            <tbody>
+                <tr><td>Transaction ID</td><td><code>CC00</code></td></tr>
+                <tr><td>Program</td><td><code>COSGN00C</code></td></tr>
+                <tr><td>Map Set</td><td><code>COSGN00</code></td></tr>
+                <tr><td>Map Name</td><td><code>COSGN0A</code></td></tr>
+                <tr><td>Entry: cold start</td><td>EIBCALEN = 0 (first invocation)</td></tr>
+                <tr><td>Entry: warm return</td><td>EIBCALEN &gt; 0 (operator pressed a key)</td></tr>
+                <tr><td>COMMAREA length</td><td>LENGTH OF CARDDEMO-COMMAREA</td></tr>
+            </tbody>
+        </table>
+        <h3>Input Fields (Screen COSGN0A)</h3>
+        <table>
+            <thead><tr><th>Field</th><th>Row, Col</th><th>Length</th><th>Attribute</th><th>Description</th></tr></thead>
+            <tbody>
+                <tr><td><code>USERID</code></td><td>19, 43</td><td>8</td><td>FSET, IC, NORM, UNPROT, GREEN</td><td>User ID input; initial cursor (IC) positioned here</td></tr>
+                <tr><td><code>PASSWD</code></td><td>20, 43</td><td>8</td><td>DRK, FSET, UNPROT, GREEN</td><td>Password input; DRK attribute hides characters from display</td></tr>
+            </tbody>
+        </table>
+        <h3>Output Fields (Screen COSGN0A)</h3>
+        <table>
+            <thead><tr><th>Field</th><th>Position</th><th>Length</th><th>Description</th></tr></thead>
+            <tbody>
+                <tr><td><code>TRNNAME</code></td><td>(1,8)</td><td>4</td><td>Transaction ID displayed in header</td></tr>
+                <tr><td><code>TITLE01</code></td><td>(1,21)</td><td>40</td><td>Application title line 1 (from CCDA-TITLE01)</td></tr>
+                <tr><td><code>TITLE02</code></td><td>(2,21)</td><td>40</td><td>Application title line 2 (from CCDA-TITLE02)</td></tr>
+                <tr><td><code>CURDATE</code></td><td>(1,71)</td><td>8</td><td>Current date mm/dd/yy</td></tr>
+                <tr><td><code>CURTIME</code></td><td>(2,71)</td><td>9</td><td>Current time hh:mm:ss</td></tr>
+                <tr><td><code>APPLID</code></td><td>(3,8)</td><td>8</td><td>CICS application ID (EXEC CICS ASSIGN)</td></tr>
+                <tr><td><code>SYSID</code></td><td>(3,71)</td><td>8</td><td>System ID (EXEC CICS ASSIGN)</td></tr>
+                <tr><td><code>ERRMSG</code></td><td>(23,1)</td><td>78</td><td>Error/status message; bright RED when populated</td></tr>
+            </tbody>
+        </table>
+        <h3>Navigation Keys</h3>
+        <table>
+            <thead><tr><th>Key</th><th>AID Constant</th><th>Action</th></tr></thead>
+            <tbody>
+                <tr><td>ENTER</td><td><code>DFHENTER</code></td><td>Submit credentials for validation</td></tr>
+                <tr><td>PF3</td><td><code>DFHPF3</code></td><td>Display thank-you message and exit (CICS RETURN without TRANSID)</td></tr>
+                <tr><td>Any other key</td><td><code>OTHER</code></td><td>Display invalid-key error, redisplay signon screen</td></tr>
+            </tbody>
+        </table>
+        <h3>Outbound XCTL Targets</h3>
+        <table>
+            <thead><tr><th>Condition</th><th>Target Program</th><th>Transaction</th></tr></thead>
+            <tbody>
+                <tr><td>CDEMO-USRTYP-ADMIN (SEC-USR-TYPE = 'A')</td><td><code>COADM01C</code></td><td>CA00 Admin Menu</td></tr>
+                <tr><td>Regular user (SEC-USR-TYPE = 'U')</td><td><code>COMEN01C</code></td><td>CM00 Main Menu</td></tr>
+            </tbody>
+        </table>
+    </div>
 
-        <h3>🔗 Dependencies</h3>
+    <div class="section" id="data-models">
+        <h2>6. Data Models</h2>
+        <h3>SEC-USER-DATA - USRSEC VSAM Record (CSUSR01Y.cpy)</h3>
+        <pre>* File: app/cpy/CSUSR01Y.cpy
+* VSAM: USRSEC (KSDS, RECLN=80)
+* Primary key: SEC-USR-ID (PIC X(08), offset 0, length 8)
+
+ 01 SEC-USER-DATA.
+   05 SEC-USR-ID      PIC X(08).   *&gt; User ID (primary key)
+   05 SEC-USR-FNAME   PIC X(20).   *&gt; First name
+   05 SEC-USR-LNAME   PIC X(20).   *&gt; Last name
+   05 SEC-USR-PWD     PIC X(08).   *&gt; Password (plain text - demo only)
+   05 SEC-USR-TYPE    PIC X(01).   *&gt; 'A'=Admin, 'U'=Regular User
+   05 SEC-USR-FILLER  PIC X(23).   *&gt; Reserved (total = 80 bytes)</pre>
+        <div class="callout callout-error">
+            <strong>Security Note:</strong> Passwords are stored in <strong>plain text</strong> in the USRSEC file.
+            This is an intentional characteristic of the CardDemo demo. Production implementations must
+            replace this with a cryptographic hash scheme (e.g., SHA-256 with salt).
+        </div>
+        <h3>CARDDEMO-COMMAREA - Session State (COCOM01Y.cpy)</h3>
+        <pre>* File: app/cpy/COCOM01Y.cpy
+* Shared communication area passed between all CICS programs.
+* Authentication module initializes CDEMO-GENERAL-INFO group.
+
+ 01 CARDDEMO-COMMAREA.
+   05 CDEMO-GENERAL-INFO.
+     10 CDEMO-FROM-TRANID   PIC X(04).  *&gt; Set to 'CC00' by auth
+     10 CDEMO-FROM-PROGRAM  PIC X(08).  *&gt; Set to 'COSGN00C' by auth
+     10 CDEMO-TO-TRANID     PIC X(04).
+     10 CDEMO-TO-PROGRAM    PIC X(08).
+     10 CDEMO-USER-ID       PIC X(08).  *&gt; Authenticated user ID &lt;- SET BY AUTH
+     10 CDEMO-USER-TYPE     PIC X(01).  *&gt; 'A' or 'U' &lt;- SET BY AUTH
+        88 CDEMO-USRTYP-ADMIN  VALUE 'A'.
+        88 CDEMO-USRTYP-USER   VALUE 'U'.
+     10 CDEMO-PGM-CONTEXT   PIC 9(01).  *&gt; Set to 0 (CDEMO-PGM-ENTER) by auth
+        88 CDEMO-PGM-ENTER    VALUE 0.
+        88 CDEMO-PGM-REENTER  VALUE 1.
+   05 CDEMO-CUSTOMER-INFO.
+     10 CDEMO-CUST-ID       PIC 9(09).
+     10 CDEMO-CUST-FNAME    PIC X(25).
+     10 CDEMO-CUST-MNAME    PIC X(25).
+     10 CDEMO-CUST-LNAME    PIC X(25).
+   05 CDEMO-ACCOUNT-INFO.
+     10 CDEMO-ACCT-ID       PIC 9(11).
+     10 CDEMO-ACCT-STATUS   PIC X(01).
+   05 CDEMO-CARD-INFO.
+     10 CDEMO-CARD-NUM      PIC 9(16).
+   05 CDEMO-MORE-INFO.
+     10 CDEMO-LAST-MAP      PIC X(7).
+     10 CDEMO-LAST-MAPSET   PIC X(7).</pre>
+        <h3>Working Storage Variables (COSGN00C.cbl)</h3>
+        <pre> 01 WS-VARIABLES.
+   05 WS-PGMNAME     PIC X(08) VALUE 'COSGN00C'.
+   05 WS-TRANID      PIC X(04) VALUE 'CC00'.
+   05 WS-MESSAGE     PIC X(80) VALUE SPACES.
+   05 WS-USRSEC-FILE PIC X(08) VALUE 'USRSEC  '. *&gt; VSAM DD name (8-char padded)
+   05 WS-ERR-FLG     PIC X(01) VALUE 'N'.
+      88 ERR-FLG-ON  VALUE 'Y'.
+      88 ERR-FLG-OFF VALUE 'N'.
+   05 WS-RESP-CD     PIC S9(09) COMP VALUE ZEROS. *&gt; CICS RESP code
+   05 WS-REAS-CD     PIC S9(09) COMP VALUE ZEROS. *&gt; CICS RESP2 code
+   05 WS-USER-ID     PIC X(08).   *&gt; Uppercased user ID from screen
+   05 WS-USER-PWD    PIC X(08).   *&gt; Uppercased password from screen</pre>
+    </div>
+
+    <div class="section" id="business-rules">
+        <h2>7. Business Rules</h2>
+        <table>
+            <thead><tr><th>Rule ID</th><th>Rule</th><th>Implementation Detail</th></tr></thead>
+            <tbody>
+                <tr><td>BR-01</td><td>User ID is required (non-blank)</td><td>USERIDI = SPACES OR LOW-VALUES -&gt; error "Please enter User ID ..."</td></tr>
+                <tr><td>BR-02</td><td>Password is required (non-blank)</td><td>PASSWDI = SPACES OR LOW-VALUES -&gt; error "Please enter Password ..."</td></tr>
+                <tr><td>BR-03</td><td>User ID input is case-insensitive</td><td>FUNCTION UPPER-CASE applied before VSAM key lookup</td></tr>
+                <tr><td>BR-04</td><td>Password input is case-insensitive</td><td>FUNCTION UPPER-CASE applied before comparison</td></tr>
+                <tr><td>BR-05</td><td>User must exist in USRSEC</td><td>RESP=13 (NOTFND) -&gt; error "User not found. Try again ..."</td></tr>
+                <tr><td>BR-06</td><td>Password must exactly match stored value</td><td>SEC-USR-PWD = WS-USER-PWD (8-char exact match)</td></tr>
+                <tr><td>BR-07</td><td>PF3 exits the application gracefully</td><td>CCDA-MSG-THANK-YOU via SEND TEXT; CICS RETURN without TRANSID</td></tr>
+                <tr><td>BR-08</td><td>Any key other than ENTER or PF3 is invalid</td><td>WHEN OTHER -&gt; CCDA-MSG-INVALID-KEY, redisplay screen</td></tr>
+                <tr><td>BR-09</td><td>Admin users ('A') route to Admin Menu</td><td>IF CDEMO-USRTYP-ADMIN -&gt; XCTL COADM01C</td></tr>
+                <tr><td>BR-10</td><td>Regular users ('U') route to Main Menu</td><td>ELSE -&gt; XCTL COMEN01C</td></tr>
+                <tr><td>BR-11</td><td>VSAM I/O errors produce a generic message</td><td>WHEN OTHER -&gt; "Unable to verify the User ..."</td></tr>
+                <tr><td>BR-12</td><td>Failed auth repositions cursor at failed field</td><td>MOVE -1 TO USERIDL or PASSWDL of COSGN0AI</td></tr>
+            </tbody>
+        </table>
+        <h3>VSAM Response Code Handling</h3>
+        <table>
+            <thead><tr><th>RESP Code</th><th>Meaning</th><th>Action</th></tr></thead>
+            <tbody>
+                <tr><td>0</td><td>Normal - record found</td><td>Proceed to password comparison</td></tr>
+                <tr><td>13</td><td>NOTFND - user ID not in USRSEC</td><td>Error: "User not found. Try again ..." Cursor to USERID</td></tr>
+                <tr><td>Other</td><td>Unexpected VSAM or CICS error</td><td>Error: "Unable to verify the User ..." Cursor to USERID</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section" id="processing-flow">
+        <h2>8. Processing Flow</h2>
+        <h3>Cold Start (EIBCALEN = 0)</h3>
+        <div class="flow-step">1. CICS initiates CC00 transaction with no COMMAREA (EIBCALEN=0)</div>
+        <div class="flow-step">2. Program moves LOW-VALUES to COSGN0AO (clears output map)</div>
+        <div class="flow-step">3. Sets cursor to USERID field: MOVE -1 TO USERIDL OF COSGN0AI</div>
+        <div class="flow-step">4. Calls SEND-SIGNON-SCREEN (EXEC CICS SEND MAP ERASE CURSOR)</div>
+        <div class="flow-step">5. EXEC CICS RETURN TRANSID('CC00') COMMAREA(...) - waits for operator</div>
+
+        <h3>ENTER Key - Credential Validation</h3>
+        <div class="flow-step">1. CICS resumes: EIBAID = DFHENTER, EIBCALEN &gt; 0</div>
+        <div class="flow-step">2. EXEC CICS RECEIVE MAP('COSGN0A') MAPSET('COSGN00') - read screen input</div>
+        <div class="flow-step">3. Validate USERID field is not blank - if blank, error and redisplay</div>
+        <div class="flow-step">4. Validate PASSWD field is not blank - if blank, error and redisplay</div>
+        <div class="flow-step">5. Apply FUNCTION UPPER-CASE to USERID and PASSWD</div>
+        <div class="flow-step">6. EXEC CICS READ DATASET('USRSEC') INTO(SEC-USER-DATA) RIDFLD(WS-USER-ID)</div>
+        <div class="flow-step">7. Evaluate RESP: 0=found / 13=not found / other=error</div>
+        <div class="flow-step">8. If found: compare SEC-USR-PWD with WS-USER-PWD</div>
+        <div class="flow-step">9. If password matches: populate COMMAREA (USER-ID, USER-TYPE, FROM-TRANID, FROM-PROGRAM, PGM-CONTEXT=0)</div>
+        <div class="flow-step">10. Check SEC-USR-TYPE: 'A' -&gt; XCTL COADM01C / else -&gt; XCTL COMEN01C</div>
+
+        <h3>PF3 - Exit</h3>
+        <div class="flow-step">1. CICS resumes: EIBAID = DFHPF3</div>
+        <div class="flow-step">2. MOVE CCDA-MSG-THANK-YOU TO WS-MESSAGE</div>
+        <div class="flow-step">3. EXEC CICS SEND TEXT FROM(WS-MESSAGE) ERASE FREEKB</div>
+        <div class="flow-step">4. EXEC CICS RETURN (no TRANSID) - terminal session ends</div>
+
+        <h3>Main Program Logic (from COSGN00C.cbl)</h3>
+        <pre>MAIN-PARA.
+    SET ERR-FLG-OFF TO TRUE
+    MOVE SPACES TO WS-MESSAGE
+                   ERRMSGO OF COSGN0AO
+
+    IF EIBCALEN = 0
+        MOVE LOW-VALUES TO COSGN0AO
+        MOVE -1         TO USERIDL OF COSGN0AI
+        PERFORM SEND-SIGNON-SCREEN
+    ELSE
+        EVALUATE EIBAID
+            WHEN DFHENTER
+                PERFORM PROCESS-ENTER-KEY
+            WHEN DFHPF3
+                MOVE CCDA-MSG-THANK-YOU TO WS-MESSAGE
+                PERFORM SEND-PLAIN-TEXT
+            WHEN OTHER
+                MOVE 'Y'                  TO WS-ERR-FLG
+                MOVE CCDA-MSG-INVALID-KEY TO WS-MESSAGE
+                PERFORM SEND-SIGNON-SCREEN
+        END-EVALUATE
+    END-IF.
+
+    EXEC CICS RETURN
+              TRANSID (WS-TRANID)
+              COMMAREA (CARDDEMO-COMMAREA)
+              LENGTH(LENGTH OF CARDDEMO-COMMAREA)
+    END-EXEC.</pre>
+    </div>
+
+    <div class="section" id="screen-layout">
+        <h2>9. Screen Layout (BMS - COSGN00)</h2>
+        <p>The signon screen is a standard IBM 3270 24x80 character terminal display. BMS mapset COSGN00, map COSGN0A.</p>
+        <pre style="font-size:0.78em; line-height:1.45;">Col: 1         10        20        30        40        50        60        70        80
+     +---------+---------+---------+---------+---------+---------+---------+---------+
+ 1 | Tran : CC00         [TITLE01 - Application Title 40 chars              ] Date : mm/dd/yy|
+ 2 | Prog : COSGN00C     [TITLE02 - Application Title 40 chars              ] Time : hh:mm:ss|
+ 3 | AppID: xxxxxxxx                                                    SysID: xxxxxxxx|
+ 4 |                                                                                   |
+ 5 |      This is a Credit Card Demo Application for Mainframe Modernization           |
+ 6 |                                                                                   |
+ 7 |                     +========================================+                   |
+ 8 |                     |%%%%%%%  NATIONAL RESERVE NOTE  %%%%%%%%|                   |
+ 9 |                     |%(1)  THE UNITED STATES OF KICSLAND (1)%|                   |
+10 |                     |%295              ___       ********  295%|                   |
+11 |                     |%$    {x}       (o o)                 $%|                   |
+12 |                     |%$     ******  (  V  )      O N E     $%|                   |
+13 |                     |%(1)          ---m-m---             (1)%|                   |
+14 |                     |%%~~~~~~~~~~~ ONE DOLLAR ~~~~~~~~~~~~~%%|                   |
+15 |                     +========================================+                   |
+16 |                                                                                   |
+17 |                Type your User ID and Password, then press ENTER:                 |
+18 |                                                                                   |
+19 |                             User ID     : [________] (8 Char)                    |
+20 |                             Password    : [________] (8 Char)                    |
+21 |                                                                                   |
+22 |                                                                                   |
+23 | [Error/Status message - bright RED 78 chars                                    ] |
+24 | ENTER=Sign-on  F3=Exit                                                            |
+     +---------+---------+---------+---------+---------+---------+---------+---------+</pre>
+        <h3>Key Field Attributes</h3>
         <ul>
-            <li><strong>USRSEC VSAM file:</strong> Must be available — populated by DUSRSECJ JCL job before first use</li>
-            <li><strong>DFHAID / DFHBMSCA:</strong> CICS system copybooks for key handling</li>
-            <li><strong>COMMAREA:</strong> All downstream programs depend on CDEMO-USER-ID and CDEMO-USER-TYPE being set here</li>
+            <li><strong>USERID</strong>: <code>ATTRB=(FSET,IC,NORM,UNPROT)</code> - initial cursor (IC), user can type, content transmitted</li>
+            <li><strong>PASSWD</strong>: <code>ATTRB=(DRK,FSET,UNPROT)</code> - dark attribute hides password characters; initial value '________'</li>
+            <li><strong>ERRMSG</strong>: <code>ATTRB=(ASKIP,BRT,FSET) COLOR=RED</code> - bright red protected message field</li>
+            <li><strong>Map</strong>: <code>CTRL=(ALARM,FREEKB)</code> - alarm sounds and keyboard is unlocked when screen is sent</li>
         </ul>
-
-        <h3>Data Model</h3>
-        <pre>SEC-USER-DATA (USRSEC VSAM, RECLN=80):
-  SEC-USR-ID      PIC X(08)  ← Primary key
-  SEC-USR-FNAME   PIC X(20)
-  SEC-USR-LNAME   PIC X(20)
-  SEC-USR-PWD     PIC X(08)  ← Plain text (demo only)
-  SEC-USR-TYPE    PIC X(01)  ← 'A'=Admin, 'U'=User</pre>
     </div>
 
-    <div class="card">
-        <h2>✅ Acceptance Criteria Examples</h2>
-        <div class="ac-example"><strong>Valid login — Regular User:</strong><br>Given a valid User ID and matching password for a 'U' type user,<br>When user presses ENTER on the signon screen,<br>Then the system displays the Main Menu (CM00) and sets CDEMO-USER-TYPE = 'U'</div>
-        <div class="ac-example"><strong>Valid login — Admin:</strong><br>Given a valid User ID and matching password for an 'A' type user,<br>When user presses ENTER,<br>Then the system displays the Admin Menu (CA00) and sets CDEMO-USER-TYPE = 'A'</div>
-        <div class="ac-example"><strong>Invalid credentials:</strong><br>Given an incorrect password or non-existent User ID,<br>When user presses ENTER,<br>Then the signon screen is redisplayed with an error message and no session state is set</div>
-        <div class="ac-example"><strong>PF3 exit:</strong><br>Given any state on the signon screen,<br>When user presses PF3,<br>Then a thank-you message is displayed and the session ends</div>
-        <div class="ac-example"><strong>Invalid key:</strong><br>Given any screen state,<br>When user presses an unsupported PF key,<br>Then the screen redisplays with "Invalid Key" message and cursor repositioned on User ID field</div>
+    <div class="section" id="code-examples">
+        <h2>10. Code Examples</h2>
+        <h3>VSAM Read with Full Error Handling (from COSGN00C.cbl)</h3>
+        <pre>READ-USER-SEC-FILE.
+    EXEC CICS READ
+         DATASET   (WS-USRSEC-FILE)       *&gt; 'USRSEC  '
+         INTO      (SEC-USER-DATA)         *&gt; CSUSR01Y structure
+         LENGTH    (LENGTH OF SEC-USER-DATA)
+         RIDFLD    (WS-USER-ID)            *&gt; 8-char uppercased key
+         KEYLENGTH (LENGTH OF WS-USER-ID)
+         RESP      (WS-RESP-CD)
+         RESP2     (WS-REAS-CD)
+    END-EXEC.
+
+    EVALUATE WS-RESP-CD
+        WHEN 0                            *&gt; DFHRESP(NORMAL)
+            IF SEC-USR-PWD = WS-USER-PWD
+                MOVE WS-TRANID    TO CDEMO-FROM-TRANID
+                MOVE WS-PGMNAME   TO CDEMO-FROM-PROGRAM
+                MOVE WS-USER-ID   TO CDEMO-USER-ID
+                MOVE SEC-USR-TYPE TO CDEMO-USER-TYPE
+                MOVE ZEROS        TO CDEMO-PGM-CONTEXT
+
+                IF CDEMO-USRTYP-ADMIN
+                    EXEC CICS XCTL
+                        PROGRAM ('COADM01C')
+                        COMMAREA(CARDDEMO-COMMAREA)
+                    END-EXEC
+                ELSE
+                    EXEC CICS XCTL
+                        PROGRAM ('COMEN01C')
+                        COMMAREA(CARDDEMO-COMMAREA)
+                    END-EXEC
+                END-IF
+            ELSE
+                MOVE 'Wrong Password. Try again ...' TO WS-MESSAGE
+                MOVE -1 TO PASSWDL OF COSGN0AI
+                PERFORM SEND-SIGNON-SCREEN
+            END-IF
+        WHEN 13                           *&gt; DFHRESP(NOTFND)
+            MOVE 'Y' TO WS-ERR-FLG
+            MOVE 'User not found. Try again ...' TO WS-MESSAGE
+            MOVE -1  TO USERIDL OF COSGN0AI
+            PERFORM SEND-SIGNON-SCREEN
+        WHEN OTHER                        *&gt; Unexpected error
+            MOVE 'Y' TO WS-ERR-FLG
+            MOVE 'Unable to verify the User ...' TO WS-MESSAGE
+            MOVE -1  TO USERIDL OF COSGN0AI
+            PERFORM SEND-SIGNON-SCREEN
+    END-EVALUATE.</pre>
+
+        <h3>PROCESS-ENTER-KEY - Input Validation (from COSGN00C.cbl)</h3>
+        <pre>PROCESS-ENTER-KEY.
+    EXEC CICS RECEIVE
+              MAP('COSGN0A')
+              MAPSET('COSGN00')
+              RESP(WS-RESP-CD)
+              RESP2(WS-REAS-CD)
+    END-EXEC.
+
+    EVALUATE TRUE
+        WHEN USERIDI OF COSGN0AI = SPACES OR LOW-VALUES
+            MOVE 'Y'  TO WS-ERR-FLG
+            MOVE 'Please enter User ID ...' TO WS-MESSAGE
+            MOVE -1   TO USERIDL OF COSGN0AI
+            PERFORM SEND-SIGNON-SCREEN
+        WHEN PASSWDI OF COSGN0AI = SPACES OR LOW-VALUES
+            MOVE 'Y'  TO WS-ERR-FLG
+            MOVE 'Please enter Password ...' TO WS-MESSAGE
+            MOVE -1   TO PASSWDL OF COSGN0AI
+            PERFORM SEND-SIGNON-SCREEN
+        WHEN OTHER
+            CONTINUE
+    END-EVALUATE.
+
+    MOVE FUNCTION UPPER-CASE(USERIDI OF COSGN0AI) TO
+                    WS-USER-ID
+                    CDEMO-USER-ID
+    MOVE FUNCTION UPPER-CASE(PASSWDI OF COSGN0AI) TO
+                    WS-USER-PWD
+
+    IF NOT ERR-FLG-ON
+        PERFORM READ-USER-SEC-FILE
+    END-IF.</pre>
+
+        <h3>POPULATE-HEADER-INFO - Date/Time/System Info (from COSGN00C.cbl)</h3>
+        <pre>POPULATE-HEADER-INFO.
+    MOVE FUNCTION CURRENT-DATE  TO WS-CURDATE-DATA
+
+    MOVE CCDA-TITLE01           TO TITLE01O OF COSGN0AO
+    MOVE CCDA-TITLE02           TO TITLE02O OF COSGN0AO
+    MOVE WS-TRANID              TO TRNNAMEO OF COSGN0AO
+    MOVE WS-PGMNAME             TO PGMNAMEO OF COSGN0AO
+    MOVE WS-CURDATE-MM-DD-YY    TO CURDATEO OF COSGN0AO
+    MOVE WS-CURTIME-HH-MM-SS    TO CURTIMEO OF COSGN0AO
+
+    EXEC CICS ASSIGN
+        APPLID(APPLIDO OF COSGN0AO)
+    END-EXEC
+
+    EXEC CICS ASSIGN
+        SYSID(SYSIDO OF COSGN0AO)
+    END-EXEC.</pre>
+
+        <h3>BMS Password Field - Dark Attribute (from COSGN00.bms)</h3>
+        <pre>* User ID input: initial cursor (IC), 8-char unprot, green
+USERID  DFHMDF ATTRB=(FSET,IC,NORM,UNPROT),
+               COLOR=GREEN,
+               HILIGHT=OFF,
+               LENGTH=8,
+               POS=(19,43)
+
+* Password input: DRK hides characters, 8-char unprot
+PASSWD  DFHMDF ATTRB=(DRK,FSET,UNPROT),
+               COLOR=GREEN,
+               HILIGHT=OFF,
+               LENGTH=8,
+               POS=(20,43),
+               INITIAL='________'
+
+* Error message: bright red, skip (protected), 78-char
+ERRMSG  DFHMDF ATTRB=(ASKIP,BRT,FSET),
+               COLOR=RED,
+               LENGTH=78,
+               POS=(23,1)</pre>
     </div>
 
-    <div class="footer">
-        <a href="../../index.html" class="nav-link">← Back to Index</a>
-        <a href="../accounts/index.html" class="nav-link">Accounts →</a>
-        <p style="margin-top:10px"><em>Last updated: 2026-03-26 | CardDemo Documentation</em></p>
+    <div class="section" id="config">
+        <h2>11. Configuration and Environment</h2>
+        <h3>CICS Resource Definitions Required</h3>
+        <table>
+            <thead><tr><th>Resource Type</th><th>Name</th><th>Key Attributes</th></tr></thead>
+            <tbody>
+                <tr><td>Transaction</td><td><code>CC00</code></td><td>PROGRAM(COSGN00C)</td></tr>
+                <tr><td>Program</td><td><code>COSGN00C</code></td><td>LANGUAGE(COBOL), compiled with CICS translator option</td></tr>
+                <tr><td>Mapset</td><td><code>COSGN00</code></td><td>BMS-compiled, LANGUAGE(COBOL)</td></tr>
+                <tr><td>File</td><td><code>USRSEC</code></td><td>DSNAME(CARDDEMO.USRSEC.VSAM), DISP=SHR, opened READ at startup</td></tr>
+            </tbody>
+        </table>
+        <h3>Hard-Coded Values</h3>
+        <table>
+            <thead><tr><th>Name</th><th>Value</th><th>Location</th></tr></thead>
+            <tbody>
+                <tr><td><code>WS-PGMNAME</code></td><td>'COSGN00C'</td><td>Working Storage literal</td></tr>
+                <tr><td><code>WS-TRANID</code></td><td>'CC00'</td><td>Working Storage literal</td></tr>
+                <tr><td><code>WS-USRSEC-FILE</code></td><td>'USRSEC  '</td><td>Working Storage literal (8-char padded)</td></tr>
+                <tr><td>RESP=13</td><td>DFHRESP(NOTFND)</td><td>CICS standard response code</td></tr>
+                <tr><td>Admin target</td><td>'COADM01C'</td><td>Hard-coded XCTL PROGRAM literal</td></tr>
+                <tr><td>User target</td><td>'COMEN01C'</td><td>Hard-coded XCTL PROGRAM literal</td></tr>
+            </tbody>
+        </table>
+        <h3>Initial User File Setup</h3>
+        <pre>* DUSRSECJ JCL job - initialize USRSEC from seed data
+* Uses IEBGENER to copy user records into the VSAM file.
+* Must be run once before the authentication module is usable.
+* Ongoing user management is performed via the user-management module:
+*   COUSR01C (CU01) - Add user
+*   COUSR02C (CU02) - Update user
+*   COUSR03C (CU03) - Delete user</pre>
     </div>
+
+    <div class="section" id="dev-guide">
+        <h2>12. Development Guidelines and Patterns</h2>
+        <h3>Pseudo-Conversational Pattern</h3>
+        <p>
+            CardDemo uses CICS pseudo-conversational programming. The program processes one screen
+            interaction per invocation, then issues <code>EXEC CICS RETURN TRANSID COMMAREA</code>
+            to suspend. When the operator presses a key, CICS re-invokes the program with the COMMAREA intact.
+        </p>
+        <div class="callout callout-info">
+            <strong>Key Rule:</strong> Never issue <code>EXEC CICS RETURN</code> without TRANSID except when
+            intentionally ending the session (PF3 exit). Always pass COMMAREA on RETURN to preserve
+            session state across interactions.
+        </div>
+        <h3>Error Flag Pattern</h3>
+        <p>
+            The module uses a two-value condition-name flag (<code>WS-ERR-FLG</code>) with 88-levels
+            <code>ERR-FLG-ON</code> and <code>ERR-FLG-OFF</code>. Set with <code>SET ERR-FLG-OFF TO TRUE</code>
+            at paragraph entry, and test with <code>IF NOT ERR-FLG-ON</code> before proceeding to VSAM read.
+            This prevents VSAM reads when prior validation already failed.
+        </p>
+        <h3>COMMAREA Initialization</h3>
+        <p>
+            Authentication is the <strong>only</strong> program that creates a fresh COMMAREA. All other
+            programs receive a pre-populated COMMAREA via XCTL or RETURN. When enhancing this module,
+            always initialize all required COMMAREA fields to their defaults to prevent uninitialized
+            data from propagating to downstream programs.
+        </p>
+        <h3>Cursor Positioning</h3>
+        <p>
+            Use <code>MOVE -1 TO &lt;fieldname&gt;L OF &lt;mapname&gt;I</code> to position the cursor
+            at a specific field. This is the BMS length field mechanism for cursor positioning. The CURSOR
+            option on EXEC CICS SEND activates this positioning.
+        </p>
+        <h3>Story Complexity Estimates</h3>
+        <div class="grid-3">
+            <div class="card card-green">
+                <strong>Simple (1-2 pts)</strong>
+                <ul>
+                    <li>Update error message wording</li>
+                    <li>Change BMS field label text</li>
+                    <li>Modify screen colors/attributes</li>
+                    <li>Add hint text to screen</li>
+                </ul>
+            </div>
+            <div class="card card-orange">
+                <strong>Medium (3-5 pts)</strong>
+                <ul>
+                    <li>Add login attempt counter</li>
+                    <li>Account lockout after N failures</li>
+                    <li>Store last-login timestamp</li>
+                    <li>Add new user type routing</li>
+                    <li>Add USRSEC REWRITE for failure count</li>
+                </ul>
+            </div>
+            <div class="card card-red">
+                <strong>Complex (5-8 pts)</strong>
+                <ul>
+                    <li>Password hashing (new utility + USRSEC schema change)</li>
+                    <li>RACF integration for external auth</li>
+                    <li>Session timeout enforcement</li>
+                    <li>Multi-factor authentication</li>
+                </ul>
+            </div>
+        </div>
+        <h3>Adding a New User Type - Example</h3>
+        <pre>* Step 1: In COCOM01Y.cpy, add new 88-level value
+ 10 CDEMO-USER-TYPE     PIC X(01).
+    88 CDEMO-USRTYP-ADMIN  VALUE 'A'.
+    88 CDEMO-USRTYP-USER   VALUE 'U'.
+    88 CDEMO-USRTYP-SUPER  VALUE 'S'.  &lt;-- new type
+
+* Step 2: In COSGN00C.cbl READ-USER-SEC-FILE, extend routing
+IF CDEMO-USRTYP-ADMIN
+    EXEC CICS XCTL PROGRAM('COADM01C') COMMAREA(CARDDEMO-COMMAREA) END-EXEC
+ELSE IF CDEMO-USRTYP-SUPER
+    EXEC CICS XCTL PROGRAM('COSUP01C') COMMAREA(CARDDEMO-COMMAREA) END-EXEC
+ELSE
+    EXEC CICS XCTL PROGRAM('COMEN01C') COMMAREA(CARDDEMO-COMMAREA) END-EXEC
+END-IF
+
+* Step 3: Recompile COSGN00C and COCOM01Y copybook dependents
+* Step 4: Add COSUP01C program and CICS transaction definition</pre>
+    </div>
+
+    <div class="section" id="user-stories">
+        <h2>13. User Stories and Acceptance Criteria</h2>
+        <h3>Story Templates</h3>
+        <ul>
+            <li>As a <strong>cardholder</strong>, I want to sign in with my user ID and password so I can access my account functions</li>
+            <li>As an <strong>administrator</strong>, I want to log in with admin credentials so I am routed to the admin menu</li>
+            <li>As a <strong>user</strong>, I want to receive a clear error when my credentials are wrong so I know to retry</li>
+            <li>As a <strong>user</strong>, I want to press PF3 to exit so I can safely end my session</li>
+            <li>As a <strong>system operator</strong>, I want the signon screen to show current date/time so I can verify system availability</li>
+        </ul>
+        <h3>Acceptance Criteria</h3>
+        <div class="ac-item">
+            <strong>Valid login - Regular User (BR-06, BR-10)</strong>
+            Given a valid User ID and matching password for a 'U' type user in USRSEC,
+            when the user presses ENTER, then the system XCTLs to COMEN01C (CM00),
+            and CDEMO-USER-ID is set to the authenticated user, and CDEMO-USER-TYPE = 'U'.
+        </div>
+        <div class="ac-item">
+            <strong>Valid login - Administrator (BR-06, BR-09)</strong>
+            Given a valid User ID and matching password for an 'A' type user in USRSEC,
+            when the user presses ENTER, then the system XCTLs to COADM01C (CA00),
+            and CDEMO-USER-TYPE = 'A' in CARDDEMO-COMMAREA.
+        </div>
+        <div class="ac-item">
+            <strong>Wrong password (BR-06, BR-12)</strong>
+            Given a valid User ID but incorrect password, when user presses ENTER,
+            then the signon screen redisplays with "Wrong Password. Try again ...",
+            the cursor is on the Password field, and no user identity is set in COMMAREA.
+        </div>
+        <div class="ac-item">
+            <strong>User not found (BR-05)</strong>
+            Given a User ID that does not exist in USRSEC, when user presses ENTER,
+            then the signon screen redisplays with "User not found. Try again ...",
+            and the cursor is on the User ID field.
+        </div>
+        <div class="ac-item">
+            <strong>Blank User ID (BR-01)</strong>
+            Given the User ID field is empty, when user presses ENTER,
+            then the screen redisplays with "Please enter User ID ..." and no VSAM read is attempted.
+        </div>
+        <div class="ac-item">
+            <strong>Blank Password (BR-02)</strong>
+            Given a User ID is entered but Password is empty, when user presses ENTER,
+            then the screen redisplays with "Please enter Password ..." and no VSAM read is attempted.
+        </div>
+        <div class="ac-item">
+            <strong>PF3 Exit (BR-07)</strong>
+            Given any state on the signon screen, when user presses PF3,
+            then the thank-you message is displayed via SEND TEXT and the CICS transaction ends
+            (RETURN without TRANSID).
+        </div>
+        <div class="ac-item">
+            <strong>Invalid key (BR-08)</strong>
+            Given any screen state, when user presses any key other than ENTER or PF3,
+            then the signon screen redisplays with the standard invalid-key message and no credentials
+            are processed.
+        </div>
+        <div class="ac-item">
+            <strong>Case-insensitive User ID (BR-03)</strong>
+            Given user ID 'USERTEST' in USRSEC, when user enters 'usertest' (lowercase) with correct password,
+            then authentication succeeds because FUNCTION UPPER-CASE is applied before the VSAM key lookup.
+        </div>
+    </div>
+
+    <div class="section" id="risks">
+        <h2>14. Risks and Tech Debt</h2>
+        <div class="callout callout-error">
+            <strong>HIGH - Plain-text passwords:</strong>
+            SEC-USR-PWD stores passwords in plain text in the USRSEC VSAM file.
+            Any user with read access to the VSAM dataset can view all system passwords.
+            Modernization must implement cryptographic hashing (SHA-256 + salt) in a utility program
+            before this is acceptable in any production environment.
+        </div>
+        <div class="callout callout-warn">
+            <strong>MEDIUM - No account lockout:</strong>
+            There is no mechanism to lock a user account after repeated failed login attempts.
+            Brute-force credential guessing is unconstrained. Recommended: add a failed-attempt counter
+            field to USRSEC (requires REWRITE access) and lockout after N failures.
+        </div>
+        <div class="callout callout-warn">
+            <strong>MEDIUM - No session timeout:</strong>
+            CICS pseudo-conversational session state is maintained indefinitely. An unattended
+            authenticated terminal represents a security risk. Consider recording a session-start
+            timestamp in COMMAREA and checking elapsed time on each transaction.
+        </div>
+        <div class="callout">
+            <strong>LOW - Hard-coded program names:</strong>
+            Target programs 'COADM01C' and 'COMEN01C' are compile-time string literals.
+            Any rename or routing change requires recompilation of COSGN00C and all programs
+            that include COCOM01Y.
+        </div>
+        <div class="callout">
+            <strong>LOW - Read-only USRSEC access:</strong>
+            COSGN00C only READs USRSEC; it never WRITEs or REWRITEs. Password change functionality
+            requires a separate program with REWRITE access to the USRSEC file.
+        </div>
+        <h3>Recommended Modernization Order</h3>
+        <ol>
+            <li><strong>Authentication</strong> must work fully before any other module can be tested end-to-end</li>
+            <li>Then: accounts, credit-cards, transactions, billing, reports, user-management, batch-processing</li>
+            <li>Optional modules (authorization, transaction-types) only after core application is verified</li>
+        </ol>
+    </div>
+
+    <footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #444; color: #888; font-size: 0.85em;">
+        <p><a href="../../index.html">&#8592; Back to Index</a> &nbsp;|&nbsp; <a href="../accounts/index.html">Accounts &#8594;</a></p>
+        <p style="margin-top: 8px;">Last reviewed: 2026-03-26T18:00:16Z</p>
+        <p style="margin-top: 4px;">CardDemo Mainframe Application | Module: authentication | Transaction: CC00 | Program: COSGN00C</p>
+    </footer>
 </div>
 </body>
 </html>
