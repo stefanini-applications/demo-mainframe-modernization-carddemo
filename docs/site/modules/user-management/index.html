@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - User Story Development Guide | CardDemo</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; color: #212529; line-height: 1.6; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+        .header { background: linear-gradient(135deg, #37474f 0%, #455a64 100%); color: #fff; padding: 36px 32px; border-radius: 10px; margin-bottom: 28px; }
+        .header h1 { font-size: 2rem; margin-bottom: 8px; }
+        .header p { opacity: 0.85; font-size: 1.05rem; }
+        .badge { display: inline-block; background: rgba(255,255,255,0.2); border-radius: 4px; padding: 2px 10px; font-size: 0.8rem; margin-right: 8px; }
+        .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 28px; margin-bottom: 24px; }
+        h2 { font-size: 1.35rem; color: #37474f; border-bottom: 2px solid #eceff1; padding-bottom: 8px; margin-bottom: 18px; }
+        h3 { font-size: 1.1rem; color: #455a64; margin: 18px 0 10px; }
+        ul, ol { padding-left: 22px; }
+        li { margin-bottom: 6px; }
+        code { background: #f3f4f6; border-radius: 3px; padding: 2px 6px; font-size: 0.88rem; font-family: 'Courier New', monospace; }
+        pre { background: #1e1e2e; color: #cdd6f4; border-radius: 6px; padding: 18px; overflow-x: auto; font-size: 0.85rem; margin: 12px 0; }
+        .complexity { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 12px 0; }
+        .complexity-card { border-radius: 6px; padding: 14px; }
+        .simple { background: #e8f5e9; border-left: 4px solid #4caf50; }
+        .medium { background: #fff3e0; border-left: 4px solid #ff9800; }
+        .complex { background: #fce4ec; border-left: 4px solid #e91e63; }
+        .complexity-card strong { display: block; margin-bottom: 4px; }
+        .ac-example { background: #f1f8ff; border-left: 4px solid #0288d1; border-radius: 4px; padding: 12px 16px; margin: 10px 0; font-size: 0.93rem; }
+        .footer { text-align: center; padding: 20px; color: #6c757d; font-size: 0.9rem; }
+        .nav-link { display: inline-block; margin: 6px 8px 0 0; color: #37474f; text-decoration: none; font-size: 0.95rem; }
+        .nav-link:hover { text-decoration: underline; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+        th { background: #eceff1; color: #37474f; text-align: left; padding: 10px 12px; font-size: 0.9rem; }
+        td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
+        .warning { background: #fff8e1; border-left: 4px solid #ffc107; border-radius: 4px; padding: 12px 16px; margin: 10px 0; font-size: 0.93rem; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>👥 User Management</h1>
+        <p>User Story Development Guide — CardDemo Mainframe Application</p>
+        <div style="margin-top:12px">
+            <span class="badge">CICS</span>
+            <span class="badge">Admin Only</span>
+            <span class="badge">COBOL</span>
+            <span class="badge">VSAM USRSEC</span>
+            <span class="badge">CA00 · CU00–CU03</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>📋 Module Overview</h2>
+        <p><strong>Purpose:</strong> Administrative management of system users — list, add, update, and delete user accounts. Controls who can access the CardDemo application and with what privileges.</p>
+        <p style="margin-top:10px"><strong>Business Context:</strong> Admin-only module. User type ('A' or 'U') stored in USRSEC determines which menu and functions are accessible. User management is the access control mechanism for the entire application.</p>
+        <div class="warning">⚠️ <strong>Admin Access Required:</strong> All user management functions require CDEMO-USER-TYPE = 'A' in COMMAREA. Regular users cannot access CA00 or CU00–CU03.</div>
+        <h3>Key Components</h3>
+        <table>
+            <tr><th>Component</th><th>Transaction</th><th>Responsibility</th></tr>
+            <tr><td><code>COADM01C.cbl</code></td><td>CA00</td><td>Admin menu — entry point for all admin functions</td></tr>
+            <tr><td><code>COUSR00C.cbl</code></td><td>CU00</td><td>List all users in USRSEC (paginated)</td></tr>
+            <tr><td><code>COUSR01C.cbl</code></td><td>CU01</td><td>Add new user to USRSEC</td></tr>
+            <tr><td><code>COUSR02C.cbl</code></td><td>CU02</td><td>Update existing user fields</td></tr>
+            <tr><td><code>COUSR03C.cbl</code></td><td>CU03</td><td>Delete user from USRSEC (hard delete)</td></tr>
+            <tr><td><code>CSUSR01Y.cpy</code></td><td>—</td><td>SEC-USER-DATA structure (RECLN=80)</td></tr>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>🎯 User Story Development Guide</h2>
+        <h3>📝 Module-Specific US Templates</h3>
+        <ul>
+            <li><strong>List users:</strong> As an administrator, I want to view all system users so I can audit who has access to CardDemo</li>
+            <li><strong>Add user:</strong> As an administrator, I want to add a new user with ID, name, password, and type so they can access the system</li>
+            <li><strong>Update user:</strong> As an administrator, I want to update a user's type from 'U' to 'A' so they have admin privileges</li>
+            <li><strong>Delete user:</strong> As an administrator, I want to delete a user account so terminated employees lose system access</li>
+            <li><strong>Password reset:</strong> As an administrator, I want to reset a user's password so locked-out users can regain access</li>
+            <li><strong>User type control:</strong> As an administrator, I want to change a user's type so their access level matches their role</li>
+        </ul>
+
+        <h3>⚡ Development Acceleration Factors</h3>
+        <ul>
+            <li><strong>USRSEC KSDS:</strong> Simple primary-key access by SEC-USR-ID — all CRUD operations are direct keyed reads/writes</li>
+            <li><strong>Admin type check:</strong> CDEMO-USER-TYPE = 'A' check already implemented — reuse this pattern for any new admin function</li>
+            <li><strong>Four-program CRUD:</strong> List/Add/Update/Delete already separated — each can be modified independently</li>
+            <li><strong>DUSRSECJ JCL:</strong> Bulk user load pattern exists — reuse for user import from external systems</li>
+        </ul>
+
+        <h3>📊 Complexity Guidelines</h3>
+        <div class="complexity">
+            <div class="complexity-card simple">
+                <strong>Simple (1–2 pts)</strong>
+                Add display-only field to user list; change field order on add/update screens; improve error message text
+            </div>
+            <div class="complexity-card medium">
+                <strong>Medium (3–5 pts)</strong>
+                Add user active/inactive flag to USRSEC; implement soft delete (deactivate vs. hard delete); add user search by name
+            </div>
+            <div class="complexity-card complex">
+                <strong>Complex (5–8 pts)</strong>
+                Add audit log for user changes (new VSAM file); implement password complexity rules (utility program); add user groups/roles beyond A/U types; bulk user import from external source
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🔧 Technical Foundation</h2>
+        <h3>Add User Flow</h3>
+        <pre>Admin on CU01 screen:
+  → Enter: User ID, First Name, Last Name, Password, Type
+  → Validate: ID unique (READ USRSEC → NOTFOUND expected)
+  → Validate: type = 'A' or 'U', all required fields present
+  → WRITE USRSEC record (SEC-USER-DATA)
+  → Display confirmation</pre>
+
+        <h3>Update User Flow</h3>
+        <pre>Admin selects user from list (CU00) → navigates to CU02:
+  → READ USRSEC (key = selected SEC-USR-ID)
+  → Display current values on screen
+  → Admin modifies fields → ENTER
+  → Validate changes
+  → REWRITE USRSEC record
+  → Display confirmation</pre>
+
+        <h3>Delete User Flow</h3>
+        <pre>Admin selects user from list → navigates to CU03:
+  → Display user details for confirmation
+  → Admin confirms deletion → ENTER
+  → DELETE from USRSEC (key = SEC-USR-ID)
+  → Hard delete — record permanently removed
+  → Return to user list with confirmation</pre>
+
+        <h3>Data Model</h3>
+        <pre>SEC-USER-DATA (USRSEC VSAM, RECLN=80):
+  SEC-USR-ID      PIC X(08)  ← Primary key (unique, 8 char)
+  SEC-USR-FNAME   PIC X(20)  ← First name
+  SEC-USR-LNAME   PIC X(20)  ← Last name
+  SEC-USR-PWD     PIC X(08)  ← Password (plain text — demo only)
+  SEC-USR-TYPE    PIC X(01)  ← 'A'=Admin, 'U'=User
+  SEC-USR-FILLER  PIC X(23)  ← Reserved</pre>
+
+        <h3>🔗 Dependencies</h3>
+        <ul>
+            <li><strong>authentication:</strong> COMMAREA must have CDEMO-USER-TYPE = 'A' — user management blocked for non-admins</li>
+            <li><strong>USRSEC VSAM file:</strong> Must be pre-loaded via DUSRSECJ JCL before first admin login</li>
+            <li><strong>RACF (optional):</strong> May integrate with external RACF security for enterprise deployments</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>✅ Acceptance Criteria Examples</h2>
+        <div class="ac-example"><strong>List users — admin only:</strong><br>Given a signed-in admin (CDEMO-USER-TYPE='A'),<br>When navigating to User List (CU00),<br>Then all users in USRSEC are displayed with ID, name, and type</div>
+        <div class="ac-example"><strong>Non-admin blocked:</strong><br>Given a signed-in regular user (CDEMO-USER-TYPE='U'),<br>When attempting to navigate to CA00 or CU00,<br>Then access is denied with an "Unauthorized" message and user is returned to Main Menu</div>
+        <div class="ac-example"><strong>Add user — success:</strong><br>Given all required fields entered on CU01 with a unique User ID,<br>When pressing ENTER,<br>Then a new SEC-USER-DATA record is written to USRSEC; success message displayed; user appears in list</div>
+        <div class="ac-example"><strong>Add user — duplicate ID:</strong><br>Given a User ID that already exists in USRSEC,<br>When pressing ENTER on CU01,<br>Then "User ID already exists" error is displayed and no USRSEC write occurs</div>
+        <div class="ac-example"><strong>Delete user — confirmed:</strong><br>Given an admin confirms deletion on CU03,<br>When pressing ENTER,<br>Then the record is permanently removed from USRSEC and user can no longer log in</div>
+        <div class="ac-example"><strong>Update user type:</strong><br>Given an admin changes SEC-USR-TYPE from 'U' to 'A' on CU02,<br>When pressing ENTER,<br>Then USRSEC is updated; the user's next login routes them to the Admin Menu</div>
+    </div>
+
+    <div class="footer">
+        <a href="../../index.html" class="nav-link">← Back to Index</a>
+        <a href="../reports/index.html" class="nav-link">Reports</a>
+        <a href="../batch-processing/index.html" class="nav-link">Batch Processing →</a>
+        <p style="margin-top:10px"><em>Last updated: 2026-03-26 | CardDemo Documentation</em></p>
+    </div>
+</div>
+</body>
+</html>

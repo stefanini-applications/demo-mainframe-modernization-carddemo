@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billing - User Story Development Guide | CardDemo</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; color: #212529; line-height: 1.6; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+        .header { background: linear-gradient(135deg, #e65100 0%, #ef6c00 100%); color: #fff; padding: 36px 32px; border-radius: 10px; margin-bottom: 28px; }
+        .header h1 { font-size: 2rem; margin-bottom: 8px; }
+        .header p { opacity: 0.85; font-size: 1.05rem; }
+        .badge { display: inline-block; background: rgba(255,255,255,0.2); border-radius: 4px; padding: 2px 10px; font-size: 0.8rem; margin-right: 8px; }
+        .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 28px; margin-bottom: 24px; }
+        h2 { font-size: 1.35rem; color: #e65100; border-bottom: 2px solid #fff3e0; padding-bottom: 8px; margin-bottom: 18px; }
+        h3 { font-size: 1.1rem; color: #ef6c00; margin: 18px 0 10px; }
+        ul, ol { padding-left: 22px; }
+        li { margin-bottom: 6px; }
+        code { background: #f3f4f6; border-radius: 3px; padding: 2px 6px; font-size: 0.88rem; font-family: 'Courier New', monospace; }
+        pre { background: #1e1e2e; color: #cdd6f4; border-radius: 6px; padding: 18px; overflow-x: auto; font-size: 0.85rem; margin: 12px 0; }
+        .complexity { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 12px 0; }
+        .complexity-card { border-radius: 6px; padding: 14px; }
+        .simple { background: #e8f5e9; border-left: 4px solid #4caf50; }
+        .medium { background: #fff3e0; border-left: 4px solid #ff9800; }
+        .complex { background: #fce4ec; border-left: 4px solid #e91e63; }
+        .complexity-card strong { display: block; margin-bottom: 4px; }
+        .ac-example { background: #f1f8ff; border-left: 4px solid #0288d1; border-radius: 4px; padding: 12px 16px; margin: 10px 0; font-size: 0.93rem; }
+        .footer { text-align: center; padding: 20px; color: #6c757d; font-size: 0.9rem; }
+        .nav-link { display: inline-block; margin: 6px 8px 0 0; color: #e65100; text-decoration: none; font-size: 0.95rem; }
+        .nav-link:hover { text-decoration: underline; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+        th { background: #fff3e0; color: #e65100; text-align: left; padding: 10px 12px; font-size: 0.9rem; }
+        td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>💰 Billing</h1>
+        <p>User Story Development Guide — CardDemo Mainframe Application</p>
+        <div style="margin-top:12px">
+            <span class="badge">CICS</span>
+            <span class="badge">COBOL</span>
+            <span class="badge">VSAM ACCTFILE + TRANFILE</span>
+            <span class="badge">Transaction: CB00</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>📋 Module Overview</h2>
+        <p><strong>Purpose:</strong> Process bill payments for a credit card account. Accepts a payment amount from the cardholder, creates a credit transaction record, and reduces the account's current balance.</p>
+        <p style="margin-top:10px"><strong>Business Context:</strong> Payment processing is the primary cardholder action to reduce outstanding balance. Payments are recorded as positive (credit) transactions and immediately update the account balance. The billing flow depends on accounts and transactions modules.</p>
+        <h3>Key Components</h3>
+        <table>
+            <tr><th>Component</th><th>Type</th><th>Responsibility</th></tr>
+            <tr><td><code>COBIL00C.cbl</code></td><td>CICS (CB00)</td><td>Payment input, validation, TRANFILE write, ACCTFILE balance update</td></tr>
+            <tr><td><code>COBIL00.bms</code></td><td>BMS Map</td><td>Bill payment 3270 screen layout</td></tr>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>🎯 User Story Development Guide</h2>
+        <h3>📝 Module-Specific US Templates</h3>
+        <ul>
+            <li><strong>Make payment:</strong> As a cardholder, I want to make a bill payment so my outstanding balance is reduced</li>
+            <li><strong>View balance before paying:</strong> As a cardholder, I want to see my current balance on the payment screen so I know how much to pay</li>
+            <li><strong>Partial payment:</strong> As a cardholder, I want to enter a partial payment amount so I can pay more than the minimum but less than the full balance</li>
+            <li><strong>Payment confirmation:</strong> As a cardholder, I want to receive a confirmation message after submitting a payment so I know it was processed</li>
+            <li><strong>Payment history:</strong> As a cardholder, I want to see my payment transactions in the transaction list so I have a record of all payments made</li>
+        </ul>
+
+        <h3>⚡ Development Acceleration Factors</h3>
+        <ul>
+            <li><strong>TRAN-RECORD structure:</strong> Payment creates a standard TRAN-RECORD with positive TRAN-AMT — no new data structures needed</li>
+            <li><strong>Account balance update:</strong> Same ACCTFILE REWRITE pattern as POSTTRAN batch — well-established approach</li>
+            <li><strong>Single-screen flow:</strong> COBIL00C is self-contained — input, validation, and update in one CICS program</li>
+            <li><strong>Existing validation patterns:</strong> Amount format validation reuses patterns from Transaction Add (COTRN02C)</li>
+        </ul>
+
+        <h3>📊 Complexity Guidelines</h3>
+        <div class="complexity">
+            <div class="complexity-card simple">
+                <strong>Simple (1–2 pts)</strong>
+                Add minimum payment display; show last payment date on screen; add payment amount field validation message improvement
+            </div>
+            <div class="complexity-card medium">
+                <strong>Medium (3–5 pts)</strong>
+                Add minimum payment calculation and enforcement; implement payment due date display; add statement balance vs. current balance distinction
+            </div>
+            <div class="complexity-card complex">
+                <strong>Complex (5–8 pts)</strong>
+                EFT/ACH payment integration; scheduled auto-payment batch job; payment reversal capability; late fee calculation and application
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🔧 Technical Foundation</h2>
+        <h3>Bill Payment Flow</h3>
+        <pre>Entry: ACCT-ID + CARD-NUM in COMMAREA
+  → Display COBIL00 screen with current balance from ACCTFILE
+  → User enters payment amount → ENTER
+  → Validate: amount > 0, numeric, not exceeding balance rules
+  → Read ACCTFILE (key=ACCT-ID) for current balance
+  → Generate payment TRAN-ID
+  → WRITE TRANFILE:
+      TRAN-TYPE-CD  = payment type code
+      TRAN-AMT      = +positive payment amount
+      TRAN-CARD-NUM = current card
+      TRAN-ORIG-TS  = current timestamp
+  → Update ACCTFILE:
+      ACCT-CURR-BAL        -= payment amount
+      ACCT-CURR-CYC-CREDIT += payment amount
+  → Display confirmation message</pre>
+
+        <h3>🔗 Dependencies</h3>
+        <ul>
+            <li><strong>accounts:</strong> ACCT-ID must be set in COMMAREA; account must be ACTIVE (ACCT-ACTIVE-STATUS='Y')</li>
+            <li><strong>transactions:</strong> Payment creates a TRAN-RECORD in TRANFILE — visible in transaction list as a credit entry</li>
+            <li><strong>ACCTFILE:</strong> Balance update is a direct REWRITE — subject to CLOSEFIL dependency if batch is also running</li>
+            <li><strong>TRANFILE:</strong> Payment transaction written before balance update; if TRANFILE write fails, balance update does not proceed</li>
+        </ul>
+
+        <h3>Business Rules</h3>
+        <ul>
+            <li>Payment amount must be greater than zero</li>
+            <li>No minimum payment enforcement in base application (demo simplification)</li>
+            <li>Account must be active (ACCT-ACTIVE-STATUS = 'Y') to accept payment</li>
+            <li>Payment creates a positive (credit) TRAN-RECORD entry — visible in transaction history</li>
+            <li>ACCT-CURR-CYC-CREDIT is incremented by payment amount for cycle tracking</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>✅ Acceptance Criteria Examples</h2>
+        <div class="ac-example"><strong>Successful payment:</strong><br>Given a cardholder with an active account and balance of $500,<br>When entering a payment of $100 and pressing ENTER,<br>Then ACCT-CURR-BAL is reduced to $400; a credit TRAN-RECORD is written; confirmation message displayed</div>
+        <div class="ac-example"><strong>Invalid payment amount — zero:</strong><br>Given a payment amount of $0 or blank,<br>When pressing ENTER,<br>Then the screen redisplays with "Amount must be greater than zero" and no VSAM updates occur</div>
+        <div class="ac-example"><strong>Invalid payment amount — non-numeric:</strong><br>Given a non-numeric entry in the payment field,<br>When pressing ENTER,<br>Then field validation error is displayed and cursor repositioned on the amount field</div>
+        <div class="ac-example"><strong>Payment on inactive account:</strong><br>Given an account with ACCT-ACTIVE-STATUS = 'N',<br>When attempting a payment,<br>Then the system displays "Account is not active" and no payment is processed</div>
+        <div class="ac-example"><strong>Payment appears in transaction list:</strong><br>Given a payment was successfully processed,<br>When navigating to Transaction List (CT00),<br>Then the payment entry appears with positive amount and payment type code</div>
+    </div>
+
+    <div class="footer">
+        <a href="../../index.html" class="nav-link">← Back to Index</a>
+        <a href="../transactions/index.html" class="nav-link">Transactions</a>
+        <a href="../reports/index.html" class="nav-link">Reports →</a>
+        <p style="margin-top:10px"><em>Last updated: 2026-03-26 | CardDemo Documentation</em></p>
+    </div>
+</div>
+</body>
+</html>

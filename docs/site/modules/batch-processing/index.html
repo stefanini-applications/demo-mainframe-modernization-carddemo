@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batch Processing - User Story Development Guide | CardDemo</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; color: #212529; line-height: 1.6; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+        .header { background: linear-gradient(135deg, #0d47a1 0%, #1565c0 100%); color: #fff; padding: 36px 32px; border-radius: 10px; margin-bottom: 28px; }
+        .header h1 { font-size: 2rem; margin-bottom: 8px; }
+        .header p { opacity: 0.85; font-size: 1.05rem; }
+        .badge { display: inline-block; background: rgba(255,255,255,0.2); border-radius: 4px; padding: 2px 10px; font-size: 0.8rem; margin-right: 8px; }
+        .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 28px; margin-bottom: 24px; }
+        h2 { font-size: 1.35rem; color: #0d47a1; border-bottom: 2px solid #e3f2fd; padding-bottom: 8px; margin-bottom: 18px; }
+        h3 { font-size: 1.1rem; color: #1565c0; margin: 18px 0 10px; }
+        ul, ol { padding-left: 22px; }
+        li { margin-bottom: 6px; }
+        code { background: #f3f4f6; border-radius: 3px; padding: 2px 6px; font-size: 0.88rem; font-family: 'Courier New', monospace; }
+        pre { background: #1e1e2e; color: #cdd6f4; border-radius: 6px; padding: 18px; overflow-x: auto; font-size: 0.85rem; margin: 12px 0; }
+        .complexity { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 12px 0; }
+        .complexity-card { border-radius: 6px; padding: 14px; }
+        .simple { background: #e8f5e9; border-left: 4px solid #4caf50; }
+        .medium { background: #fff3e0; border-left: 4px solid #ff9800; }
+        .complex { background: #fce4ec; border-left: 4px solid #e91e63; }
+        .complexity-card strong { display: block; margin-bottom: 4px; }
+        .ac-example { background: #f1f8ff; border-left: 4px solid #0288d1; border-radius: 4px; padding: 12px 16px; margin: 10px 0; font-size: 0.93rem; }
+        .footer { text-align: center; padding: 20px; color: #6c757d; font-size: 0.9rem; }
+        .nav-link { display: inline-block; margin: 6px 8px 0 0; color: #0d47a1; text-decoration: none; font-size: 0.95rem; }
+        .nav-link:hover { text-decoration: underline; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+        th { background: #e3f2fd; color: #0d47a1; text-align: left; padding: 10px 12px; font-size: 0.9rem; }
+        td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>⚙️ Batch Processing</h1>
+        <p>User Story Development Guide — CardDemo Mainframe Application</p>
+        <div style="margin-top:12px">
+            <span class="badge">JCL</span>
+            <span class="badge">Batch COBOL</span>
+            <span class="badge">VSAM</span>
+            <span class="badge">GDG</span>
+            <span class="badge">z/OS</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>📋 Module Overview</h2>
+        <p><strong>Purpose:</strong> Backend batch jobs for transaction posting, interest calculation, statement generation, master file refresh, and data management. Batch processing is the backbone of end-of-day and end-of-month financial operations.</p>
+        <p style="margin-top:10px"><strong>Business Context:</strong> Batch jobs run outside CICS hours (or with CICS files closed) to perform high-volume data processing. The nightly POSTTRAN and monthly INTCALC jobs are critical paths for financial accuracy.</p>
+        <h3>Key Batch Jobs</h3>
+        <table>
+            <tr><th>Job</th><th>Program</th><th>Frequency</th><th>Function</th></tr>
+            <tr><td><code>POSTTRAN</code></td><td>CBTRN02C</td><td>Daily</td><td>Post transactions, update account balances and category balances</td></tr>
+            <tr><td><code>INTCALC</code></td><td>CBACT04C</td><td>Monthly</td><td>Calculate interest per account/type/category; update ACCT-CURR-BAL</td></tr>
+            <tr><td><code>CREASTMT</code></td><td>CBSTM03A</td><td>Monthly</td><td>Generate full account statements for all accounts</td></tr>
+            <tr><td><code>TRANREPT</code></td><td>CBTRN03C</td><td>Daily/On-demand</td><td>Daily transaction report with totals</td></tr>
+            <tr><td><code>COMBTRAN</code></td><td>SORT</td><td>Daily</td><td>Combine transaction input files before POSTTRAN</td></tr>
+            <tr><td><code>CLOSEFIL</code></td><td>IEFBR14</td><td>Before batch</td><td>Close VSAM files in CICS before batch updates</td></tr>
+            <tr><td><code>OPENFIL</code></td><td>IEFBR14</td><td>After batch</td><td>Reopen VSAM files in CICS after batch completes</td></tr>
+            <tr><td><code>WAITSTEP</code></td><td>COBSWAIT</td><td>As needed</td><td>Configurable wait/delay between batch steps</td></tr>
+        </table>
+        <h3>Master File Refresh Jobs</h3>
+        <table>
+            <tr><th>Job</th><th>File Refreshed</th></tr>
+            <tr><td>ACCTFILE</td><td>Account master</td></tr>
+            <tr><td>CARDFILE</td><td>Card master</td></tr>
+            <tr><td>CUSTFILE</td><td>Customer master</td></tr>
+            <tr><td>TCATBALF</td><td>Transaction category balances</td></tr>
+            <tr><td>DISCGRP</td><td>Interest rate disclosure groups</td></tr>
+            <tr><td>XREFFILE</td><td>Card-account-customer cross reference</td></tr>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>🎯 User Story Development Guide</h2>
+        <h3>📝 Module-Specific US Templates</h3>
+        <ul>
+            <li><strong>Nightly posting:</strong> As a system operator, I want to run POSTTRAN nightly so account balances are updated with all processed transactions</li>
+            <li><strong>Monthly interest:</strong> As a system, I want to run INTCALC monthly so interest is applied to all account balances before statements</li>
+            <li><strong>Statement generation:</strong> As a system, I want to run CREASTMT monthly so all customers receive account statements</li>
+            <li><strong>File refresh:</strong> As a system operator, I want to refresh master files so the test environment is reset to a known state</li>
+            <li><strong>Batch window coordination:</strong> As a system operator, I want CLOSEFIL and OPENFIL to run reliably so CICS is not disrupted by batch operations</li>
+            <li><strong>GDG versioning:</strong> As an auditor, I want report outputs stored in GDG so prior generations are available for comparison</li>
+        </ul>
+
+        <h3>⚡ Development Acceleration Factors</h3>
+        <ul>
+            <li><strong>JCL templates:</strong> Existing JCL in <code>app/jcl/</code> provides reusable DD statements and job control patterns</li>
+            <li><strong>CLOSEFIL/OPENFIL pattern:</strong> Standard CICS file close/open already scripted — reuse for any new batch job touching CICS files</li>
+            <li><strong>COBSWAIT utility:</strong> Timer control available for any batch sequence requiring delays</li>
+            <li><strong>CSUTLDTC date utility:</strong> Date format conversion subroutine available — reuse in new batch programs needing date handling</li>
+            <li><strong>GDG bases:</strong> DEFGDGB/DEFGDGD already define GDG bases — new reports can reference existing GDG structures</li>
+        </ul>
+
+        <h3>📊 Complexity Guidelines</h3>
+        <div class="complexity">
+            <div class="complexity-card simple">
+                <strong>Simple (1–2 pts)</strong>
+                Change COBSWAIT delay parameter; modify JCL REGION/TIME limits; add new DD statement to existing job
+            </div>
+            <div class="complexity-card medium">
+                <strong>Medium (3–5 pts)</strong>
+                Add new step to existing JCL stream; modify POSTTRAN for new transaction category; add new batch report using existing TRANFILE data
+            </div>
+            <div class="complexity-card complex">
+                <strong>Complex (5–8 pts)</strong>
+                New batch program with VSAM RECLN change; parallel batch processing for performance; new GDG base definition and retirement policy; integrate new external data source into batch pipeline
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🔧 Technical Foundation</h2>
+        <h3>Nightly Batch Sequence</h3>
+        <pre>1. COMBTRAN  — SORT combines transaction input files
+2. CLOSEFIL  — Close CICS VSAM files (IEFBR14)
+3. POSTTRAN  — CBTRN02C posts transactions, updates balances
+4. TRANIDX   — IDCAMS rebuilds TRANFILE alternate index (if needed)
+5. TRANREPT  — CBTRN03C generates daily report
+6. OPENFIL   — Reopen CICS VSAM files (IEFBR14)</pre>
+
+        <h3>Monthly Batch Sequence</h3>
+        <pre>1. [Nightly sequence runs first]
+2. CLOSEFIL  — Close CICS files
+3. INTCALC   — CBACT04C applies interest to all accounts
+4. CREASTMT  — CBSTM03A generates statements (CBSTM03B for detail)
+5. TRANBKP   — IDCAMS backs up TRANFILE to GDG
+6. TCATBALF  — IDCAMS resets category balances for new cycle
+7. OPENFIL   — Reopen CICS files</pre>
+
+        <h3>Key Files and DD Names</h3>
+        <pre>ACCTFILE  → Account master VSAM KSDS
+CARDFILE  → Card master VSAM KSDS
+CUSTFILE  → Customer master VSAM KSDS
+TRANFILE  → Transaction master VSAM KSDS
+XREFFILE  → Cross-reference VSAM KSDS
+TCATBALF  → Transaction category balance VSAM KSDS
+DISCGRP   → Disclosure group (interest rates) VSAM KSDS
+USRSEC    → User security VSAM KSDS</pre>
+
+        <h3>🔗 Dependencies</h3>
+        <ul>
+            <li><strong>CLOSEFIL before update jobs:</strong> Any batch job that writes CICS-owned VSAM files must run after CLOSEFIL</li>
+            <li><strong>OPENFIL after batch:</strong> CICS remains unavailable for VSAM-dependent transactions until OPENFIL completes</li>
+            <li><strong>COMBTRAN before POSTTRAN:</strong> Transaction input must be sorted/combined before posting</li>
+            <li><strong>INTCALC before CREASTMT:</strong> Interest must be applied before statements are generated</li>
+            <li><strong>DEFGDGB before first report:</strong> GDG base definitions required before any GDG output jobs run</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>✅ Acceptance Criteria Examples</h2>
+        <div class="ac-example"><strong>POSTTRAN success:</strong><br>Given unposted transactions in TRANFILE,<br>When CBTRN02C completes with RC=0,<br>Then all transactions have TRAN-PROC-TS set; ACCT-CURR-BAL in ACCTFILE reflects all postings; TCATBALF updated with category totals</div>
+        <div class="ac-example"><strong>POSTTRAN — no transactions:</strong><br>Given TRANFILE contains no unposted transactions,<br>When CBTRN02C runs,<br>Then it completes with RC=0 and "0 records processed" in job log</div>
+        <div class="ac-example"><strong>INTCALC balance update:</strong><br>Given an account with category balance of $1,000 and interest rate of 1.5% in DISCGRP,<br>When CBACT04C runs,<br>Then ACCT-CURR-BAL is increased by $15.00 and INTCALC completes with RC=0</div>
+        <div class="ac-example"><strong>CLOSEFIL/OPENFIL coordination:</strong><br>Given CICS is running with VSAM files open,<br>When CLOSEFIL step executes,<br>Then VSAM files are inaccessible to CICS transactions until OPENFIL completes; CICS programs receive appropriate error response code during this window</div>
+        <div class="ac-example"><strong>GDG versioning:</strong><br>When CREASTMT writes statement output to a GDG dataset,<br>Then the new generation is accessible as (0); the previous generation is accessible as (-1); generation count does not exceed defined maximum</div>
+    </div>
+
+    <div class="footer">
+        <a href="../../index.html" class="nav-link">← Back to Index</a>
+        <a href="../user-management/index.html" class="nav-link">User Management</a>
+        <a href="../authorization/index.html" class="nav-link">Authorization (Optional) →</a>
+        <p style="margin-top:10px"><em>Last updated: 2026-03-26 | CardDemo Documentation</em></p>
+    </div>
+</div>
+</body>
+</html>

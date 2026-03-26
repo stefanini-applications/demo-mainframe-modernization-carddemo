@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication - User Story Development Guide | CardDemo</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; color: #212529; line-height: 1.6; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+        .header { background: linear-gradient(135deg, #1a237e 0%, #283593 100%); color: #fff; padding: 36px 32px; border-radius: 10px; margin-bottom: 28px; }
+        .header h1 { font-size: 2rem; margin-bottom: 8px; }
+        .header p { opacity: 0.85; font-size: 1.05rem; }
+        .badge { display: inline-block; background: rgba(255,255,255,0.2); border-radius: 4px; padding: 2px 10px; font-size: 0.8rem; margin-right: 8px; }
+        .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 28px; margin-bottom: 24px; }
+        h2 { font-size: 1.35rem; color: #1a237e; border-bottom: 2px solid #e8eaf6; padding-bottom: 8px; margin-bottom: 18px; }
+        h3 { font-size: 1.1rem; color: #283593; margin: 18px 0 10px; }
+        ul, ol { padding-left: 22px; }
+        li { margin-bottom: 6px; }
+        code { background: #f3f4f6; border-radius: 3px; padding: 2px 6px; font-size: 0.88rem; font-family: 'Courier New', monospace; }
+        pre { background: #1e1e2e; color: #cdd6f4; border-radius: 6px; padding: 18px; overflow-x: auto; font-size: 0.85rem; margin: 12px 0; }
+        .complexity { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 12px 0; }
+        .complexity-card { border-radius: 6px; padding: 14px; }
+        .simple { background: #e8f5e9; border-left: 4px solid #4caf50; }
+        .medium { background: #fff3e0; border-left: 4px solid #ff9800; }
+        .complex { background: #fce4ec; border-left: 4px solid #e91e63; }
+        .complexity-card strong { display: block; margin-bottom: 4px; }
+        .ac-example { background: #f1f8ff; border-left: 4px solid #0288d1; border-radius: 4px; padding: 12px 16px; margin: 10px 0; font-size: 0.93rem; }
+        .footer { text-align: center; padding: 20px; color: #6c757d; font-size: 0.9rem; }
+        .nav-link { display: inline-block; margin: 6px 8px 0 0; color: #1a237e; text-decoration: none; font-size: 0.95rem; }
+        .nav-link:hover { text-decoration: underline; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+        th { background: #e8eaf6; color: #1a237e; text-align: left; padding: 10px 12px; font-size: 0.9rem; }
+        td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
+        tr:hover td { background: #fafafa; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🔐 Authentication</h1>
+        <p>User Story Development Guide — CardDemo Mainframe Application</p>
+        <div style="margin-top:12px">
+            <span class="badge">CICS</span>
+            <span class="badge">COBOL</span>
+            <span class="badge">VSAM</span>
+            <span class="badge">Transaction: CC00</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>📋 Module Overview</h2>
+        <p><strong>Purpose:</strong> Handles user signon and session initialization. Validates credentials against the USRSEC VSAM file and routes users to the appropriate menu based on their user type (Admin or Regular).</p>
+        <p style="margin-top:10px"><strong>Business Context:</strong> Entry point for all CardDemo functions. Every user interaction begins here. User type determined at login controls all subsequent navigation and access privileges.</p>
+        <h3>Key Components</h3>
+        <table>
+            <tr><th>Component</th><th>Type</th><th>Responsibility</th></tr>
+            <tr><td><code>COSGN00C.cbl</code></td><td>CICS Program</td><td>Signon validation logic, USRSEC file read, COMMAREA initialization</td></tr>
+            <tr><td><code>COSGN00.bms</code></td><td>BMS Map</td><td>3270 signon screen layout (User ID + Password fields)</td></tr>
+            <tr><td><code>CSUSR01Y.cpy</code></td><td>Copybook</td><td>SEC-USER-DATA structure (ID, name, password, type)</td></tr>
+            <tr><td><code>COCOM01Y.cpy</code></td><td>Copybook</td><td>CARDDEMO-COMMAREA — shared session state passed between programs</td></tr>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>🎯 User Story Development Guide</h2>
+        <h3>📝 Module-Specific US Templates</h3>
+        <ul>
+            <li><strong>Cardholder login:</strong> As a cardholder, I want to sign in with my user ID and password so I can access my account functions</li>
+            <li><strong>Admin login:</strong> As an administrator, I want to sign in with admin credentials so I am routed to the admin menu</li>
+            <li><strong>Invalid login:</strong> As a cardholder, I want to receive a clear error message when my credentials are wrong so I know to retry</li>
+            <li><strong>Session exit:</strong> As a user, I want to press PF3 to exit the application so I can safely end my session</li>
+            <li><strong>Password policy:</strong> As an administrator, I want user passwords to be at least N characters so security standards are met</li>
+        </ul>
+
+        <h3>⚡ Development Acceleration Factors</h3>
+        <ul>
+            <li><strong>COMMAREA pattern:</strong> Session state already structured in COCOM01Y — reuse for new screens without redesign</li>
+            <li><strong>USRSEC KSDS:</strong> Direct keyed access by user ID — fast, no additional index needed for basic auth</li>
+            <li><strong>PF key handling:</strong> Standard DFHAID / EIBAID pattern used across all CICS programs — consistent to implement</li>
+            <li><strong>User type routing:</strong> CDEMO-USER-TYPE already propagated — conditional routing logic minimal</li>
+        </ul>
+
+        <h3>📊 Complexity Guidelines</h3>
+        <div class="complexity">
+            <div class="complexity-card simple">
+                <strong>Simple (1–2 pts)</strong>
+                Update error message text; change screen field labels; add password masking attribute to BMS map
+            </div>
+            <div class="complexity-card medium">
+                <strong>Medium (3–5 pts)</strong>
+                Add account lockout after N failed attempts; add last-login timestamp to USRSEC record; implement session timeout
+            </div>
+            <div class="complexity-card complex">
+                <strong>Complex (5–8 pts)</strong>
+                Implement password hashing (requires utility program + USRSEC schema change); add RACF integration for external auth; support multi-factor authentication
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🔧 Technical Foundation</h2>
+        <h3>Processing Flow</h3>
+        <pre>User types UserID + Password on COSGN00 screen
+  → ENTER key triggers CC00 transaction
+  → COSGN00C reads USRSEC VSAM (key = User ID)
+  → Compares SEC-USR-PWD with entered password
+  → On match: populates CARDDEMO-COMMAREA
+      CDEMO-USER-ID = entered User ID
+      CDEMO-USER-TYPE = 'A' (admin) or 'U' (user)
+  → Routes to CM00 (Main Menu) or CA00 (Admin Menu)
+  → On failure: redisplays signon screen with error</pre>
+
+        <h3>🔗 Dependencies</h3>
+        <ul>
+            <li><strong>USRSEC VSAM file:</strong> Must be available — populated by DUSRSECJ JCL job before first use</li>
+            <li><strong>DFHAID / DFHBMSCA:</strong> CICS system copybooks for key handling</li>
+            <li><strong>COMMAREA:</strong> All downstream programs depend on CDEMO-USER-ID and CDEMO-USER-TYPE being set here</li>
+        </ul>
+
+        <h3>Data Model</h3>
+        <pre>SEC-USER-DATA (USRSEC VSAM, RECLN=80):
+  SEC-USR-ID      PIC X(08)  ← Primary key
+  SEC-USR-FNAME   PIC X(20)
+  SEC-USR-LNAME   PIC X(20)
+  SEC-USR-PWD     PIC X(08)  ← Plain text (demo only)
+  SEC-USR-TYPE    PIC X(01)  ← 'A'=Admin, 'U'=User</pre>
+    </div>
+
+    <div class="card">
+        <h2>✅ Acceptance Criteria Examples</h2>
+        <div class="ac-example"><strong>Valid login — Regular User:</strong><br>Given a valid User ID and matching password for a 'U' type user,<br>When user presses ENTER on the signon screen,<br>Then the system displays the Main Menu (CM00) and sets CDEMO-USER-TYPE = 'U'</div>
+        <div class="ac-example"><strong>Valid login — Admin:</strong><br>Given a valid User ID and matching password for an 'A' type user,<br>When user presses ENTER,<br>Then the system displays the Admin Menu (CA00) and sets CDEMO-USER-TYPE = 'A'</div>
+        <div class="ac-example"><strong>Invalid credentials:</strong><br>Given an incorrect password or non-existent User ID,<br>When user presses ENTER,<br>Then the signon screen is redisplayed with an error message and no session state is set</div>
+        <div class="ac-example"><strong>PF3 exit:</strong><br>Given any state on the signon screen,<br>When user presses PF3,<br>Then a thank-you message is displayed and the session ends</div>
+        <div class="ac-example"><strong>Invalid key:</strong><br>Given any screen state,<br>When user presses an unsupported PF key,<br>Then the screen redisplays with "Invalid Key" message and cursor repositioned on User ID field</div>
+    </div>
+
+    <div class="footer">
+        <a href="../../index.html" class="nav-link">← Back to Index</a>
+        <a href="../accounts/index.html" class="nav-link">Accounts →</a>
+        <p style="margin-top:10px"><em>Last updated: 2026-03-26 | CardDemo Documentation</em></p>
+    </div>
+</div>
+</body>
+</html>
