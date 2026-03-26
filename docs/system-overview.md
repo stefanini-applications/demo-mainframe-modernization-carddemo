@@ -63,41 +63,95 @@
 ### 1. Authentication
 
 **ID:** `authentication`  
-**Purpose:** User signon and session initialization for the CardDemo application  
+**Purpose:** User signon and session initialization for the CardDemo application. Entry point for all user interactions — every cardholder and administrator must authenticate here before accessing any other module.
+
 **Key Components:**
-- `COSGN00C.cbl` — CICS program; validates user ID + password against USRSEC VSAM file
-- `COSGN00.bms` — BMS map for signon screen
-- `CSUSR01Y.cpy` — SEC-USER-DATA structure (user ID, names, password, type)
-- `COCOM01Y.cpy` — CARDDEMO-COMMAREA shared communication area
+- `COSGN00C.cbl` — CICS program (CC00); validates user ID + password against USRSEC VSAM file, initializes COMMAREA, routes to appropriate menu via EXEC CICS XCTL
+- `COSGN00.bms` — BMS mapset; defines the 3270 signon screen (24×80) with USERID, PASSWD (dark/hidden), and ERRMSG fields
+- `CSUSR01Y.cpy` — SEC-USER-DATA structure (user ID, first/last name, password, type, filler; RECLN=80)
+- `COCOM01Y.cpy` — CARDDEMO-COMMAREA shared communication area; authentication initializes CDEMO-USER-ID, CDEMO-USER-TYPE, CDEMO-FROM-TRANID, CDEMO-FROM-PROGRAM, and CDEMO-PGM-CONTEXT
+- `COMEN01C.cbl` — downstream: Main Menu for regular users (CM00); receives COMMAREA from authentication
+- `COADM01C.cbl` — downstream: Admin Menu (CA00); receives COMMAREA from authentication
+
+**Supporting Copybooks:**
+- `COTTL01Y.cpy` — screen title constants (CCDA-TITLE01, CCDA-TITLE02)
+- `CSDAT01Y.cpy` — date/time working storage for header (CURDATE, CURTIME fields)
+- `CSMSG01Y.cpy` — standard message constants (CCDA-MSG-THANK-YOU, CCDA-MSG-INVALID-KEY)
+- `DFHAID` / `DFHBMSCA` — CICS system copybooks for AID key and BMS attribute constants
 
 **CICS Transaction:** `CC00`  
-**Screen:** COSGN00 (Signon Screen)
+**Screen:** COSGN00 / COSGN0A (Signon Screen, 24×80 3270 terminal)
 
 **Processing Flow:**
-1. User enters User ID + Password on signon screen
-2. COSGN00C reads USRSEC VSAM file to validate credentials
-3. On success, sets `CDEMO-USER-ID` and `CDEMO-USER-TYPE` (A=Admin, U=User) in COMMAREA
-4. Routes to Main Menu (CM00/COMEN01C) or Admin Menu (CA00/COADM01C)
+1. Cold start (EIBCALEN=0): display blank signon screen with cursor on USERID field
+2. User enters User ID (8 chars, case-insensitive) + Password (8 chars, hidden/dark attribute)
+3. ENTER key: COSGN00C receives map input, applies FUNCTION UPPER-CASE to both fields
+4. Validates non-blank inputs, then performs EXEC CICS READ against USRSEC VSAM (key=User ID)
+5. VSAM RESP=0 (found): compares SEC-USR-PWD with entered password (exact 8-char match)
+6. On password match: populates CARDDEMO-COMMAREA and XCTLs to target menu program
+7. On any failure: redisplays signon screen with specific error message, cursor on failed field
+8. PF3 key: displays thank-you message via SEND TEXT, issues CICS RETURN without TRANSID
 
-**Data Model:**
-```
-SEC-USER-DATA (USRSEC file, RECLN=80):
-  SEC-USR-ID      PIC X(08)   -- User ID (primary key)
-  SEC-USR-FNAME   PIC X(20)   -- First name
-  SEC-USR-LNAME   PIC X(20)   -- Last name
-  SEC-USR-PWD     PIC X(08)   -- Password
-  SEC-USR-TYPE    PIC X(01)   -- 'A'=Admin, 'U'=User
+**Outbound XCTL Targets:**
+| Condition | Target Program | Transaction |
+|-----------|---------------|-------------|
+| SEC-USR-TYPE = 'A' (CDEMO-USRTYP-ADMIN) | COADM01C | CA00 Admin Menu |
+| SEC-USR-TYPE = 'U' (default) | COMEN01C | CM00 Main Menu |
+
+**Data Models:**
+```cobol
+* USRSEC VSAM KSDS — primary key: SEC-USR-ID (offset 0, length 8)
+01 SEC-USER-DATA.
+  05 SEC-USR-ID      PIC X(08)   -- User ID (primary key, 8 chars)
+  05 SEC-USR-FNAME   PIC X(20)   -- First name
+  05 SEC-USR-LNAME   PIC X(20)   -- Last name
+  05 SEC-USR-PWD     PIC X(08)   -- Password (plain text — demo only)
+  05 SEC-USR-TYPE    PIC X(01)   -- 'A'=Admin, 'U'=Regular User
+  05 SEC-USR-FILLER  PIC X(23)   -- Reserved (total RECLN=80)
+
+* COMMAREA fields SET by authentication (COCOM01Y.cpy):
+  CDEMO-FROM-TRANID  PIC X(04)   -- Set to 'CC00'
+  CDEMO-FROM-PROGRAM PIC X(08)   -- Set to 'COSGN00C'
+  CDEMO-USER-ID      PIC X(08)   -- Authenticated user ID
+  CDEMO-USER-TYPE    PIC X(01)   -- 'A'=Admin / 'U'=User
+  CDEMO-PGM-CONTEXT  PIC 9(01)   -- Set to 0 (CDEMO-PGM-ENTER)
 ```
 
 **Business Rules:**
-- Invalid user ID or password → display error message, remain on signon screen
-- PF3 key → display thank-you message and exit
-- Any other key → display invalid key message
-- Session context (user type) propagated to all subsequent transactions via COMMAREA
+- BR-01: User ID required (non-blank) → "Please enter User ID ..."
+- BR-02: Password required (non-blank) → "Please enter Password ..."
+- BR-03/04: Both User ID and Password converted to UPPER-CASE before validation
+- BR-05: User ID must exist in USRSEC (RESP=13/NOTFND) → "User not found. Try again ..."
+- BR-06: Password must exactly match SEC-USR-PWD (8-char comparison) → "Wrong Password. Try again ..."
+- BR-07: PF3 → thank-you message + CICS RETURN (no TRANSID, session ends)
+- BR-08: Any other key → "Invalid Key" error, redisplay screen
+- BR-09: Admin users routed to COADM01C (CA00 Admin Menu)
+- BR-10: Regular users routed to COMEN01C (CM00 Main Menu)
+- BR-11: VSAM I/O errors (RESP other than 0/13) → "Unable to verify the User ..."
+- BR-12: Failed authentication repositions cursor at the failed input field
+
+**VSAM Response Code Handling:**
+| RESP | Meaning | Action |
+|------|---------|--------|
+| 0 | Normal (record found) | Proceed to password comparison |
+| 13 | NOTFND (user not in USRSEC) | Error: "User not found. Try again ..." |
+| Other | Unexpected CICS/VSAM error | Error: "Unable to verify the User ..." |
+
+**Internal Dependencies:**
+- USRSEC VSAM file must be pre-loaded (DUSRSECJ JCL job using IEBGENER)
+- All downstream modules depend on CDEMO-USER-ID and CDEMO-USER-TYPE being set correctly here
+- Authentication is a prerequisite for all end-to-end testing of any other module
+
+**Security Notes:**
+- Passwords stored as plain text in USRSEC (intentional demo characteristic — must be hashed in production)
+- No account lockout after failed attempts (modernization opportunity)
+- No session timeout mechanism (modernization opportunity)
 
 **User Story Examples:**
 - As a cardholder, I want to sign in with my user ID and password so I can access my account
 - As an administrator, I want to log in with admin credentials so I can manage users
+- As a user, I want a clear error message when my credentials are wrong so I know to retry
+- As a user, I want to press PF3 to exit safely so my session ends cleanly
 
 ---
 
