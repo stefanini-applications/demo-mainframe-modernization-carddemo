@@ -14,9 +14,13 @@ app/cbl/CBACT03C.cbl = accounts, batch-processing
 app/cbl/CBACT04C.cbl = accounts, batch-processing
 app/bms/COACTVW.bms = accounts
 app/bms/COACTUP.bms = accounts
+app/cpy-bms/COACTVW.CPY = accounts
+app/cpy-bms/COACTUP.CPY = accounts
 app/cpy/CVACT01Y.cpy = accounts
 app/cpy/CVACT02Y.cpy = accounts, credit-cards
 app/cpy/CVACT03Y.cpy = accounts, credit-cards
+app/jcl/INTCALC.jcl = accounts, batch-processing
+app/jcl/ACCTFILE.jcl = accounts, batch-processing
 
 app/cbl/COCRDLIC.cbl = credit-cards
 app/cbl/COCRDSLC.cbl = credit-cards
@@ -25,6 +29,9 @@ app/bms/COCRDLI.bms = credit-cards
 app/bms/COCRDSL.bms = credit-cards
 app/bms/COCRDUP.bms = credit-cards
 app/cpy/CVCRD01Y.cpy = credit-cards
+app/cpy-bms/COCRDLI.CPY = credit-cards
+app/cpy-bms/COCRDSL.CPY = credit-cards
+app/cpy-bms/COCRDUP.CPY = credit-cards
 
 app/cbl/COTRN00C.cbl = transactions
 app/cbl/COTRN01C.cbl = transactions
