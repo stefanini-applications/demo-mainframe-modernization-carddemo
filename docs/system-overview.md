@@ -467,32 +467,87 @@ SEC-USER-DATA (USRSEC VSAM file, RECLN=80):
 ### 10. Transaction Types (Optional — DB2)
 
 **ID:** `transaction-types`  
-**Purpose:** Maintain and manage transaction type reference data using DB2  
+**Purpose:** Maintain and manage transaction type reference data using DB2 relational tables; provides admin CICS screens for add/edit/delete/browse, a batch bulk-maintenance program, and daily extract jobs that bridge DB2 data to VSAM-based batch reporting  
 **Location:** `app/app-transaction-type-db2/`  
 **Key Components:**
-- `COTRTUPC.cbl` — CICS; Transaction Type add/edit (CTTU / COTRTUP)
-- `COTRTLIC.cbl` — CICS; Transaction Type list/update/delete (CTLI / COTRTLI)
-- `COBTUPDT.cbl` — Batch; Maintain transaction type table (MNTTRDB2)
+- `COTRTUPC.cbl` — CICS; Transaction Type add/edit/delete single record (CTTU / COTRTUP mapset)
+- `COTRTLIC.cbl` — CICS; Transaction Type list/browse/filter with per-row delete/update (CTLI / COTRTLI mapset)
+- `COBTUPDT.cbl` — Batch; Bulk insert/update/delete from sequential flat-file INPFILE (MNTTRDB2 job)
+- `COTRTUP.bms` / `COTRTLI.bms` — BMS map definitions for both CICS screens
+- `DCLTRTYP.dcl` — DCLGEN host-variable declaration for CARDDEMO.TRANSACTION_TYPE
+- `DCLTRCAT.dcl` — DCLGEN host-variable declaration for CARDDEMO.TRANSACTION_TYPE_CATEGORY
+- `CSDB2RWY.cpy` — Common DB2 working-storage (SQLCA, DSNTIAC variables)
+- `CSDB2RPY.cpy` — Common DB2 procedures (priming query, error formatter)
+- `ddl/TRNTYPE.ddl` / `ddl/TRNTYCAT.ddl` — DB2 CREATE TABLE DDL
+- `ctl/DB2CREAT.ctl` — Full DB2 setup DDL (database, tablespaces, tables, indexes, grants)
+- `ctl/DB2LTTYP.ctl` — Seed INSERT statements for TRANSACTION_TYPE (7 types)
+- `ctl/DB2LTCAT.ctl` — Seed INSERT statements for TRANSACTION_TYPE_CATEGORY
 
 **CICS Transactions:**
-- `CTTU` → Transaction Type add/edit (DB2 UPDATE and INSERT)
-- `CTLI` → Transaction Type list/update/delete (DB2 cursor and DELETE)
+- `CTTU` → Transaction Type add/edit/delete (DB2 SELECT, UPDATE, INSERT, DELETE + EXEC CICS SYNCPOINT)
+- `CTLI` → Transaction Type list/browse with filter (DB2 bidirectional cursors C-TR-TYPE-FORWARD / C-TR-TYPE-BACKWARD + DELETE)
 
 **Integration Points:**
-- **DB2:** All transaction type data stored in DB2 tables (not VSAM)
-- **JCL:** CREADB21 creates DB2 database and loads tables; TRANEXTR extracts latest DB2 data
+- **DB2 (SSID: DAZ1):** All transaction type data stored in CARDDEMO DB2 database (not VSAM)
+  - `CARDDEMO.TRANSACTION_TYPE` — type code (CHAR 2) + description (VARCHAR 50)
+  - `CARDDEMO.TRANSACTION_TYPE_CATEGORY` — type+category composite PK with FK to TRANSACTION_TYPE (ON DELETE RESTRICT)
+- **JCL:** CREADB21 creates DB2 database, tablespaces, tables, indexes and loads seed data; TRANEXTR uses DSNTIAUL to extract current DB2 data to flat files (TRANTYPE.PS, TRANCATG.PS) for TRANREPT batch report; MNTTRDB2 runs COBTUPDT for bulk maintenance
+
+**DB2 Schema:**
+```sql
+-- Primary table
+CREATE TABLE CARDDEMO.TRANSACTION_TYPE (
+    TR_TYPE        CHAR(2)      NOT NULL,   -- e.g. '01'=PURCHASE, '02'=PAYMENT
+    TR_DESCRIPTION VARCHAR(50)  NOT NULL,
+    PRIMARY KEY (TR_TYPE)
+);
+
+-- Category table with FK constraint
+CREATE TABLE CARDDEMO.TRANSACTION_TYPE_CATEGORY (
+    TRC_TYPE_CODE      CHAR(2)     NOT NULL,  -- FK -> TRANSACTION_TYPE
+    TRC_TYPE_CATEGORY  CHAR(4)     NOT NULL,  -- e.g. '0001'
+    TRC_CAT_DATA       VARCHAR(50) NOT NULL,
+    PRIMARY KEY (TRC_TYPE_CODE, TRC_TYPE_CATEGORY),
+    FOREIGN KEY TRC_TYPE_CODE (TRC_TYPE_CODE)
+        REFERENCES CARDDEMO.TRANSACTION_TYPE (TR_TYPE) ON DELETE RESTRICT
+);
+```
+
+**Seed Transaction Types:** 01=PURCHASE, 02=PAYMENT, 03=CREDIT, 04=AUTHORIZATION, 05=REFUND, 06=REVERAL, 07=ADJUSTMENT
+
+**Batch Input Format (MNTTRDB2 / INPFILE):**
+```
+Col 1:    A=Add  U=Update  D=Delete  *=Comment
+Cols 2-3: TR_TYPE (2-char)
+Cols 4-53: TR_DESCRIPTION (50-char)
+```
 
 **Business Rules:**
-- Only accessible from Admin Menu (CA00) — Admin users only
-- DB2 cursor used for list/paginated browse of transaction types
-- Transaction types used in TRANFILE records (TRAN-TYPE-CD field)
-- MNTTRDB2 batch job synchronizes DB2 data
-- TRANEXTR extracts transaction type data for reporting
+- Only accessible from Admin Menu (CA00) — `CDEMO-USER-TYPE = 'A'` required in COMMAREA
+- DB2 bidirectional cursors used for paginated list (7 rows/page); PF7=back, PF8=forward
+- Transaction types used in TRANFILE records (`TRAN-TYPE-CD PIC X(02)`); type + category determines interest rate group via DISCGRP VSAM
+- COTRTUPC uses optimistic change detection — compares old vs new values before issuing UPDATE; skips if unchanged
+- All DML followed by `EXEC CICS SYNCPOINT` to commit DB2 unit of work
+- DB2 FK ON DELETE RESTRICT prevents deleting a type that has associated category rows
+- MNTTRDB2 ABENDs on unexpected SQL errors; no partial-batch rollback
+- TRANEXTR must run before TRANREPT so report contains current type descriptions (GDG backups retained for audit)
+- DB2 connectivity verified at COTRTLIC startup via priming query (`SELECT 1 FROM SYSIBM.SYSDUMMY1`)
+- DSNTIAC utility formats SQLCA diagnostics for user-visible error messages
+
+**JCL Jobs:**
+| Job       | Program   | Function                                              | Frequency  |
+|-----------|-----------|-------------------------------------------------------|------------|
+| CREADB21  | DSNTIAD / DSNTEP4 | One-time: create CARDDEMO DB2 database + load seed data | Once (setup) |
+| MNTTRDB2  | COBTUPDT  | Bulk INSERT/UPDATE/DELETE from flat INPFILE           | On demand  |
+| TRANEXTR  | DSNTIAUL  | Extract type/category data to flat files for TRANREPT | Daily      |
 
 **User Story Examples:**
 - As an administrator, I want to view all transaction type codes so I can understand the classification scheme
 - As an administrator, I want to add a new transaction type so new purchase categories can be tracked
+- As an administrator, I want to correct a type description so reports display accurate labels
 - As an administrator, I want to delete an obsolete transaction type so the reference data stays current
+- As a system operator, I want to bulk-load type updates from a flat file so I can provision environments without online screen entry
+- As a system, I want to extract transaction type data daily so TRANREPT contains current type descriptions
 
 ---
 

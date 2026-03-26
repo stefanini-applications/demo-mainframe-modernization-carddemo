@@ -1,171 +1,875 @@
 <!DOCTYPE html>
-<html lang="en-US">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transaction Types (Optional) - User Story Development Guide | CardDemo</title>
+    <meta name="last-updated" content="2026-03-26T18:01:30Z">
+    <title>transaction-types - Module Documentation | CardDemo</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; color: #212529; line-height: 1.6; }
-        .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
-        .header { background: linear-gradient(135deg, #4527a0 0%, #512da8 100%); color: #fff; padding: 36px 32px; border-radius: 10px; margin-bottom: 28px; }
-        .header h1 { font-size: 2rem; margin-bottom: 8px; }
-        .header p { opacity: 0.85; font-size: 1.05rem; }
-        .badge { display: inline-block; background: rgba(255,255,255,0.2); border-radius: 4px; padding: 2px 10px; font-size: 0.8rem; margin-right: 8px; }
-        .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 28px; margin-bottom: 24px; }
-        h2 { font-size: 1.35rem; color: #4527a0; border-bottom: 2px solid #ede7f6; padding-bottom: 8px; margin-bottom: 18px; }
-        h3 { font-size: 1.1rem; color: #512da8; margin: 18px 0 10px; }
-        ul, ol { padding-left: 22px; }
-        li { margin-bottom: 6px; }
-        code { background: #f3f4f6; border-radius: 3px; padding: 2px 6px; font-size: 0.88rem; font-family: 'Courier New', monospace; }
-        pre { background: #1e1e2e; color: #cdd6f4; border-radius: 6px; padding: 18px; overflow-x: auto; font-size: 0.85rem; margin: 12px 0; }
-        .complexity { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 12px 0; }
-        .complexity-card { border-radius: 6px; padding: 14px; }
-        .simple { background: #e8f5e9; border-left: 4px solid #4caf50; }
-        .medium { background: #fff3e0; border-left: 4px solid #ff9800; }
-        .complex { background: #fce4ec; border-left: 4px solid #e91e63; }
-        .complexity-card strong { display: block; margin-bottom: 4px; }
-        .ac-example { background: #f1f8ff; border-left: 4px solid #0288d1; border-radius: 4px; padding: 12px 16px; margin: 10px 0; font-size: 0.93rem; }
-        .optional-note { background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 4px; padding: 12px 16px; margin: 10px 0; font-size: 0.93rem; }
-        .footer { text-align: center; padding: 20px; color: #6c757d; font-size: 0.9rem; }
-        .nav-link { display: inline-block; margin: 6px 8px 0 0; color: #4527a0; text-decoration: none; font-size: 0.95rem; }
-        .nav-link:hover { text-decoration: underline; }
-        table { width: 100%; border-collapse: collapse; margin: 12px 0; }
-        th { background: #ede7f6; color: #4527a0; text-align: left; padding: 10px 12px; font-size: 0.9rem; }
-        td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
+        body { background-color: #1a1a1a; color: #e0e0e0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; max-width: 1200px; margin: 0 auto; padding: 20px; }
+        h1 { color: #4fc3f7; border-bottom: 2px solid #4fc3f7; padding-bottom: 10px; margin-bottom: 20px; }
+        h2 { color: #81c784; margin-top: 36px; margin-bottom: 12px; border-left: 4px solid #81c784; padding-left: 12px; }
+        h3 { color: #ffb74d; margin-top: 20px; margin-bottom: 8px; }
+        h4 { color: #ce93d8; margin-top: 14px; margin-bottom: 6px; }
+        p  { margin-bottom: 10px; }
+        code { background-color: #2d2d2d; padding: 2px 6px; border-radius: 3px; font-family: 'Courier New', Courier, monospace; font-size: 0.9em; color: #f48fb1; }
+        pre { background-color: #2d2d2d; padding: 15px; border-radius: 5px; overflow-x: auto; border-left: 3px solid #4fc3f7; margin: 12px 0; }
+        pre code { background: none; padding: 0; color: #a5d6a7; font-size: 0.88em; }
+        a { color: #4fc3f7; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        nav { margin-bottom: 24px; }
+        table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 0.92em; }
+        th { background-color: #2d2d2d; color: #4fc3f7; padding: 10px 14px; text-align: left; border-bottom: 2px solid #444; }
+        td { padding: 9px 14px; border-bottom: 1px solid #333; }
+        tr:hover td { background-color: #252525; }
+        .badge { display: inline-block; background-color: #1565c0; color: #e3f2fd; border-radius: 4px; padding: 2px 8px; font-size: 0.78em; font-weight: bold; margin-right: 4px; vertical-align: middle; }
+        .badge-optional { background-color: #6a1b9a; color: #f3e5f5; }
+        .badge-db2 { background-color: #bf360c; color: #fbe9e7; }
+        .badge-cics { background-color: #1b5e20; color: #e8f5e9; }
+        .badge-batch { background-color: #4e342e; color: #efebe9; }
+        .note { background-color: #1c2a3a; border-left: 4px solid #4fc3f7; padding: 12px 16px; border-radius: 4px; margin: 14px 0; }
+        .warning { background-color: #2a1f0a; border-left: 4px solid #ffb74d; padding: 12px 16px; border-radius: 4px; margin: 14px 0; }
+        .section-box { background-color: #222; border: 1px solid #333; border-radius: 6px; padding: 18px 20px; margin: 14px 0; }
+        ul { padding-left: 24px; margin-bottom: 10px; }
+        ol { padding-left: 24px; margin-bottom: 10px; }
+        li { margin-bottom: 4px; }
+        .toc { background-color: #222; border-radius: 6px; padding: 16px 22px; margin-bottom: 28px; }
+        .toc h3 { color: #4fc3f7; margin-top: 0; }
+        .toc ol { padding-left: 22px; }
+        .toc li { margin-bottom: 3px; }
+        .flow-step { display: flex; align-items: flex-start; margin-bottom: 10px; }
+        .flow-num { background-color: #1565c0; color: #fff; border-radius: 50%; min-width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85em; flex-shrink: 0; margin-right: 12px; margin-top: 2px; }
+        .key-map { background: #2d2d2d; border-radius: 4px; padding: 10px 14px; margin: 8px 0; font-family: monospace; }
+        footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #444; color: #888; font-size: 0.85em; text-align: center; }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="header">
-        <h1>🏷️ Transaction Types</h1>
-        <p>User Story Development Guide — CardDemo Optional Module</p>
-        <div style="margin-top:12px">
-            <span class="badge">Optional Module</span>
-            <span class="badge">DB2</span>
-            <span class="badge">Admin Only</span>
-            <span class="badge">CTTU · CTLI</span>
-        </div>
-    </div>
 
-    <div class="card">
-        <h2>📋 Module Overview</h2>
-        <div class="optional-note">📦 <strong>Optional Module:</strong> Requires DB2 to be configured. Accessible from Admin Menu (CA00). Located in <code>app/app-transaction-type-db2/</code>.</div>
-        <p style="margin-top:12px"><strong>Purpose:</strong> Maintain transaction type reference data in DB2 tables. Provides CICS-based CRUD for transaction types (add, update, list, delete) and batch synchronization via MNTTRDB2.</p>
-        <p style="margin-top:10px"><strong>Business Context:</strong> Transaction types (TRAN-TYPE-CD in TRANFILE) classify financial transactions for reporting and interest calculation. This module uses DB2 to demonstrate relational database patterns including cursors, dynamic SQL, and batch DB2 operations — contrasting with the base application's VSAM approach.</p>
-        <h3>Key Components</h3>
-        <table>
-            <tr><th>Component</th><th>Transaction</th><th>Responsibility</th></tr>
-            <tr><td><code>COTRTUPC.cbl</code></td><td>CTTU</td><td>Add/edit transaction type — DB2 UPDATE and INSERT</td></tr>
-            <tr><td><code>COTRTLIC.cbl</code></td><td>CTLI</td><td>List/update/delete transaction types — DB2 cursor and DELETE</td></tr>
-            <tr><td><code>COBTUPDT.cbl</code></td><td>—</td><td>Batch: maintain DB2 transaction type table (MNTTRDB2)</td></tr>
-        </table>
-        <h3>JCL Jobs</h3>
-        <table>
-            <tr><th>Job</th><th>Function</th></tr>
-            <tr><td>CREADB21</td><td>Create CardDemo DB2 database and load initial tables (DSNTEP4)</td></tr>
-            <tr><td>TRANEXTR</td><td>Extract latest DB2 transaction type data (DSNTIAUL)</td></tr>
-            <tr><td>DEFGDGD</td><td>Setup additional GDG bases for DB2 data</td></tr>
-            <tr><td>MNTTRDB2</td><td>Batch maintain DB2 transaction type table (COBTUPDT)</td></tr>
-        </table>
-    </div>
+<nav><a href="../../index.html">&larr; Back to Index</a></nav>
 
-    <div class="card">
-        <h2>🎯 User Story Development Guide</h2>
-        <h3>📝 Module-Specific US Templates</h3>
-        <ul>
-            <li><strong>View transaction types:</strong> As an administrator, I want to view all transaction type codes and descriptions so I understand the transaction classification scheme</li>
-            <li><strong>Add transaction type:</strong> As an administrator, I want to add a new transaction type code so new purchase categories can be tracked</li>
-            <li><strong>Update transaction type:</strong> As an administrator, I want to update a transaction type description so the reference data is accurate</li>
-            <li><strong>Delete transaction type:</strong> As an administrator, I want to delete an obsolete transaction type so the reference data stays clean</li>
-            <li><strong>Sync batch:</strong> As a system operator, I want to run MNTTRDB2 so DB2 transaction type table stays synchronized</li>
-        </ul>
+<h1>transaction-types
+    <span class="badge badge-optional">OPTIONAL</span>
+    <span class="badge badge-db2">DB2</span>
+    <span class="badge badge-cics">CICS</span>
+</h1>
 
-        <h3>⚡ Development Acceleration Factors</h3>
-        <ul>
-            <li><strong>DB2 cursor pattern:</strong> COTRTLIC demonstrates DB2 cursor for paginated browse — reuse pattern for any DB2 list function</li>
-            <tr><td><strong>DB2 INSERT/UPDATE pattern:</strong> COTRTUPC shows embedded SQL INSERT and UPDATE — template for new DB2 write operations</td></tr>
-            <li><strong>TRANEXTR extract pattern:</strong> DSNTIAUL unload pattern available for extracting any DB2 table to flat file</li>
-            <li><strong>Batch DB2 maintenance:</strong> COBTUPDT and MNTTRDB2 JCL provide template for batch DB2 table updates</li>
-        </ul>
-
-        <h3>📊 Complexity Guidelines</h3>
-        <div class="complexity">
-            <div class="complexity-card simple">
-                <strong>Simple (1–2 pts)</strong>
-                Add display column to type list; change DB2 column label on screen; update existing type description
-            </div>
-            <div class="complexity-card medium">
-                <strong>Medium (3–5 pts)</strong>
-                Add new DB2 column to transaction type table; implement type search by description; add type usage count query (join with TRANFILE data)
-            </div>
-            <div class="complexity-card complex">
-                <strong>Complex (5–8 pts)</strong>
-                Migrate TRANTYPE VSAM to DB2 (dual-mode read during transition); add DB2 stored procedure for type validation; implement type hierarchy (parent/child type codes); integrate type codes with reporting for dynamic category descriptions
-            </div>
-        </div>
-    </div>
-
-    <div class="card">
-        <h2>🔧 Technical Foundation</h2>
-        <h3>DB2 Patterns Used</h3>
-        <pre>CTTU (COTRTUPC) — Add/Edit:
-  EXEC SQL INSERT INTO TRAN_TYPE_TABLE
-    (TYPE_CD, TYPE_DESC, ...)
-    VALUES (:WS-TYPE-CD, :WS-TYPE-DESC, ...)
-  END-EXEC
-
-  EXEC SQL UPDATE TRAN_TYPE_TABLE
-    SET TYPE_DESC = :WS-TYPE-DESC
-    WHERE TYPE_CD = :WS-TYPE-CD
-  END-EXEC
-
-CTLI (COTRTLIC) — List with cursor:
-  EXEC SQL DECLARE TRAN_TYPE_CURSOR CURSOR FOR
-    SELECT TYPE_CD, TYPE_DESC FROM TRAN_TYPE_TABLE
-    ORDER BY TYPE_CD
-  END-EXEC
-
-  EXEC SQL OPEN TRAN_TYPE_CURSOR END-EXEC
-  EXEC SQL FETCH TRAN_TYPE_CURSOR
-    INTO :WS-TYPE-CD, :WS-TYPE-DESC
-  END-EXEC
-
-  EXEC SQL DELETE FROM TRAN_TYPE_TABLE
-    WHERE TYPE_CD = :WS-TYPE-CD
-  END-EXEC</pre>
-
-        <h3>DB2 Setup Requirements</h3>
-        <ul>
-            <li>Run CREADB21 JCL to create database schema before first use</li>
-            <li>DB2 plan/package must be bound for COTRTUPC, COTRTLIC, COBTUPDT</li>
-            <li>DB2 subsystem must be accessible from CICS</li>
-        </ul>
-
-        <h3>🔗 Dependencies</h3>
-        <ul>
-            <li><strong>authentication:</strong> Must be Admin user (CDEMO-USER-TYPE = 'A') — module only accessible from Admin Menu (CA00)</li>
-            <li><strong>DB2 subsystem:</strong> Must be running and CardDemo database objects created via CREADB21</li>
-            <li><strong>transactions:</strong> TRAN-TYPE-CD in TRANFILE must match codes defined in this module's DB2 table</li>
-            <li><strong>DEFGDGD JCL:</strong> Additional GDG bases for DB2 data must be defined before TRANEXTR</li>
-        </ul>
-    </div>
-
-    <div class="card">
-        <h2>✅ Acceptance Criteria Examples</h2>
-        <div class="ac-example"><strong>List transaction types:</strong><br>Given transaction type records exist in the DB2 table,<br>When admin navigates to CTLI,<br>Then all type codes and descriptions are displayed using DB2 cursor with PF7/PF8 pagination</div>
-        <div class="ac-example"><strong>Add transaction type:</strong><br>Given a new unique type code entered on CTTU,<br>When pressing ENTER,<br>Then a DB2 INSERT is executed; the new type appears in the CTLI list; RC=0 on the SQL operation</div>
-        <div class="ac-example"><strong>Add duplicate type code:</strong><br>Given a type code that already exists in the DB2 table,<br>When pressing ENTER on CTTU,<br>Then SQLCODE indicates duplicate key; error message displayed; no duplicate row inserted</div>
-        <div class="ac-example"><strong>Delete transaction type:</strong><br>Given an admin selects a type code on CTLI and confirms deletion,<br>When pressing ENTER,<br>Then the DB2 DELETE executes; type no longer appears in list; existing TRAN-TYPE-CD references in TRANFILE are unaffected</div>
-        <div class="ac-example"><strong>MNTTRDB2 batch:</strong><br>Given the DB2 transaction type table requires synchronization,<br>When COBTUPDT runs via MNTTRDB2 JCL,<br>Then DB2 table is updated and job completes with RC=0</div>
-    </div>
-
-    <div class="footer">
-        <a href="../../index.html" class="nav-link">← Back to Index</a>
-        <a href="../authorization/index.html" class="nav-link">Authorization</a>
-        <a href="../../index.html" class="nav-link">← Back to Main Index</a>
-        <p style="margin-top:10px"><em>Last updated: 2026-03-26 | CardDemo Documentation</em></p>
-    </div>
+<div class="toc">
+    <h3>Contents</h3>
+    <ol>
+        <li><a href="#overview">Overview &amp; Purpose</a></li>
+        <li><a href="#architecture">Architectural Context</a></li>
+        <li><a href="#components">Key Components</a></li>
+        <li><a href="#data-models">Data Models &amp; DB2 Schema</a></li>
+        <li><a href="#cics-transactions">CICS Transactions &amp; Screens</a></li>
+        <li><a href="#processing-flows">Processing Flows</a></li>
+        <li><a href="#db2-sql">DB2 SQL Operations</a></li>
+        <li><a href="#batch">Batch Processing</a></li>
+        <li><a href="#business-rules">Business Rules &amp; Validation</a></li>
+        <li><a href="#navigation">Navigation &amp; Keyboard Map</a></li>
+        <li><a href="#dependencies">Dependencies</a></li>
+        <li><a href="#jcl-jobs">JCL Jobs</a></li>
+        <li><a href="#configuration">Configuration &amp; Environment</a></li>
+        <li><a href="#integration">Integration Points</a></li>
+        <li><a href="#development">Development Guidelines</a></li>
+        <li><a href="#user-stories">User Story Examples</a></li>
+        <li><a href="#testing">Testing Considerations</a></li>
+    </ol>
 </div>
+
+<h2 id="overview">1. Overview &amp; Purpose</h2>
+
+<p>The <strong>transaction-types</strong> module is an optional extension to the CardDemo mainframe credit card management system. It provides administrative management of transaction type reference data stored in IBM DB2 relational tables rather than VSAM files.</p>
+
+<p>Transaction type codes (e.g., <code>01</code>=PURCHASE, <code>02</code>=PAYMENT) are recorded on every transaction record in the <code>TRANFILE</code> VSAM file via the <code>TRAN-TYPE-CD</code> field. This module allows administrators to maintain the lookup table that classifies and describes those codes, as well as nested category sub-codes that drive interest rate groupings for billing calculations.</p>
+
+<div class="note">
+    <strong>Optional Module:</strong> Requires IBM DB2 to be provisioned and configured in the z/OS environment. The core CardDemo application (VSAM/CICS) functions independently; this module extends it with DB2-backed reference data management.
+</div>
+
+<p><strong>Location in repository:</strong> <code>app/app-transaction-type-db2/</code></p>
+
+<p><strong>Primary responsibilities:</strong></p>
+<ul>
+    <li>Maintain <code>CARDDEMO.TRANSACTION_TYPE</code> DB2 table (2-char type codes and descriptions)</li>
+    <li>Maintain <code>CARDDEMO.TRANSACTION_TYPE_CATEGORY</code> DB2 table (sub-categories per type with FK constraint)</li>
+    <li>Provide CICS online screens for admin-only add, edit, delete, and list operations</li>
+    <li>Provide batch job (MNTTRDB2) for bulk insert/update/delete from flat-file input</li>
+    <li>Extract transaction type data to flat files (TRANEXTR) for downstream TRANREPT reporting</li>
+</ul>
+
+<h2 id="architecture">2. Architectural Context</h2>
+
+<p>This module sits at the boundary between the traditional VSAM-based CardDemo application and an optional DB2 relational database layer. It follows the same CICS/BMS pattern as other CardDemo modules but replaces VSAM file I/O with embedded SQL (<code>EXEC SQL</code>) calls to DB2.</p>
+
+<div class="section-box">
+    <h3>Technology Stack</h3>
+    <table>
+        <tr><th>Layer</th><th>Technology</th><th>Details</th></tr>
+        <tr><td>Online Terminal</td><td>IBM 3270 / CICS BMS</td><td>Two BMS mapsets: COTRTUP (update/add), COTRTLI (list/browse)</td></tr>
+        <tr><td>Application Logic</td><td>COBOL + CICS/DB2</td><td>COTRTUPC (update/add), COTRTLIC (list/delete)</td></tr>
+        <tr><td>Batch Program</td><td>COBOL + DB2</td><td>COBTUPDT: bulk maintenance via flat-file input (INPFILE)</td></tr>
+        <tr><td>Data Store</td><td>IBM DB2 (SSID: DAZ1)</td><td>CARDDEMO database; tablespaces CARDSPC1 and CARDSTTC</td></tr>
+        <tr><td>Security</td><td>CICS COMMAREA</td><td>Admin-only access enforced via <code>CDEMO-USER-TYPE = 'A'</code></td></tr>
+        <tr><td>DB2 Error Reporting</td><td>DSNTIAC utility</td><td>Formats SQLCA error messages for human-readable display</td></tr>
+        <tr><td>DB2 Connectivity Test</td><td>CSDB2RPY.cpy (9998-PRIMING-QUERY)</td><td>Validates DB2 attachment before business SQL runs</td></tr>
+    </table>
+</div>
+
+<p>Communication between transactions uses the standard <code>CARDDEMO-COMMAREA</code> (COCOM01Y copybook), passing the user's identity and type. The admin-only access check is enforced on each screen entry using <code>CDEMO-USER-TYPE</code>.</p>
+
+<p>The TRANEXTR job bridges the DB2 world back to VSAM-based batch processing by extracting DB2 type data to fixed-length flat files that the TRANREPT batch report program (CBTRN03C) can read directly.</p>
+
+<h2 id="components">3. Key Components</h2>
+
+<div class="section-box">
+    <h3>COTRTUPC.cbl &mdash; Transaction Type Update/Add <span class="badge badge-cics">CICS</span></h3>
+    <p><strong>Transaction:</strong> <code>CTTU</code> &nbsp;|&nbsp; <strong>Mapset:</strong> COTRTUP &nbsp;|&nbsp; <strong>Map:</strong> CTRTUPA</p>
+    <p>Handles both <em>add</em> and <em>edit</em> operations for a single transaction type record. Uses a multi-step confirm-before-commit pattern:</p>
+    <ul>
+        <li>Step 1: Enter 2-char type code &rarr; DB2 SELECT to fetch existing record</li>
+        <li>Step 2: Display existing values (edit) or blank fields (add); user modifies description</li>
+        <li>Step 3: Validate input; show confirmation prompt ("Changes validated. Press F5 to save")</li>
+        <li>Step 4: PF5 commits &mdash; UPDATE if record existed, INSERT if new</li>
+        <li>PF4 triggers delete with 2-step confirmation flow</li>
+        <li>PF3 exits to Admin Menu (XCTL to COADM01C)</li>
+        <li>PF12 cancels and returns to search state</li>
+    </ul>
+    <p><strong>DB2 operations:</strong> SELECT, UPDATE, INSERT INTO, DELETE FROM <code>CARDDEMO.TRANSACTION_TYPE</code>. Issues <code>EXEC CICS SYNCPOINT</code> after each successful DML.</p>
+    <p><strong>Key working-storage sections:</strong> TTYP-UPDATE-RECORD (type + description, 60 bytes), WS-NON-KEY-FLAGS (description validation), WS-DATACHANGED-FLAG (change detection), WS-INFO-MSG / WS-RETURN-MSG (user messages).</p>
+</div>
+
+<div class="section-box">
+    <h3>COTRTLIC.cbl &mdash; Transaction Type List/Browse <span class="badge badge-cics">CICS</span></h3>
+    <p><strong>Transaction:</strong> <code>CTLI</code> &nbsp;|&nbsp; <strong>Mapset:</strong> COTRTLI &nbsp;|&nbsp; <strong>Map:</strong> CTRTLIA</p>
+    <p>Provides a scrollable list (up to 7 rows per page) with optional filter by type code or description. Supports per-row action selection (U=Update, D=Delete).</p>
+    <ul>
+        <li>Two DB2 cursors declared in working-storage: <code>C-TR-TYPE-FORWARD</code> (PF8 scroll) and <code>C-TR-TYPE-BACKWARD</code> (PF7 scroll)</li>
+        <li>PF7/PF8 for bi-directional pagination</li>
+        <li>PF2 navigates to COTRTUPC for add</li>
+        <li>PF10 confirms pending per-row U or D action</li>
+        <li>PF3 returns to Admin Menu</li>
+        <li>Enters row with U &rarr; PF10 &rarr; XCTL to COTRTUPC with type code</li>
+        <li>Uses <code>CSDB2RWY.cpy</code> (common DB2 working-storage) and <code>CSDB2RPY.cpy</code> (common DB2 procedures)</li>
+    </ul>
+    <p><strong>DB2 operations:</strong> Cursor SELECT with FETCH, DELETE FROM <code>CARDDEMO.TRANSACTION_TYPE</code>. Priming query on entry to verify DB2 availability.</p>
+    <p><strong>Delete safety flags:</strong> WS-DELETE-STATUS, WS-UPDATE-STATUS, WS-ROW-SELECTION-CHANGED, WS-ACTIONS-SELECTED (counts deletes/updates/no-actions requested across 7 rows).</p>
+</div>
+
+<div class="section-box">
+    <h3>COBTUPDT.cbl &mdash; Batch Transaction Type Maintenance <span class="badge badge-batch">BATCH</span></h3>
+    <p><strong>JCL Job:</strong> MNTTRDB2 &nbsp;|&nbsp; <strong>DB2 Plan:</strong> CARDDEMO</p>
+    <p>Batch program that reads sequential flat-file (<code>INPFILE</code>) and performs INSERT, UPDATE, or DELETE on <code>CARDDEMO.TRANSACTION_TYPE</code>. Input record layout (53 bytes):</p>
+    <ul>
+        <li>Col 1: <code>A</code>=Add/Insert, <code>U</code>=Update, <code>D</code>=Delete, <code>*</code>=Comment (skip)</li>
+        <li>Cols 2&ndash;3: Transaction type code (2-char numeric)</li>
+        <li>Cols 4&ndash;53: Transaction type description (50 chars)</li>
+    </ul>
+    <p>Abends (9999-ABEND) on any unrecognized action code or unexpected SQL error.</p>
+</div>
+
+<h3>BMS Maps</h3>
+<div class="section-box">
+    <h4>COTRTUP.bms &mdash; Transaction Type Update Screen (24&times;80)</h4>
+    <table>
+        <tr><th>Field</th><th>Position</th><th>Len</th><th>Attr</th><th>Description</th></tr>
+        <tr><td><code>TRNNAME</code></td><td>1,7</td><td>4</td><td>ASKIP</td><td>Current CICS transaction ID</td></tr>
+        <tr><td><code>TITLE01/02</code></td><td>1,21 / 2,21</td><td>40</td><td>ASKIP,YELLOW</td><td>Screen title lines</td></tr>
+        <tr><td><code>CURDATE</code></td><td>1,71</td><td>8</td><td>ASKIP</td><td>Current date mm/dd/yy</td></tr>
+        <tr><td><code>CURTIME</code></td><td>2,71</td><td>8</td><td>ASKIP</td><td>Current time hh:mm:ss</td></tr>
+        <tr><td><code>TRTYPCD</code></td><td>12,26</td><td>2</td><td>UNPROT/IC</td><td>Transaction type code (primary input)</td></tr>
+        <tr><td><code>TRTYDSC</code></td><td>14,26</td><td>50</td><td>UNPROT</td><td>Type description (input/output)</td></tr>
+        <tr><td><code>INFOMSG</code></td><td>17+</td><td>40</td><td>ASKIP</td><td>Informational status message</td></tr>
+        <tr><td><code>ERRMSGO</code></td><td>lower</td><td>75</td><td>ASKIP</td><td>Error/return message</td></tr>
+        <tr><td>PF hints</td><td>23&ndash;24</td><td>&mdash;</td><td>ASKIP</td><td>F3=Exit F4=Delete F5=Save F12=Cancel</td></tr>
+    </table>
+</div>
+
+<div class="section-box">
+    <h4>COTRTLI.bms &mdash; Transaction Type List Screen (24&times;80)</h4>
+    <table>
+        <tr><th>Field</th><th>Position</th><th>Len</th><th>Description</th></tr>
+        <tr><td><code>TRTYPE</code></td><td>6,44</td><td>2</td><td>Type code filter input (optional)</td></tr>
+        <tr><td><code>TRDESC</code></td><td>8,44</td><td>50</td><td>Description filter input (optional)</td></tr>
+        <tr><td><code>PAGENO</code></td><td>4,76</td><td>3</td><td>Current page number</td></tr>
+        <tr><td><code>TRTSEL[1-7]</code></td><td>rows 10&ndash;16, col 4</td><td>1</td><td>Per-row action: U=Update, D=Delete</td></tr>
+        <tr><td><code>TRTTYP[1-7]</code></td><td>rows 10&ndash;16, col 7</td><td>2</td><td>Type code (display only)</td></tr>
+        <tr><td><code>TRTDSC[1-7]</code></td><td>rows 10&ndash;16, col 12</td><td>50</td><td>Description (display only)</td></tr>
+        <tr><td><code>INFOMSG</code></td><td>19+</td><td>40</td><td>Informational message</td></tr>
+        <tr><td>PF hints</td><td>23&ndash;24</td><td>&mdash;</td><td>F2=Add F3=Exit F7=Prev F8=Next F10=Confirm</td></tr>
+    </table>
+</div>
+
+<h3>Copybooks</h3>
+<table>
+    <tr><th>File</th><th>Location</th><th>Purpose</th></tr>
+    <tr><td><code>DCLTRTYP.dcl</code></td><td>dcl/</td><td>DCLGEN for CARDDEMO.TRANSACTION_TYPE; provides <code>DCLTRANSACTION-TYPE</code> with <code>DCL-TR-TYPE PIC X(2)</code> and <code>DCL-TR-DESCRIPTION</code> (VARCHAR host var)</td></tr>
+    <tr><td><code>DCLTRCAT.dcl</code></td><td>dcl/</td><td>DCLGEN for CARDDEMO.TRANSACTION_TYPE_CATEGORY; provides <code>DCLTRANSACTION-TYPE-CATEGORY</code> with type code, category, and data fields</td></tr>
+    <tr><td><code>CSDB2RWY.cpy</code></td><td>cpy/</td><td>Common DB2 working-storage: SQLCA INCLUDE, WS-DISP-SQLCODE, DB2 error flags, DSNTIAC message-construction variables</td></tr>
+    <tr><td><code>CSDB2RPY.cpy</code></td><td>cpy/</td><td>Common DB2 procedure paragraphs: 9998-PRIMING-QUERY (connectivity test via SYSIBM.SYSDUMMY1), 9999-FORMAT-DB2-MESSAGE (DSNTIAC error formatter)</td></tr>
+    <tr><td><code>COTRTUP.cpy</code></td><td>cpy-bms/</td><td>BMS-generated I/O areas for COTRTUP mapset</td></tr>
+    <tr><td><code>COTRTLI.cpy</code></td><td>cpy-bms/</td><td>BMS-generated I/O areas for COTRTLI mapset</td></tr>
+</table>
+
+<h2 id="data-models">4. Data Models &amp; DB2 Schema</h2>
+
+<h3>DB2 Database Structure</h3>
+<pre><code>Database:   CARDDEMO  (SSID: DAZ1, STOGROUP: AWST1STG, BUFFERPOOL: BP0)
+            &#9500;&#9472;&#9472; Tablespace CARDSPC1  &#10140; TRANSACTION_TYPE
+            &#9492;&#9472;&#9472; Tablespace CARDSTTC  &#10140; TRANSACTION_TYPE_CATEGORY</code></pre>
+
+<h3>CARDDEMO.TRANSACTION_TYPE</h3>
+<pre><code>CREATE TABLE CARDDEMO.TRANSACTION_TYPE
+(
+    TR_TYPE         CHAR(2)       NOT NULL,   -- Primary key e.g. '01','02'
+    TR_DESCRIPTION  VARCHAR(50)   NOT NULL,   -- Human-readable label
+    PRIMARY KEY (TR_TYPE)
+);
+
+CREATE UNIQUE INDEX CARDDEMO.XTRAN_TYPE
+    ON CARDDEMO.TRANSACTION_TYPE (TR_TYPE ASC);</code></pre>
+
+<h4>Seed Data (DB2LTTYP.ctl)</h4>
+<table>
+    <tr><th>TR_TYPE</th><th>TR_DESCRIPTION</th></tr>
+    <tr><td><code>01</code></td><td>PURCHASE</td></tr>
+    <tr><td><code>02</code></td><td>PAYMENT</td></tr>
+    <tr><td><code>03</code></td><td>CREDIT</td></tr>
+    <tr><td><code>04</code></td><td>AUTHORIZATION</td></tr>
+    <tr><td><code>05</code></td><td>REFUND</td></tr>
+    <tr><td><code>06</code></td><td>REVERAL (sic &mdash; typo in seed data)</td></tr>
+    <tr><td><code>07</code></td><td>ADJUSTMENT</td></tr>
+</table>
+
+<h3>CARDDEMO.TRANSACTION_TYPE_CATEGORY</h3>
+<pre><code>CREATE TABLE CARDDEMO.TRANSACTION_TYPE_CATEGORY
+(
+    TRC_TYPE_CODE      CHAR(2)     NOT NULL,  -- FK -> TRANSACTION_TYPE.TR_TYPE
+    TRC_TYPE_CATEGORY  CHAR(4)     NOT NULL,  -- 4-digit code e.g. '0001'
+    TRC_CAT_DATA       VARCHAR(50) NOT NULL,  -- Category description
+    PRIMARY KEY (TRC_TYPE_CODE, TRC_TYPE_CATEGORY),
+    FOREIGN KEY TRC_TYPE_CODE (TRC_TYPE_CODE)
+        REFERENCES CARDDEMO.TRANSACTION_TYPE (TR_TYPE)
+        ON DELETE RESTRICT
+);
+
+CREATE UNIQUE INDEX CARDDEMO.X_TRAN_TYPE_CATG
+    ON CARDDEMO.TRANSACTION_TYPE_CATEGORY
+       (TRC_TYPE_CODE ASC, TRC_TYPE_CATEGORY ASC);</code></pre>
+
+<h4>Selected Seed Data (DB2LTCAT.ctl)</h4>
+<table>
+    <tr><th>TRC_TYPE_CODE</th><th>TRC_TYPE_CATEGORY</th><th>TRC_CAT_DATA</th></tr>
+    <tr><td><code>01</code></td><td><code>0001</code></td><td>REGULAR SALES DRAFT</td></tr>
+    <tr><td><code>01</code></td><td><code>0002</code></td><td>REGULAR CASH ADVANCE</td></tr>
+    <tr><td><code>01</code></td><td><code>0003</code></td><td>CONVENIENCE CHECK DEBIT</td></tr>
+    <tr><td><code>01</code></td><td><code>0004</code></td><td>ATM CASH ADVANCE</td></tr>
+    <tr><td><code>01</code></td><td><code>0005</code></td><td>INTEREST AMOUNT</td></tr>
+    <tr><td><code>02</code></td><td><code>0001</code></td><td>CASH PAYMENT</td></tr>
+    <tr><td><code>02</code></td><td><code>0002</code></td><td>ELECTRONIC PAYMENT</td></tr>
+    <tr><td><code>02</code></td><td><code>0003</code></td><td>CHECK PAYMENT</td></tr>
+    <tr><td><code>03</code></td><td><code>0001</code></td><td>CREDIT TO ACCOUNT</td></tr>
+    <tr><td><code>03</code></td><td><code>0002</code></td><td>CREDIT TO PURCHASE BALANCE</td></tr>
+    <tr><td><code>03</code></td><td><code>0003</code></td><td>CREDIT TO CASH BALANCE</td></tr>
+</table>
+
+<h3>COBOL Host-Variable Declarations (DCLGEN)</h3>
+<pre><code>* DCLTRTYP.dcl -- CARDDEMO.TRANSACTION_TYPE host variables
+ 01  DCLTRANSACTION-TYPE.
+     10 DCL-TR-TYPE                PIC X(2).
+     10 DCL-TR-DESCRIPTION.
+        49 DCL-TR-DESCRIPTION-LEN  PIC S9(4) USAGE COMP.
+        49 DCL-TR-DESCRIPTION-TEXT PIC X(50).
+
+* DCLTRCAT.dcl -- CARDDEMO.TRANSACTION_TYPE_CATEGORY host variables
+ 01  DCLTRANSACTION-TYPE-CATEGORY.
+     10 DCL-TRC-TYPE-CODE          PIC X(2).
+     10 DCL-TRC-TYPE-CATEGORY      PIC X(4).
+     10 DCL-TRC-CAT-DATA.
+        49 DCL-TRC-CAT-DATA-LEN    PIC S9(4) USAGE COMP.
+        49 DCL-TRC-CAT-DATA-TEXT   PIC X(50).</code></pre>
+
+<h3>Relationship to VSAM TRANFILE</h3>
+<pre><code>TRAN-RECORD (TRANFILE VSAM)
+  TRAN-TYPE-CD  PIC X(02)  corresponds to  TRANSACTION_TYPE.TR_TYPE
+  TRAN-CAT-CD   PIC 9(04)  corresponds to  TRANSACTION_TYPE_CATEGORY.TRC_TYPE_CATEGORY
+
+Combined (TRAN-TYPE-CD + TRAN-CAT-CD) indexes DISCGRP VSAM
+  for interest rate determination during INTCALC batch</code></pre>
+
+<h2 id="cics-transactions">5. CICS Transactions &amp; Screens</h2>
+
+<table>
+    <tr><th>Transaction</th><th>Program</th><th>Mapset</th><th>Function</th></tr>
+    <tr><td><code>CTTU</code></td><td><code>COTRTUPC</code></td><td><code>COTRTUP</code></td><td>Transaction Type add / edit / delete (single-record)</td></tr>
+    <tr><td><code>CTLI</code></td><td><code>COTRTLIC</code></td><td><code>COTRTLI</code></td><td>Transaction Type list, filter, per-row delete (multi-row browse)</td></tr>
+</table>
+
+<p>Both transactions are accessible exclusively from the Admin Menu (<code>CA00</code> / COADM01C). Regular users (<code>CDEMO-USER-TYPE = 'U'</code>) cannot navigate to these screens.</p>
+
+<div class="note">
+    <strong>CICS CSD:</strong> Transaction definitions for CTTU and CTLI are in <code>csd/CRDDEMOD.csd</code> and must be installed via <code>CEDA INSTALL GROUP(CARDDEMO)</code> or DFHCSDUP batch utility.
+</div>
+
+<h2 id="processing-flows">6. Processing Flows</h2>
+
+<h3>CTTU &mdash; Add a New Transaction Type</h3>
+<div class="section-box">
+    <div class="flow-step"><div class="flow-num">1</div><div>Admin navigates from Admin Menu (CA00) &rarr; CTTU invoked &rarr; COTRTUPC starts; COMMAREA verified</div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div>Screen CTRTUPA displayed with empty TRTYPCD/TRTYDSC; message: "Enter transaction type to be maintained"</div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div>Admin types 2-char code; presses ENTER &rarr; DB2 SELECT executed. SQLCODE=100 (not found)</div></div>
+    <div class="flow-step"><div class="flow-num">4</div><div>Message changes to "Enter new transaction type details." &rarr; admin enters description</div></div>
+    <div class="flow-step"><div class="flow-num">5</div><div>Admin presses PF5 &rarr; input validated (alphanumeric, non-blank). Message: "Changes validated. Press F5 to save"</div></div>
+    <div class="flow-step"><div class="flow-num">6</div><div>PF5 again &rarr; INSERT INTO DB2; EXEC CICS SYNCPOINT; message: "Changes committed to database"</div></div>
+    <div class="flow-step"><div class="flow-num">7</div><div>Admin presses PF3 &rarr; XCTL to COADM01C (Admin Menu)</div></div>
+</div>
+
+<h3>CTTU &mdash; Edit an Existing Transaction Type</h3>
+<div class="section-box">
+    <div class="flow-step"><div class="flow-num">1</div><div>Enter existing code &rarr; SELECT returns SQLCODE=0 &rarr; existing description displayed</div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div>Message: "Update transaction type details shown." Admin modifies description</div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div>1205-COMPARE-OLD-NEW compares TTUP-OLD-* vs TTUP-NEW-*. If identical: "No change detected..."</div></div>
+    <div class="flow-step"><div class="flow-num">4</div><div>If changed and valid: "Changes validated. Press F5 to save." &rarr; PF5 &rarr; UPDATE; SYNCPOINT</div></div>
+</div>
+
+<h3>CTTU &mdash; Delete a Transaction Type</h3>
+<div class="section-box">
+    <div class="flow-step"><div class="flow-num">1</div><div>Record displayed. Admin presses PF4 &rarr; message: "Delete this record? Press F4 to confirm"</div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div>Admin presses PF4 again &rarr; DELETE FROM executed; SYNCPOINT; "Delete successful."</div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div>FK constraint failure (type has categories): SQLCODE &ne; 0 &rarr; "Delete of record failed" displayed</div></div>
+</div>
+
+<h3>CTLI &mdash; Browse and Filter Transaction Types</h3>
+<div class="section-box">
+    <div class="flow-step"><div class="flow-num">1</div><div>COTRTLIC starts &rarr; 9998-PRIMING-QUERY verifies DB2 connectivity (SELECT 1 FROM SYSIBM.SYSDUMMY1)</div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div>OPEN C-TR-TYPE-FORWARD cursor with optional WHERE on type/description filter fields</div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div>FETCH up to 7 rows &rarr; populate TRTSEL/TRTTYP/TRTDSC screen rows 1&ndash;7; PAGENO incremented</div></div>
+    <div class="flow-step"><div class="flow-num">4</div><div>PF8 (forward): FETCH next page via C-TR-TYPE-FORWARD cursor</div></div>
+    <div class="flow-step"><div class="flow-num">5</div><div>PF7 (backward): OPEN C-TR-TYPE-BACKWARD cursor, FETCH previous page</div></div>
+    <div class="flow-step"><div class="flow-num">6</div><div>Enter 'U' in TRTSEL field &rarr; PF10 &rarr; XCTL to COTRTUPC with type code pre-filled</div></div>
+    <div class="flow-step"><div class="flow-num">7</div><div>Enter 'D' in TRTSEL field &rarr; PF10 &rarr; DELETE FROM executed; page refreshed</div></div>
+    <div class="flow-step"><div class="flow-num">8</div><div>PF2 navigates to COTRTUPC (blank) to add a new type; PF3 exits to Admin Menu</div></div>
+</div>
+
+<h2 id="db2-sql">7. DB2 SQL Operations</h2>
+
+<h3>COTRTUPC &mdash; Single-Record Operations</h3>
+
+<pre><code>-- Fetch existing record
+EXEC SQL
+    SELECT TR_TYPE, TR_DESCRIPTION
+      INTO :DCL-TR-TYPE,
+           :DCL-TR-DESCRIPTION
+      FROM CARDDEMO.TRANSACTION_TYPE
+     WHERE TR_TYPE = :DCL-TR-TYPE
+END-EXEC
+-- SQLCODE 0   = found; display for edit
+-- SQLCODE 100 = not found; prompt for new description (add flow)
+-- Other       = error; call 9999-FORMAT-DB2-MESSAGE</code></pre>
+
+<pre><code>-- Update existing record
+EXEC SQL
+    UPDATE CARDDEMO.TRANSACTION_TYPE
+       SET TR_DESCRIPTION = :DCL-TR-DESCRIPTION
+     WHERE TR_TYPE = :DCL-TR-TYPE
+END-EXEC
+EXEC CICS SYNCPOINT END-EXEC</code></pre>
+
+<pre><code>-- Insert new record
+EXEC SQL
+    INSERT INTO CARDDEMO.TRANSACTION_TYPE
+           (TR_TYPE, TR_DESCRIPTION)
+    VALUES (:DCL-TR-TYPE,
+            :DCL-TR-DESCRIPTION)
+END-EXEC
+EXEC CICS SYNCPOINT END-EXEC</code></pre>
+
+<pre><code>-- Delete record
+EXEC SQL
+    DELETE FROM CARDDEMO.TRANSACTION_TYPE
+     WHERE TR_TYPE = :DCL-TR-TYPE
+END-EXEC
+EXEC CICS SYNCPOINT END-EXEC</code></pre>
+
+<h3>COTRTLIC &mdash; Cursor-Based Paging</h3>
+
+<pre><code>-- Forward cursor (PF8 scroll, WORKING-STORAGE declaration)
+EXEC SQL
+    DECLARE C-TR-TYPE-FORWARD CURSOR FOR
+        SELECT TR_TYPE
+          FROM CARDDEMO.TRANSACTION_TYPE
+         WHERE TR_TYPE >= :WS-FILTER-TYPE-START
+           AND TR_DESCRIPTION LIKE :WS-FILTER-DESC-MASK
+         ORDER BY TR_TYPE
+END-EXEC
+
+-- Backward cursor (PF7 scroll)
+EXEC SQL
+    DECLARE C-TR-TYPE-BACKWARD CURSOR FOR
+        SELECT TR_TYPE
+          FROM CARDDEMO.TRANSACTION_TYPE
+         WHERE TR_TYPE <= :WS-FILTER-TYPE-END
+           AND TR_DESCRIPTION LIKE :WS-FILTER-DESC-MASK
+         ORDER BY TR_TYPE DESC
+END-EXEC
+
+-- DB2 connectivity priming query
+EXEC SQL
+    SELECT 1
+      INTO :WS-DUMMY-DB2-INT
+      FROM SYSIBM.SYSDUMMY1
+     FETCH FIRST 1 ROW ONLY
+END-EXEC</code></pre>
+
+<h3>COBTUPDT &mdash; Batch SQL</h3>
+
+<pre><code>-- Insert (action 'A')
+EXEC SQL
+    INSERT INTO CARDDEMO.TRANSACTION_TYPE
+           (TR_TYPE, TR_DESCRIPTION)
+    VALUES (:INPUT-REC-NUMBER, :INPUT-REC-DESC)
+END-EXEC
+
+-- Update (action 'U')
+EXEC SQL
+    UPDATE CARDDEMO.TRANSACTION_TYPE
+       SET TR_DESCRIPTION = :INPUT-REC-DESC
+     WHERE TR_TYPE = :INPUT-REC-NUMBER
+END-EXEC
+
+-- Delete (action 'D')
+EXEC SQL
+    DELETE FROM CARDDEMO.TRANSACTION_TYPE
+     WHERE TR_TYPE = :INPUT-REC-NUMBER
+END-EXEC</code></pre>
+
+<h2 id="batch">8. Batch Processing</h2>
+
+<h3>MNTTRDB2 Job (COBTUPDT)</h3>
+<p>Bulk maintenance of TRANSACTION_TYPE from a flat input file. Useful for environment-specific seeding, bulk corrections, or scripted migrations without CICS online access.</p>
+
+<h4>Input File Format (INPFILE, FB, LRECL=53)</h4>
+<pre><code>Col 1     : Action  A=Add  U=Update  D=Delete  *=Comment(skip)
+Cols 2-3  : TR_TYPE  (2-char, e.g. '08')
+Cols 4-53 : TR_DESCRIPTION  (50-char description)</code></pre>
+
+<h4>Sample Input File</h4>
+<pre><code>* Bulk update run 2026-03-26
+A08BALANCE TRANSFER
+U01PURCHASE - RETAIL
+D06</code></pre>
+
+<h4>Processing Logic</h4>
+<pre><code>OPEN INPUT TR-RECORD
+PERFORM UNTIL LASTREC = 'Y'
+    READ TR-RECORD NEXT INTO WS-INPUT-REC
+    EVALUATE INPUT-REC-TYPE
+        WHEN 'A'    PERFORM 10031-INSERT-DB
+        WHEN 'U'    PERFORM 10032-UPDATE-DB
+        WHEN 'D'    PERFORM 10033-DELETE-DB
+        WHEN '*'    CONTINUE
+        WHEN OTHER  PERFORM 9999-ABEND
+    END-EVALUATE
+END-PERFORM
+CLOSE TR-RECORD</code></pre>
+
+<h3>TRANEXTR Job (Daily Extract)</h3>
+<p>Extracts DB2 transaction type and category data to FB/LRECL=60 flat files for use by TRANREPT. Runs daily; backs up prior version to GDG before overwriting.</p>
+
+<table>
+    <tr><th>Step</th><th>Action</th><th>Output Dataset</th></tr>
+    <tr><td>STEP10</td><td>Backup TRANTYPE.PS to GDG (+1)</td><td><code>HLQ.TRANTYPE.BKUP(+1)</code></td></tr>
+    <tr><td>STEP20</td><td>Backup TRANCATG.PS to GDG (+1)</td><td><code>HLQ.TRANCATG.PS.BKUP(+1)</code></td></tr>
+    <tr><td>STEP30</td><td>Delete previous run's work files</td><td>&mdash;</td></tr>
+    <tr><td>STEP40</td><td>DSNTIAUL extracts TRANSACTION_TYPE</td><td><code>HLQ.TRANTYPE.PS</code> (LRECL=60)</td></tr>
+    <tr><td>STEP50</td><td>DSNTIAUL extracts TRANSACTION_TYPE_CATEGORY</td><td><code>HLQ.TRANCATG.PS</code> (LRECL=60)</td></tr>
+</table>
+
+<h4>TRANTYPE Extraction SQL</h4>
+<pre><code>SELECT CAST(CONCAT(CONCAT(
+   TR_TYPE,
+   CAST(TR_DESCRIPTION AS CHAR(50))
+   ),
+   REPEAT('0',8)
+) AS CHAR(60))
+FROM CARDDEMO.TRANSACTION_TYPE
+ORDER BY TR_TYPE;</code></pre>
+
+<h4>TRANCATG Extraction SQL</h4>
+<pre><code>SELECT CAST(
+    TRC_TYPE_CODE
+ || TRC_TYPE_CATEGORY
+ || CAST(TRC_CAT_DATA AS CHAR(50))
+ || REPEAT('0',4)
+ AS CHAR(60))
+FROM CARDDEMO.TRANSACTION_TYPE_CATEGORY
+ORDER BY TRC_TYPE_CODE, TRC_TYPE_CATEGORY;</code></pre>
+
+<h3>CREADB21 Job (One-Time Setup)</h3>
+<ol>
+    <li><strong>FREEPLN</strong> &mdash; Free existing DB2 plan/packages (TSSO using DB2FREE.ctl)</li>
+    <li><strong>CRCRDDB</strong> &mdash; Create database, tablespaces, tables, indexes, grants (DSNTIAD using DB2CREAT.ctl)</li>
+    <li><strong>LDTTYPE</strong> &mdash; Load TRANSACTION_TYPE seed data (DSNTEP4 using DB2LTTYP.ctl)</li>
+    <li><strong>LDTCCAT</strong> &mdash; Load TRANSACTION_TYPE_CATEGORY seed data (DSNTEP4 using DB2LTCAT.ctl)</li>
+</ol>
+
+<h2 id="business-rules">9. Business Rules &amp; Validation</h2>
+
+<div class="section-box">
+    <h3>Access Control</h3>
+    <ul>
+        <li>CTTU and CTLI accessible only from Admin Menu (CA00)</li>
+        <li><code>CDEMO-USER-TYPE = 'A'</code> required in COMMAREA; Regular Users (type 'U') cannot access</li>
+        <li>PF3 on any screen executes XCTL to COADM01C</li>
+    </ul>
+</div>
+
+<div class="section-box">
+    <h3>Type Code Rules</h3>
+    <ul>
+        <li>Exactly 2 characters (CHAR(2) NOT NULL)</li>
+        <li>Unique &mdash; PRIMARY KEY enforced by DB2</li>
+        <li>Used as <code>TRAN-TYPE-CD PIC X(02)</code> in TRANFILE VSAM records</li>
+        <li>Deleting a type that has category children fails (FK ON DELETE RESTRICT)</li>
+    </ul>
+</div>
+
+<div class="section-box">
+    <h3>Description Validation</h3>
+    <ul>
+        <li>VARCHAR(50) NOT NULL &mdash; blank description rejected</li>
+        <li>Validated with alphanumeric check (1230-EDIT-ALPHANUM-REQD paragraph in COTRTUPC)</li>
+        <li>Input error sets <code>INPUT-ERROR</code> flag; field highlighted with error attribute</li>
+    </ul>
+</div>
+
+<div class="section-box">
+    <h3>Optimistic Change Detection (COTRTUPC)</h3>
+    <ul>
+        <li>Original fetched values stored in TTUP-OLD-* fields; user input in TTUP-NEW-* fields</li>
+        <li>1205-COMPARE-OLD-NEW paragraph compares them before issuing UPDATE</li>
+        <li>No changes: "No change detected with respect to values fetched." &mdash; UPDATE skipped</li>
+        <li>External concurrent modification detected: "Record changed by some one else. Please review"</li>
+    </ul>
+</div>
+
+<div class="section-box">
+    <h3>DB2 Error Handling</h3>
+    <ul>
+        <li>All EXEC SQL blocks followed by SQLCODE evaluation</li>
+        <li>SQLCODE=0: success; SQLCODE=100: not found; other: error</li>
+        <li>Errors route to 9999-FORMAT-DB2-MESSAGE (CSDB2RPY) &rarr; DSNTIAC utility formats SQLCA</li>
+        <li>Formatted message written to WS-RETURN-MSG for display on screen</li>
+        <li>Critical/unexpected errors: EXEC CICS ABEND via ABEND-ROUTINE paragraph</li>
+    </ul>
+</div>
+
+<div class="section-box">
+    <h3>SYNCPOINT (Transaction Commit)</h3>
+    <ul>
+        <li>After every successful INSERT, UPDATE, or DELETE: <code>EXEC CICS SYNCPOINT END-EXEC</code></li>
+        <li>PF12 (cancel) or PF3 (exit) without save: CICS task termination rolls back uncommitted DB2 UoW</li>
+        <li>Ensures atomicity: screen message and DB2 commit are tightly coupled</li>
+    </ul>
+</div>
+
+<div class="section-box">
+    <h3>Batch MNTTRDB2 Rules</h3>
+    <ul>
+        <li>Lines beginning with <code>*</code> are comments and are skipped silently</li>
+        <li>Unrecognized action codes cause ABEND (9999-ABEND)</li>
+        <li>INSERT failures (e.g., duplicate key -803) cause ABEND</li>
+        <li>UPDATE/DELETE with SQLCODE &ne; 0 causes ABEND</li>
+        <li>No transactional rollback on partial failure &mdash; records processed before the failing record are committed</li>
+    </ul>
+</div>
+
+<h2 id="navigation">10. Navigation &amp; Keyboard Map</h2>
+
+<h3>CTTU (COTRTUPC) &mdash; Update/Add Screen</h3>
+<div class="key-map">
+    <table>
+        <tr><th>Key</th><th>Action / State</th></tr>
+        <tr><td>ENTER</td><td>Submit type code for DB2 fetch; re-enter after validation errors</td></tr>
+        <tr><td>PF3</td><td>Exit &mdash; XCTL to Admin Menu (COADM01C)</td></tr>
+        <tr><td>PF4</td><td>Delete &mdash; first press shows confirm prompt; second press executes DELETE</td></tr>
+        <tr><td>PF5</td><td>Save &mdash; commit INSERT or UPDATE after confirmation</td></tr>
+        <tr><td>PF12</td><td>Cancel &mdash; discard changes, return to initial search state</td></tr>
+    </table>
+</div>
+
+<h3>CTLI (COTRTLIC) &mdash; List Screen</h3>
+<div class="key-map">
+    <table>
+        <tr><th>Key</th><th>Action</th></tr>
+        <tr><td>ENTER</td><td>Apply/refresh filter; reload list from DB2</td></tr>
+        <tr><td>PF2</td><td>Navigate to COTRTUPC (blank) to add a new type</td></tr>
+        <tr><td>PF3</td><td>Exit &mdash; XCTL to Admin Menu</td></tr>
+        <tr><td>PF7</td><td>Scroll backward (previous page) via backward cursor</td></tr>
+        <tr><td>PF8</td><td>Scroll forward (next page) via forward cursor</td></tr>
+        <tr><td>PF10</td><td>Confirm pending U (Update) or D (Delete) row action</td></tr>
+    </table>
+</div>
+
+<h2 id="dependencies">11. Dependencies</h2>
+
+<h3>Internal Module Dependencies</h3>
+<table>
+    <tr><th>Module</th><th>Direction</th><th>Description</th></tr>
+    <tr><td>authentication</td><td>&larr; required by</td><td>COMMAREA set by COSGN00C; CDEMO-USER-TYPE='A' required for access</td></tr>
+    <tr><td>user-management</td><td>&larr; prerequisite</td><td>Admin Menu (COADM01C / CA00) is the navigation entry point to CTLI/CTTU</td></tr>
+    <tr><td>transactions</td><td>&rarr; provides data to</td><td>TR_TYPE values used as TRAN-TYPE-CD in TRANFILE VSAM records</td></tr>
+    <tr><td>billing / batch-processing</td><td>&rarr; provides data to</td><td>TRANEXTR extracts type/category data for INTCALC interest calculations</td></tr>
+    <tr><td>reports</td><td>&rarr; provides data to</td><td>TRANTYPE.PS and TRANCATG.PS flat files consumed by TRANREPT (CBTRN03C) for type descriptions in daily report</td></tr>
+</table>
+
+<h3>External / Infrastructure Dependencies</h3>
+<table>
+    <tr><th>Component</th><th>Required</th><th>Purpose</th></tr>
+    <tr><td>IBM DB2 (SSID: DAZ1)</td><td>Yes</td><td>All transaction type data persistence</td></tr>
+    <tr><td>DB2 CARDDEMO database</td><td>Yes</td><td>Must be created via CREADB21 job before first use</td></tr>
+    <tr><td>DB2 Plan CARDDEMO</td><td>Yes</td><td>Bound DB2 plan required for COTRTUPC, COTRTLIC, COBTUPDT</td></tr>
+    <tr><td>COCOM01Y copybook</td><td>Yes</td><td>CARDDEMO-COMMAREA for session state between CICS transactions</td></tr>
+    <tr><td>DSNTIAD utility</td><td>Setup only</td><td>Executes DDL during CREADB21</td></tr>
+    <tr><td>DSNTEP4 utility</td><td>Setup only</td><td>Executes seed data INSERT SQL during CREADB21</td></tr>
+    <tr><td>DSNTIAUL utility</td><td>TRANEXTR only</td><td>Extracts DB2 query results to flat file</td></tr>
+    <tr><td>DSNTIAC utility</td><td>Runtime</td><td>Formats SQLCA diagnostic messages for user display</td></tr>
+</table>
+
+<h2 id="jcl-jobs">12. JCL Jobs</h2>
+
+<table>
+    <tr><th>Job</th><th>JCL File</th><th>Program</th><th>Purpose</th><th>Frequency</th></tr>
+    <tr><td><code>CREADB21</code></td><td>jcl/CREADB21.jcl</td><td>DSNTIAD, DSNTEP4</td><td>Create CARDDEMO DB2 database; load seed data</td><td>Once (setup)</td></tr>
+    <tr><td><code>MNTTRDB2</code></td><td>jcl/MNTTRDB2.jcl</td><td>COBTUPDT</td><td>Bulk INSERT/UPDATE/DELETE from flat INPFILE</td><td>On demand</td></tr>
+    <tr><td><code>TRANEXTR</code></td><td>jcl/TRANEXTR.jcl</td><td>DSNTIAUL</td><td>Extract type/category data to flat files for TRANREPT</td><td>Daily batch</td></tr>
+</table>
+
+<h2 id="configuration">13. Configuration &amp; Environment</h2>
+
+<h3>DB2 Connection Parameters</h3>
+<table>
+    <tr><th>Parameter</th><th>Value</th><th>Description</th></tr>
+    <tr><td>DB2 SSID</td><td><code>DAZ1</code></td><td>DB2 subsystem identifier</td></tr>
+    <tr><td>Database</td><td><code>CARDDEMO</code></td><td>DB2 database name</td></tr>
+    <tr><td>Plan</td><td><code>CARDDEMO</code></td><td>DB2 plan bound for all programs</td></tr>
+    <tr><td>Stogroup</td><td><code>AWST1STG</code></td><td>DB2 storage group for tablespaces</td></tr>
+    <tr><td>Tablespace (types)</td><td><code>CARDSPC1</code></td><td>Holds TRANSACTION_TYPE table</td></tr>
+    <tr><td>Tablespace (categories)</td><td><code>CARDSTTC</code></td><td>Holds TRANSACTION_TYPE_CATEGORY table</td></tr>
+    <tr><td>HLQ</td><td><code>AWS.M2.CARDDEMO</code></td><td>High-level qualifier for all datasets</td></tr>
+    <tr><td>Load Library</td><td><code>AWS.M2.CARDDEMO.LOADLIB</code></td><td>Contains COBTUPDT load module</td></tr>
+    <tr><td>DBRMLIB</td><td><code>AWS.M2.CARDDEMO.DBRMLIB</code></td><td>Contains DB2 database request modules</td></tr>
+    <tr><td>CNTL Library</td><td><code>AWS.M2.CARDDEMO.CNTL</code></td><td>Contains DB2 control scripts (DB2CREAT, DB2LTTYP, DB2LTCAT, etc.)</td></tr>
+</table>
+
+<h3>GDG Output Datasets</h3>
+<table>
+    <tr><th>Dataset</th><th>LRECL</th><th>Purpose</th></tr>
+    <tr><td><code>HLQ.TRANTYPE.BKUP</code></td><td>60</td><td>GDG backup of previous TRANTYPE extract</td></tr>
+    <tr><td><code>HLQ.TRANCATG.PS.BKUP</code></td><td>60</td><td>GDG backup of previous TRANCATG extract</td></tr>
+    <tr><td><code>HLQ.TRANTYPE.PS</code></td><td>60</td><td>Current TRANSACTION_TYPE extract (for TRANREPT)</td></tr>
+    <tr><td><code>HLQ.TRANCATG.PS</code></td><td>60</td><td>Current TRANSACTION_TYPE_CATEGORY extract</td></tr>
+</table>
+
+<h2 id="integration">14. Integration Points</h2>
+
+<h3>COMMAREA Navigation Chain</h3>
+<pre><code>COSGN00C (CC00) -- Signon
+  |
+  +--> COADM01C (CA00) -- Admin Menu  [CDEMO-USER-TYPE = 'A' only]
+         |
+         +--> COTRTLIC (CTLI) -- List/Browse
+         |     |
+         |     +--> COTRTUPC (CTTU) -- [via PF2 or 'U' row action + PF10]
+         |
+         +--> COTRTUPC (CTTU) -- Add/Edit/Delete [direct]
+               |
+               +--> COADM01C (CA00) -- [via PF3 exit]</code></pre>
+
+<h3>DB2 to Flat File Bridge (TRANEXTR)</h3>
+<p>TRANEXTR uses DSNTIAUL to serialize DB2 rows as fixed-length EBCDIC records. These become the TRANTYPE.PS and TRANCATG.PS datasets that TRANREPT (CBTRN03C) reads as sequential VSAM-substitute input when printing transaction type descriptions on the daily report &mdash; bridging DB2 data into the VSAM-centric batch world.</p>
+
+<h3>Flat File to DB2 Bridge (MNTTRDB2)</h3>
+<p>COBTUPDT reads a user-prepared sequential INPFILE and drives DB2 DML operations. Provides a scriptable bulk-maintenance channel without requiring CICS online terminal access. Suitable for automated environment provisioning, test data loading, or production data corrections via controlled JCL submission.</p>
+
+<h2 id="development">15. Development Guidelines &amp; Patterns</h2>
+
+<h3>Host Variable Handling</h3>
+<ul>
+    <li>Always use DCLGEN-generated host-variable structures (<code>DCLTRANSACTION-TYPE</code>) rather than inline PIC definitions for DB2 columns</li>
+    <li>For VARCHAR fields, set both the length indicator and text field before every EXEC SQL DML:</li>
+</ul>
+<pre><code>MOVE INPUT-DESC TO DCL-TR-DESCRIPTION-TEXT
+COMPUTE DCL-TR-DESCRIPTION-LEN =
+    FUNCTION LENGTH(FUNCTION TRIM(DCL-TR-DESCRIPTION-TEXT))</code></pre>
+
+<h3>SQLCODE Evaluation Pattern</h3>
+<pre><code>EXEC SQL
+    ... SQL statement ...
+END-EXEC
+
+EVALUATE TRUE
+    WHEN SQLCODE = ZERO
+        CONTINUE   -- success path
+    WHEN SQLCODE = +100
+        SET RECORD-NOT-FOUND TO TRUE
+    WHEN OTHER
+        MOVE SQLCODE TO WS-DISP-SQLCODE
+        PERFORM 9999-FORMAT-DB2-MESSAGE
+            THRU 9999-FORMAT-DB2-MESSAGE-EXIT
+        SET WS-DB2-ERROR TO TRUE
+END-EVALUATE</code></pre>
+
+<h3>SYNCPOINT Pattern</h3>
+<pre><code>-- After every successful DML:
+EXEC CICS SYNCPOINT END-EXEC
+
+-- Check response if needed:
+IF WS-RESP-CD = DFHRESP(NORMAL)
+    SET CONFIRM-UPDATE-SUCCESS TO TRUE
+ELSE
+    PERFORM ABEND-ROUTINE
+END-IF</code></pre>
+
+<h3>Adding a New Transaction Type &mdash; Complete Flow</h3>
+<pre><code>* 1. Move screen input to host variables
+MOVE TRTYPCD  TO DCL-TR-TYPE
+MOVE TRTYDSC  TO DCL-TR-DESCRIPTION-TEXT
+COMPUTE DCL-TR-DESCRIPTION-LEN =
+    FUNCTION LENGTH(FUNCTION TRIM(DCL-TR-DESCRIPTION-TEXT))
+
+* 2. Test for existing record
+EXEC SQL
+    SELECT TR_TYPE, TR_DESCRIPTION
+      INTO :DCL-TR-TYPE, :DCL-TR-DESCRIPTION
+      FROM CARDDEMO.TRANSACTION_TYPE
+     WHERE TR_TYPE = :DCL-TR-TYPE
+END-EXEC
+
+* 3. SQLCODE=100 means new record -- INSERT
+IF SQLCODE = 100
+    EXEC SQL
+        INSERT INTO CARDDEMO.TRANSACTION_TYPE
+               (TR_TYPE, TR_DESCRIPTION)
+        VALUES (:DCL-TR-TYPE, :DCL-TR-DESCRIPTION)
+    END-EXEC
+    IF SQLCODE = ZERO
+        EXEC CICS SYNCPOINT END-EXEC
+        SET CONFIRM-UPDATE-SUCCESS TO TRUE
+    ELSE
+        PERFORM 9999-FORMAT-DB2-MESSAGE
+    END-IF
+END-IF</code></pre>
+
+<h3>DB2 Bind/Compile Procedure</h3>
+<p>After any change to EXEC SQL statements, the full precompile-compile-link-bind cycle is required:</p>
+<ol>
+    <li>DB2 COBOL precompiler &mdash; generates modified COBOL source + DBRM</li>
+    <li>IBM Enterprise COBOL compile</li>
+    <li>Link-edit into <code>LOADLIB</code></li>
+    <li>DBRM placed in <code>DBRMLIB</code></li>
+    <li>DB2 BIND PACKAGE and BIND PLAN for CARDDEMO</li>
+</ol>
+
+<h3>Screen Design Conventions</h3>
+<ul>
+    <li>Row 1: Tran ID (left, BLUE) | Screen title (center, YELLOW) | Date (right, BLUE)</li>
+    <li>Row 2: Program name (left, BLUE) | Sub-title (center, YELLOW) | Time (right, BLUE)</li>
+    <li>Input field labels: TURQUOISE, ASKIP</li>
+    <li>Input fields themselves: UNPROT, HILIGHT=UNDERLINE, GREEN for list filter fields</li>
+    <li>Per-row action selectors on list screen: UNPROT, IC (initial cursor), GREEN</li>
+    <li>Info/error messages: rows 17&ndash;20, YELLOW for errors, NEUTRAL for info</li>
+    <li>PF key help line: rows 23&ndash;24, BLUE, ASKIP</li>
+</ul>
+
+<h2 id="user-stories">16. User Story Examples</h2>
+
+<div class="section-box">
+    <h3>Browse &amp; View</h3>
+    <ul>
+        <li>As an administrator, I want to view all transaction type codes so I can understand the classification scheme used in transaction records</li>
+        <li>As an administrator, I want to filter the list by type code or description so I can quickly find a specific type without paging through all records</li>
+    </ul>
+</div>
+
+<div class="section-box">
+    <h3>Add &amp; Edit</h3>
+    <ul>
+        <li>As an administrator, I want to add a new transaction type code so new purchase categories can be tracked in the billing system</li>
+        <li>As an administrator, I want to correct the description of an existing type so reports and screens display accurate labels</li>
+        <li>As an administrator, I want to confirm changes before they are committed to DB2 so I can prevent accidental modifications</li>
+        <li>As a system, I want to detect when no changes were made before saving so unnecessary DB2 UPDATE operations are skipped</li>
+    </ul>
+</div>
+
+<div class="section-box">
+    <h3>Delete</h3>
+    <ul>
+        <li>As an administrator, I want to delete an obsolete transaction type so the reference data stays current and reports are not cluttered with unused codes</li>
+        <li>As a system, I want to prevent deletion of a type that has associated category records so referential integrity is maintained in DB2 via the FK constraint</li>
+    </ul>
+</div>
+
+<div class="section-box">
+    <h3>Batch Maintenance</h3>
+    <ul>
+        <li>As a system operator, I want to bulk-load type updates from a flat file so I can apply environment-specific tables without online screen entry</li>
+        <li>As a system, I want to extract transaction type data daily so TRANREPT batch reports contain current type descriptions</li>
+    </ul>
+</div>
+
+<div class="section-box">
+    <h3>Acceptance Criteria Patterns</h3>
+    <table>
+        <tr><th>Operation</th><th>Acceptance Criteria</th></tr>
+        <tr><td>Add</td><td>Type code is 2-char and unique; description non-blank and alphanumeric; DB2 INSERT SQLCODE=0; SYNCPOINT issued; "Changes committed to database" shown</td></tr>
+        <tr><td>Edit</td><td>Existing description shown for modification; no-change detected skips UPDATE; valid change requires PF5 confirm to commit</td></tr>
+        <tr><td>Delete (CTTU)</td><td>Two PF4 presses required; FK constraint shows "Delete of record failed" if categories exist; "Delete successful." on clean delete</td></tr>
+        <tr><td>List/Filter</td><td>7 rows per page max; PF7/PF8 navigate full table; type and description filters narrow results; page number displayed</td></tr>
+        <tr><td>Batch (MNTTRDB2)</td><td>All records from INPFILE processed; RC=0 on success; DISPLAY message per record; ABEND on SQL error</td></tr>
+        <tr><td>DB2 unavailable</td><td>Priming query fails; "Db2 access failure. SQLCODE:nnn" displayed; program exits cleanly</td></tr>
+    </table>
+</div>
+
+<h2 id="testing">17. Testing Considerations</h2>
+
+<div class="section-box">
+    <h3>Prerequisites</h3>
+    <ul>
+        <li>CREADB21 job must complete successfully (creates DB2 objects and loads seed data)</li>
+        <li>CARDDEMO DB2 plan must be bound (<code>BIND PLAN(CARDDEMO)</code>)</li>
+        <li>CICS must have CTTU and CTLI transaction definitions installed from CRDDEMOD.csd</li>
+        <li>Test user must be defined in USRSEC with <code>SEC-USR-TYPE = 'A'</code></li>
+    </ul>
+</div>
+
+<div class="section-box">
+    <h3>Test Scenarios</h3>
+    <table>
+        <tr><th>Scenario</th><th>Steps</th><th>Expected Result</th></tr>
+        <tr><td>Enter non-existent type on CTTU</td><td>Enter '99', ENTER</td><td>SQLCODE=100; "Enter new transaction type details."</td></tr>
+        <tr><td>Enter existing type on CTTU</td><td>Enter '01', ENTER</td><td>Description "PURCHASE" displayed; "Update..." message</td></tr>
+        <tr><td>Leave description blank, PF5</td><td>Clear TRTYDSC, PF5</td><td>Validation error; field highlighted; error message</td></tr>
+        <tr><td>Submit unchanged description</td><td>ENTER (no change), PF5</td><td>"No change detected with respect to values fetched."</td></tr>
+        <tr><td>Delete type with categories</td><td>Enter '01', PF4, PF4</td><td>FK RESTRICT; "Delete of record failed"</td></tr>
+        <tr><td>Delete type without categories</td><td>Enter '07', PF4, PF4</td><td>"Delete successful." if '07' has no categories</td></tr>
+        <tr><td>CTLI no filter, PF8</td><td>Enter CTLI, PF8</td><td>Next 7 rows; page number increments</td></tr>
+        <tr><td>CTLI with type filter</td><td>Enter '01' in TRTYPE, ENTER</td><td>Only type '01' row shown</td></tr>
+        <tr><td>MNTTRDB2 add new type</td><td>INPFILE: A08BALANCE TRANSFER</td><td>"RECORD INSERTED SUCCESSFULLY"; type '08' in CTLI</td></tr>
+        <tr><td>MNTTRDB2 comment line</td><td>INPFILE: * comment</td><td>Record silently skipped; no DB2 operation</td></tr>
+        <tr><td>MNTTRDB2 unknown action</td><td>INPFILE: X01TEST</td><td>ABEND (9999-ABEND) executed</td></tr>
+    </table>
+</div>
+
+<div class="warning">
+    <strong>Data Integrity Note:</strong> Transaction type codes in DB2 should be kept in sync with actual <code>TRAN-TYPE-CD</code> values used in TRANFILE VSAM records. Deleting a type that is referenced by existing transaction records will cause inconsistency in TRANREPT report output &mdash; there is no DB2 FK preventing this since TRANFILE is VSAM, not relational. Run TRANEXTR after any type modifications before running TRANREPT.
+</div>
+
+<footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #444; color: #888; font-size: 0.85em;">
+    Last reviewed: 2026-03-26T18:01:30Z &nbsp;|&nbsp;
+    Module: transaction-types &nbsp;|&nbsp;
+    Repository: stefanini-applications/demo-mainframe-modernization-carddemo &nbsp;|&nbsp;
+    Location: app/app-transaction-type-db2/
+</footer>
+
 </body>
 </html>
