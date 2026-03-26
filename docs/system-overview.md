@@ -63,62 +63,122 @@
 ### 1. Authentication
 
 **ID:** `authentication`  
-**Purpose:** User signon and session initialization for the CardDemo application  
+**Purpose:** User signon and session initialization for the CardDemo application. Entry point for all user interactions — every cardholder and administrator must authenticate here before accessing any other module.
+
 **Key Components:**
-- `COSGN00C.cbl` — CICS program; validates user ID + password against USRSEC VSAM file
-- `COSGN00.bms` — BMS map for signon screen
-- `CSUSR01Y.cpy` — SEC-USER-DATA structure (user ID, names, password, type)
-- `COCOM01Y.cpy` — CARDDEMO-COMMAREA shared communication area
+- `COSGN00C.cbl` — CICS program (CC00); validates user ID + password against USRSEC VSAM file, initializes COMMAREA, routes to appropriate menu via EXEC CICS XCTL
+- `COSGN00.bms` — BMS mapset; defines the 3270 signon screen (24×80) with USERID, PASSWD (dark/hidden), and ERRMSG fields
+- `CSUSR01Y.cpy` — SEC-USER-DATA structure (user ID, first/last name, password, type, filler; RECLN=80)
+- `COCOM01Y.cpy` — CARDDEMO-COMMAREA shared communication area; authentication initializes CDEMO-USER-ID, CDEMO-USER-TYPE, CDEMO-FROM-TRANID, CDEMO-FROM-PROGRAM, and CDEMO-PGM-CONTEXT
+- `COMEN01C.cbl` — downstream: Main Menu for regular users (CM00); receives COMMAREA from authentication
+- `COADM01C.cbl` — downstream: Admin Menu (CA00); receives COMMAREA from authentication
+
+**Supporting Copybooks:**
+- `COTTL01Y.cpy` — screen title constants (CCDA-TITLE01, CCDA-TITLE02)
+- `CSDAT01Y.cpy` — date/time working storage for header (CURDATE, CURTIME fields)
+- `CSMSG01Y.cpy` — standard message constants (CCDA-MSG-THANK-YOU, CCDA-MSG-INVALID-KEY)
+- `DFHAID` / `DFHBMSCA` — CICS system copybooks for AID key and BMS attribute constants
 
 **CICS Transaction:** `CC00`  
-**Screen:** COSGN00 (Signon Screen)
+**Screen:** COSGN00 / COSGN0A (Signon Screen, 24×80 3270 terminal)
 
 **Processing Flow:**
-1. User enters User ID + Password on signon screen
-2. COSGN00C reads USRSEC VSAM file to validate credentials
-3. On success, sets `CDEMO-USER-ID` and `CDEMO-USER-TYPE` (A=Admin, U=User) in COMMAREA
-4. Routes to Main Menu (CM00/COMEN01C) or Admin Menu (CA00/COADM01C)
+1. Cold start (EIBCALEN=0): display blank signon screen with cursor on USERID field
+2. User enters User ID (8 chars, case-insensitive) + Password (8 chars, hidden/dark attribute)
+3. ENTER key: COSGN00C receives map input, applies FUNCTION UPPER-CASE to both fields
+4. Validates non-blank inputs, then performs EXEC CICS READ against USRSEC VSAM (key=User ID)
+5. VSAM RESP=0 (found): compares SEC-USR-PWD with entered password (exact 8-char match)
+6. On password match: populates CARDDEMO-COMMAREA and XCTLs to target menu program
+7. On any failure: redisplays signon screen with specific error message, cursor on failed field
+8. PF3 key: displays thank-you message via SEND TEXT, issues CICS RETURN without TRANSID
 
-**Data Model:**
-```
-SEC-USER-DATA (USRSEC file, RECLN=80):
-  SEC-USR-ID      PIC X(08)   -- User ID (primary key)
-  SEC-USR-FNAME   PIC X(20)   -- First name
-  SEC-USR-LNAME   PIC X(20)   -- Last name
-  SEC-USR-PWD     PIC X(08)   -- Password
-  SEC-USR-TYPE    PIC X(01)   -- 'A'=Admin, 'U'=User
+**Outbound XCTL Targets:**
+| Condition | Target Program | Transaction |
+|-----------|---------------|-------------|
+| SEC-USR-TYPE = 'A' (CDEMO-USRTYP-ADMIN) | COADM01C | CA00 Admin Menu |
+| SEC-USR-TYPE = 'U' (default) | COMEN01C | CM00 Main Menu |
+
+**Data Models:**
+```cobol
+* USRSEC VSAM KSDS — primary key: SEC-USR-ID (offset 0, length 8)
+01 SEC-USER-DATA.
+  05 SEC-USR-ID      PIC X(08)   -- User ID (primary key, 8 chars)
+  05 SEC-USR-FNAME   PIC X(20)   -- First name
+  05 SEC-USR-LNAME   PIC X(20)   -- Last name
+  05 SEC-USR-PWD     PIC X(08)   -- Password (plain text — demo only)
+  05 SEC-USR-TYPE    PIC X(01)   -- 'A'=Admin, 'U'=Regular User
+  05 SEC-USR-FILLER  PIC X(23)   -- Reserved (total RECLN=80)
+
+* COMMAREA fields SET by authentication (COCOM01Y.cpy):
+  CDEMO-FROM-TRANID  PIC X(04)   -- Set to 'CC00'
+  CDEMO-FROM-PROGRAM PIC X(08)   -- Set to 'COSGN00C'
+  CDEMO-USER-ID      PIC X(08)   -- Authenticated user ID
+  CDEMO-USER-TYPE    PIC X(01)   -- 'A'=Admin / 'U'=User
+  CDEMO-PGM-CONTEXT  PIC 9(01)   -- Set to 0 (CDEMO-PGM-ENTER)
 ```
 
 **Business Rules:**
-- Invalid user ID or password → display error message, remain on signon screen
-- PF3 key → display thank-you message and exit
-- Any other key → display invalid key message
-- Session context (user type) propagated to all subsequent transactions via COMMAREA
+- BR-01: User ID required (non-blank) → "Please enter User ID ..."
+- BR-02: Password required (non-blank) → "Please enter Password ..."
+- BR-03/04: Both User ID and Password converted to UPPER-CASE before validation
+- BR-05: User ID must exist in USRSEC (RESP=13/NOTFND) → "User not found. Try again ..."
+- BR-06: Password must exactly match SEC-USR-PWD (8-char comparison) → "Wrong Password. Try again ..."
+- BR-07: PF3 → thank-you message + CICS RETURN (no TRANSID, session ends)
+- BR-08: Any other key → "Invalid Key" error, redisplay screen
+- BR-09: Admin users routed to COADM01C (CA00 Admin Menu)
+- BR-10: Regular users routed to COMEN01C (CM00 Main Menu)
+- BR-11: VSAM I/O errors (RESP other than 0/13) → "Unable to verify the User ..."
+- BR-12: Failed authentication repositions cursor at the failed input field
+
+**VSAM Response Code Handling:**
+| RESP | Meaning | Action |
+|------|---------|--------|
+| 0 | Normal (record found) | Proceed to password comparison |
+| 13 | NOTFND (user not in USRSEC) | Error: "User not found. Try again ..." |
+| Other | Unexpected CICS/VSAM error | Error: "Unable to verify the User ..." |
+
+**Internal Dependencies:**
+- USRSEC VSAM file must be pre-loaded (DUSRSECJ JCL job using IEBGENER)
+- All downstream modules depend on CDEMO-USER-ID and CDEMO-USER-TYPE being set correctly here
+- Authentication is a prerequisite for all end-to-end testing of any other module
+
+**Security Notes:**
+- Passwords stored as plain text in USRSEC (intentional demo characteristic — must be hashed in production)
+- No account lockout after failed attempts (modernization opportunity)
+- No session timeout mechanism (modernization opportunity)
 
 **User Story Examples:**
 - As a cardholder, I want to sign in with my user ID and password so I can access my account
 - As an administrator, I want to log in with admin credentials so I can manage users
+- As a user, I want a clear error message when my credentials are wrong so I know to retry
+- As a user, I want to press PF3 to exit safely so my session ends cleanly
 
 ---
 
 ### 2. Accounts
 
 **ID:** `accounts`  
-**Purpose:** View and update credit card account details; interest calculation (batch)  
+**Purpose:** View and update credit card account details online (CICS); batch account data validation, extract, and monthly interest calculation. The account is the central financial entity — all cards, transactions, billing, and interest are linked to an account record in ACCTFILE.
+
 **Key Components:**
-- `COACTVWC.cbl` — CICS program; display account details (CAVW / COACTVW)
-- `COACTUPC.cbl` — CICS program; update account information (CAUP / COACTUP)
-- `CBACT01C.cbl` — Batch: account data validation/processing
-- `CBACT02C.cbl` — Batch: account copy/report operations
-- `CBACT03C.cbl` — Batch: account extract processing
-- `CBACT04C.cbl` — Batch: interest calculation (INTCALC job)
-- `CVACT01Y.cpy` — ACCOUNT-RECORD data structure
-- `CVACT02Y.cpy` — CARD-RECORD data structure
-- `CVACT03Y.cpy` — CARD-XREF-RECORD data structure
+- `COACTVWC.cbl` — CICS program; read-only display of account + customer details (CAVW / COACTVW); resolves card number → XREFFILE → ACCTFILE → CUSTFILE
+- `COACTUPC.cbl` — CICS program; full account and customer data update (CAUP / COACTUP); implements optimistic locking with `ACUP-OLD-*` shadow fields and CICS SYNCPOINT ROLLBACK for atomicity
+- `CBACT01C.cbl` — Batch: sequential account data validation/processing; reads ACCTFILE, writes multiple output formats
+- `CBACT02C.cbl` — Batch: sequential card file read; outputs to SYSOUT
+- `CBACT03C.cbl` — Batch: sequential card cross-reference read; outputs CARD-NUM / CUST-ID / ACCT-ID mappings
+- `CBACT04C.cbl` — Batch: monthly interest calculation (INTCALC job); reads TCATBALF sequentially, looks up XREFFILE/ACCTFILE/DISCGRP, writes interest transactions to output TRANSACT file
+- `COACTVW.bms` / `COACTUP.bms` — BMS map definitions for 24×80 3270 screens
+- `CVACT01Y.cpy` — ACCOUNT-RECORD data structure (RECLN=300)
+- `CVACT02Y.cpy` — CARD-RECORD data structure (RECLN=150)
+- `CVACT03Y.cpy` — CARD-XREF-RECORD data structure (RECLN=50)
+- `CVTRA01Y.cpy` — TRAN-CAT-BAL-RECORD (TCATBALF input to CBACT04C)
+- `CVTRA02Y.cpy` — DIS-GROUP-RECORD (DISCGRP interest rate structure)
 
 **CICS Transactions:**
-- `CAVW` → Account View (read-only)
-- `CAUP` → Account Update (editable)
+- `CAVW` → Account View (read-only); BMS mapset COACTVW, map CACTVWA
+- `CAUP` → Account Update (editable); BMS mapset COACTUP, map CACTUPA
+
+**Navigation:** PF3 returns to Main Menu (CM00); PF5 transitions from View to Update
 
 **Data Model:**
 ```
@@ -129,29 +189,63 @@ ACCOUNT-RECORD (ACCTFILE, RECLN=300):
   ACCT-CREDIT-LIMIT       PIC S9(10)V99    -- Credit limit
   ACCT-CASH-CREDIT-LIMIT  PIC S9(10)V99    -- Cash credit limit
   ACCT-OPEN-DATE          PIC X(10)        -- YYYY-MM-DD
-  ACCT-EXPIRAION-DATE     PIC X(10)        -- YYYY-MM-DD
+  ACCT-EXPIRAION-DATE     PIC X(10)        -- YYYY-MM-DD (note: typo in source copybook)
   ACCT-REISSUE-DATE       PIC X(10)        -- YYYY-MM-DD
-  ACCT-CURR-CYC-CREDIT    PIC S9(10)V99    -- Current cycle credits
-  ACCT-CURR-CYC-DEBIT     PIC S9(10)V99    -- Current cycle debits
+  ACCT-CURR-CYC-CREDIT    PIC S9(10)V99    -- Current cycle credits (payments received)
+  ACCT-CURR-CYC-DEBIT     PIC S9(10)V99    -- Current cycle debits (charges made)
   ACCT-ADDR-ZIP           PIC X(10)        -- ZIP code
-  ACCT-GROUP-ID           PIC X(10)        -- Disclosure group ID
+  ACCT-GROUP-ID           PIC X(10)        -- Disclosure group ID → links to DISCGRP
+  FILLER                  PIC X(178)       -- Unused (allows future field additions)
 
 CARD-XREF-RECORD (XREFFILE, RECLN=50):
   XREF-CARD-NUM           PIC X(16)        -- Card number (primary key)
   XREF-CUST-ID            PIC 9(09)        -- Customer ID
-  XREF-ACCT-ID            PIC 9(11)        -- Account ID
+  XREF-ACCT-ID            PIC 9(11)        -- Account ID (alternate index key)
+  FILLER                  PIC X(14)
+
+TRAN-CAT-BAL-RECORD (TCATBALF — input to interest calculation):
+  TRANCAT-ACCT-ID         PIC 9(11)        -- Account ID
+  TRANCAT-TYPE-CD         PIC X(02)        -- Transaction type code
+  TRANCAT-CD              PIC 9(04)        -- Transaction category code
+  TRAN-CAT-BAL            PIC S9(09)V99    -- Category balance (interest basis)
+
+DIS-GROUP-RECORD (DISCGRP — interest rate lookup):
+  DIS-ACCT-GROUP-ID       PIC X(10)        -- Maps from ACCT-GROUP-ID
+  DIS-TRAN-TYPE-CD        PIC X(02)
+  DIS-TRAN-CAT-CD         PIC 9(04)
+  DIS-INT-RATE            PIC S9(09)V99    -- Annual interest rate (%)
 ```
 
+**Processing Flows:**
+- **Account Lookup Chain (CAVW/CAUP):** Card number (COMMAREA) → READ XREFFILE AIX → get ACCT-ID + CUST-ID → READ ACCTFILE → READ CUSTFILE → display
+- **Interest Calculation (CBACT04C):** Sequential read TCATBALF → per record: random READ XREFFILE AIX (by ACCT-ID) + READ ACCTFILE + READ DISCGRP → COMPUTE monthly interest = `(TRAN-CAT-BAL × DIS-INT-RATE) / 1200` → WRITE interest transaction to TRANSACT file
+- **Optimistic Locking (CAUP):** Old field values stored as `ACUP-OLD-*` at view time; on update submit, freshly-read VSAM data is compared against old values; mismatch → reject with "data changed" error; on write: READ UPDATE (CICS lock) → REWRITE ACCTFILE → REWRITE CUSTFILE; if CUSTFILE REWRITE fails → `EXEC CICS SYNCPOINT ROLLBACK`
+
 **Business Rules:**
-- Account can be looked up by Card Number (via XREFFILE AIX) or Account ID
-- Interest calculation (CBACT04C) reads TCATBALF and DISCGRP to compute per-group interest
-- Account status must be 'Y' (Active) for most transactions to proceed
-- Credit limit enforced during transaction add (prevents over-limit)
-- Batch interest job (INTCALC) updates ACCT-CURR-BAL with computed interest
+- Account can be looked up by Card Number (via XREFFILE AIX) or Account ID (direct input on view screen)
+- `ACCT-ACTIVE-STATUS = 'Y'` required for transactions and billing payments to proceed
+- Interest calculation formula: `(TRAN-CAT-BAL × DIS-INT-RATE) / 1200` (annual rate ÷ 12 months)
+- If specific DISCGRP key (group+type+category) not found, CBACT04C falls back to `'DEFAULT   '` group key
+- Credit limit enforced during transaction add by COTRN02C (not within the accounts module itself)
+- Batch jobs (CBACT01C–04C) require CLOSEFIL JCL step before running and OPENFIL after to restore CICS access
+- COACTUPC validates: active status (Y/N), numeric balances/limits, dates (YYYY-MM-DD), US phone (NNN)NNN-NNNN, SSN NNN-NN-NNNN, ZIP, FICO score 0–850
+- Account update atomically updates both ACCTFILE and CUSTFILE; SYNCPOINT ROLLBACK if second write fails
+- `ACCT-EXPIRAION-DATE` field name has a typo (missing 'T') in CVACT01Y.cpy — do not rename without updating all consumers
+
+**Dependencies:**
+- **authentication** — COMMAREA CDEMO-USER-ID and CDEMO-CARD-NUM must be set before account screens
+- **ACCTFILE, XREFFILE, CUSTFILE** — must be VSAM-loaded before online use
+- **TCATBALF, DISCGRP** — required inputs for CBACT04C interest calculation
+- **credit-cards, transactions, billing** — downstream consumers of ACCT-ID from COMMAREA and ACCT-ACTIVE-STATUS
+
+**JCL Job:**
+- `INTCALC` — runs CBACT04C; parameter = date (YYYYMMDD); outputs GDG versioned TRANSACT(+1) file; must be preceded by CLOSEFIL
 
 **User Story Examples:**
 - As a cardholder, I want to view my account balance and credit limit so I know my available credit
 - As a cardholder, I want to update my ZIP code so my billing address is current
+- As a cardholder, I want to see current cycle credits and debits so I can track billing cycle activity
+- As an administrator, I want to change an account's active status so access can be suspended when needed
 - As a system, I want to calculate monthly interest so balances are updated at cycle end
 
 ---
@@ -159,133 +253,259 @@ CARD-XREF-RECORD (XREFFILE, RECLN=50):
 ### 3. Credit Cards
 
 **ID:** `credit-cards`  
-**Purpose:** List, view, and update credit card information linked to an account  
+**Purpose:** List, view, and update credit card information linked to an account. Enables cardholders to browse cards by account, inspect full card details, and modify mutable attributes (embossed name, active status, expiry date) with optimistic concurrency protection.
+
 **Key Components:**
-- `COCRDLIC.cbl` — CICS program; list cards for an account (CCLI / COCRDLI)
-- `COCRDSLC.cbl` — CICS program; view credit card details (CCDL / COCRDSL)
-- `COCRDUPC.cbl` — CICS program; update credit card record (CCUP / COCRDUP)
-- `CVCRD01Y.cpy` — CC-WORK-AREAS (card navigation work area)
-- `CVACT02Y.cpy` — CARD-RECORD data structure
+- `COCRDLIC.cbl` — CICS program (1,459 lines); list cards for an account with pagination (CCLI / COCRDLI)
+- `COCRDSLC.cbl` — CICS program (887 lines); view credit card details, read-only (CCDL / COCRDSL)
+- `COCRDUPC.cbl` — CICS program (1,560 lines); update credit card record with two-phase confirmation and optimistic locking (CCUP / COCRDUP)
+- `CVCRD01Y.cpy` — CC-WORK-AREAS (card navigation work area: AID keys, next program/map pointers, error/return messages, account/card/customer IDs)
+- `CVACT02Y.cpy` — CARD-RECORD data structure (CARDFILE, RECLN=150)
+- `CVACT03Y.cpy` — CARD-XREF-RECORD data structure (XREFFILE — card-account-customer linkage)
+- `COCOM01Y.cpy` — CARDDEMO-COMMAREA shared session communication area
+- `CSSETATY.cpy` — BMS attribute byte constants shared with all online modules
+- `CSLKPCDY.cpy` — Shared lookup code tables used in field validation
+
+**BMS Maps:**
+- `COCRDLI.bms` — Card list screen (7 selectable rows with card number, account, status, expiry)
+- `COCRDSL.bms` — Card detail screen (full read-only card record display)
+- `COCRDUP.bms` — Card update screen (editable: name, status, expiry month/year/day)
 
 **CICS Transactions:**
-- `CCLI` → Credit Card List
-- `CCDL` → Credit Card View/Detail
-- `CCUP` → Credit Card Update
+- `CCLI` → Credit Card List (paginated, PF7/PF8 navigation)
+- `CCDL` → Credit Card View/Detail (read-only)
+- `CCUP` → Credit Card Update (two-phase: validate on ENTER, commit on PF5)
 
 **Data Model:**
 ```
 CARD-RECORD (CARDFILE, RECLN=150):
-  CARD-NUM              PIC X(16)    -- Card number (primary key)
-  CARD-ACCT-ID          PIC 9(11)    -- Linked account ID
-  CARD-CVV-CD           PIC 9(03)    -- CVV security code
-  CARD-EMBOSSED-NAME    PIC X(50)    -- Name on card
-  CARD-EXPIRAION-DATE   PIC X(10)    -- Expiry date YYYY-MM-DD
-  CARD-ACTIVE-STATUS    PIC X(01)    -- 'Y'=Active, 'N'=Inactive
+  CARD-NUM              PIC X(16)    -- Card number / 16-digit PAN (primary key)
+  CARD-ACCT-ID          PIC 9(11)    -- Linked account ID (also AIX key: ACCT-PATH)
+  CARD-CVV-CD           PIC 9(03)    -- CVV security code (plain text, demo only)
+  CARD-EMBOSSED-NAME    PIC X(50)    -- Name printed on card face (editable)
+  CARD-EXPIRAION-DATE   PIC X(10)    -- Expiry date YYYY-MM-DD (editable)
+  CARD-ACTIVE-STATUS    PIC X(01)    -- 'Y'=Active, 'N'=Inactive (editable)
+  FILLER                PIC X(59)    -- Padding to RECLN=150
+
+CC-WORK-AREAS (CVCRD01Y.cpy):
+  CCARD-AID             PIC X(5)     -- AID key (ENTER / PFKxx / CLEAR)
+  CCARD-NEXT-PROG       PIC X(8)     -- Target program for XCTL
+  CCARD-NEXT-MAPSET     PIC X(7)     -- Target BMS mapset
+  CCARD-NEXT-MAP        PIC X(7)     -- Target BMS map
+  CCARD-ERROR-MSG       PIC X(75)    -- Error message for screen display
+  CC-ACCT-ID            PIC X(11)    -- Current account ID
+  CC-CARD-NUM           PIC X(16)    -- Current card number
+  CC-CUST-ID            PIC X(09)    -- Current customer ID
 ```
 
+**Processing Flows:**
+- **Card List:** COCRDLIC reads CARDFILE via CARD-ACCT-ID AIX using VSAM BROWSE (STARTBR/READNEXT/ENDBR). Displays up to 7 cards per page. User selects one row with 'S' (view) or 'U' (update); selected card number is stored in `CDEMO-CARD-NUM` in COMMAREA and program XCTLs to COCRDSLC or COCRDUPC.
+- **Card Detail:** COCRDSLC reads CARDFILE by primary key (card number) or falls back to ACCT-PATH AIX when card number is zero. Read-only display.
+- **Card Update:** COCRDUPC implements a two-phase update: Phase 1 (ENTER) validates all fields and shows confirmation prompt; Phase 2 (PF5) acquires exclusive VSAM READ UPDATE lock, checks for concurrent modification via paragraph 9300-CHECK-CHANGE-IN-REC, then issues EXEC CICS REWRITE if no conflict.
+
 **Business Rules:**
-- Card list filtered by Account ID stored in COMMAREA
-- Card number is 16-digit, must match XREFFILE for valid card-account-customer linkage
-- Card status can be toggled Active/Inactive via update screen
-- Embossed name may differ from customer legal name
-- CVV stored in plain text (design characteristic for demo environment)
+- Card list filtered by `CDEMO-ACCT-ID` in COMMAREA for regular users; admin users (`CDEMO-USER-TYPE='A'`) can browse all cards
+- Card list shows maximum 7 rows per page; PF7=previous page, PF8=next page
+- Only one card selection allowed per page submission; multiple selections produce an error
+- Card number is 16-digit PAN; must be numeric if provided on update screen
+- Card status toggles between 'Y' (Active) and 'N' (Inactive) — only accepted values
+- Embossed name must be non-blank and contain only alphabetic characters and spaces
+- Expiry month must be 1–12; expiry year must be 1950–2099; day is accepted without calendar validation
+- If submitted update values match current DB values, no write is performed ("No change detected")
+- Optimistic locking: concurrent modification is detected by comparing locked record with values shown at fetch time; on conflict, screen is refreshed with latest values
+- CVV is preserved from the locked DB read and not modifiable via the update screen
+- Embossed name may differ from customer legal name on file in CUSTFILE
+
+**Dependencies:**
+- `authentication` — must succeed before any credit-cards transaction; provides `CDEMO-USER-ID` and `CDEMO-USER-TYPE`
+- `accounts` — provides `CDEMO-ACCT-ID` in COMMAREA as the CARDFILE AIX filter key
+- `transactions` (downstream) — reads `CDEMO-CARD-NUM` set by this module to look up transactions
+- CARDFILE VSAM KSDS — must have CARD-ACCT-ID alternate index (ACCT-PATH) defined and active
+- XREFFILE VSAM KSDS — card-account-customer cross-reference used for validation in COCRDSLC/COCRDUPC
+
+**Error Handling:**
+- All VSAM I/O errors produce a structured message: `"File Error: {op} on {file} returned RESP {n},RESP2 {n}"`
+- Validation errors are surfaced simultaneously (all errors shown on one screen re-send)
+- COCRDSLC and COCRDUPC register CICS ABEND handlers that send a plain-text error screen and return cleanly
 
 **User Story Examples:**
 - As a cardholder, I want to see all cards on my account so I know which are active
 - As a cardholder, I want to view my card's expiration date so I can plan for renewal
 - As a cardholder, I want to deactivate a lost card so unauthorized charges are prevented
+- As a cardholder, I want to correct the embossed name on my card so it reflects my legal name
+- As an administrator, I want to list all cards across all accounts so I can audit active and inactive cards
+- As a system, I want concurrent card updates to be safely handled so card data is never corrupted
 
 ---
 
 ### 4. Transactions
 
 **ID:** `transactions`  
-**Purpose:** List, view, add, and batch-process credit card transactions  
+**Purpose:** List, view, add, and batch-process credit card transactions. Provides three CICS online screens (list, view, add) plus three batch programs for validation, posting, and report generation. Transaction data feeds the billing, reports, and interest-calculation pipelines.
+
 **Key Components:**
-- `COTRN00C.cbl` — CICS program; transaction list (CT00 / COTRN00)
-- `COTRN01C.cbl` — CICS program; transaction view/detail (CT01 / COTRN01)
-- `COTRN02C.cbl` — CICS program; add new transaction (CT02 / COTRN02)
-- `CBTRN01C.cbl` — Batch: transaction file processing/validation
-- `CBTRN02C.cbl` — Batch: transaction posting (POSTTRAN job)
-- `CBTRN03C.cbl` — Batch: transaction report generation (TRANREPT job, submitted from CICS)
-- `CVTRA05Y.cpy` — TRAN-RECORD data structure
-- `CVTRA01Y.cpy` — TRAN-CAT-BAL-RECORD structure
-- `CVTRA02Y.cpy` — DIS-GROUP-RECORD structure
+- `COTRN00C.cbl` — CICS program; paginated transaction list (CT00 / COTRN00); 10 rows/page; browses TRANFILE via AIX on TRAN-CARD-NUM using STARTBR/READNEXT/READPREV; PF7/PF8 scroll; 'S' to drill into CT01
+- `COTRN01C.cbl` — CICS program; transaction view/detail (CT01 / COTRN01); reads TRANSACT by TRAN-ID primary key; displays all TRAN-RECORD fields; PF5 returns to list
+- `COTRN02C.cbl` — CICS program; add new transaction (CT02 / COTRN02); validates card/account via CCXREF AIX; generates TRAN-ID via STARTBR HIGH-VALUES + READPREV + increment; PF4 copies last transaction
+- `CBTRN01C.cbl` — Batch: transaction file validation; reads DALYTRAN sequential; validates against CUSTFILE, XREFFILE, CARDFILE, ACCTFILE, TRANFILE
+- `CBTRN02C.cbl` — Batch: transaction posting (POSTTRAN job); reads DALYTRAN; validates via XREFFILE + ACCTFILE; writes to TRANFILE; updates ACCT-CURR-BAL in ACCTFILE and TRAN-CAT-BAL in TCATBALF; rejects to DALYREJS GDG
+- `CBTRN03C.cbl` — Batch: transaction report (TRANREPT job); reads date-filtered, card-sorted TRANFILE; joins TRANTYPE + TRANCATG for descriptions; writes 133-char formatted report lines with page/account/grand totals
+- `CVTRA05Y.cpy` — TRAN-RECORD data structure (350 bytes)
+- `CVTRA01Y.cpy` — TRAN-CAT-BAL-RECORD structure (50 bytes)
+- `CVTRA02Y.cpy` — DIS-GROUP-RECORD structure (50 bytes, used by INTCALC)
+- `CVTRA03Y.cpy` — TRAN-TYPE-RECORD (60 bytes; transaction type reference)
+- `CVTRA04Y.cpy` — TRAN-CAT-RECORD (60 bytes; category reference)
+- `CVTRA06Y.cpy` — DALYTRAN-RECORD (350 bytes; batch sequential input)
+- `CVTRA07Y.cpy` — Report layout structures (TRANSACTION-DETAIL-REPORT, totals)
 
 **CICS Transactions:**
-- `CT00` → Transaction List (paginated)
-- `CT01` → Transaction View (detail)
-- `CT02` → Transaction Add
+- `CT00` → Transaction List (paginated, AIX browse by TRAN-CARD-NUM)
+- `CT01` → Transaction View (direct read by TRAN-ID primary key)
+- `CT02` → Transaction Add (validates card+account, writes to TRANFILE)
+
+**Batch JCL Jobs:**
+| Job        | Program    | Input                  | Key Outputs                          |
+|------------|------------|------------------------|--------------------------------------|
+| `POSTTRAN` | CBTRN02C   | DALYTRAN sequential    | TRANFILE (write), ACCTFILE (rewrite), TCATBALF (rewrite), DALYREJS (rejects) |
+| `TRANREPT` | SORT + CBTRN03C | TRANSACT VSAM + date filter | TRANREPT GDG (133-char report) |
+| `COMBTRAN` | SORT + IDCAMS | TRANSACT.BKUP + SYSTRAN | TRANSACT VSAM (combined reload) |
+
+**VSAM Files:**
+| DD Name    | Dataset                              | Primary Key       | AIX              |
+|------------|--------------------------------------|-------------------|------------------|
+| TRANSACT   | AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS   | TRAN-ID X(16)     | TRAN-CARD-NUM    |
+| TCATBALF   | AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS   | Acct+Type+Cat     | —                |
+| DALYTRAN   | AWS.M2.CARDDEMO.DALYTRAN.PS          | — (sequential)    | —                |
+| DALYREJS   | AWS.M2.CARDDEMO.DALYREJS(+1)         | — (GDG reject)    | —                |
 
 **Data Model:**
 ```
-TRAN-RECORD (TRANFILE, RECLN=350):
-  TRAN-ID               PIC X(16)        -- Transaction ID (primary key)
-  TRAN-TYPE-CD          PIC X(02)        -- Transaction type code
-  TRAN-CAT-CD           PIC 9(04)        -- Transaction category code
-  TRAN-SOURCE           PIC X(10)        -- Source system/channel
-  TRAN-DESC             PIC X(100)       -- Description
-  TRAN-AMT              PIC S9(09)V99    -- Amount (signed)
-  TRAN-MERCHANT-ID      PIC 9(09)        -- Merchant ID
+TRAN-RECORD (TRANFILE, RECLN=350):                    -- CVTRA05Y.cpy
+  TRAN-ID               PIC X(16)        -- Transaction ID (primary key; system-generated sequential)
+  TRAN-TYPE-CD          PIC X(02)        -- Transaction type code (links to TRANTYPE VSAM)
+  TRAN-CAT-CD           PIC 9(04)        -- Transaction category code (links to TRANCATG VSAM)
+  TRAN-SOURCE           PIC X(10)        -- Source system / channel identifier
+  TRAN-DESC             PIC X(100)       -- Free-text description
+  TRAN-AMT              PIC S9(09)V99    -- Amount: negative=debit/charge, positive=credit/payment
+  TRAN-MERCHANT-ID      PIC 9(09)        -- Merchant identifier
   TRAN-MERCHANT-NAME    PIC X(50)        -- Merchant name
   TRAN-MERCHANT-CITY    PIC X(50)        -- Merchant city
-  TRAN-MERCHANT-ZIP     PIC X(10)        -- Merchant ZIP
-  TRAN-CARD-NUM         PIC X(16)        -- Associated card number (AIX key)
-  TRAN-ORIG-TS          PIC X(26)        -- Original timestamp
+  TRAN-MERCHANT-ZIP     PIC X(10)        -- Merchant ZIP code
+  TRAN-CARD-NUM         PIC X(16)        -- Associated card PAN (Alternate Index key)
+  TRAN-ORIG-TS          PIC X(26)        -- Original timestamp (YYYY-MM-DD HH:MM:SS.ssssss)
   TRAN-PROC-TS          PIC X(26)        -- Processing timestamp
 
-TRAN-CAT-BAL-RECORD (TCATBALF, RECLN=50):
-  TRANCAT-ACCT-ID       PIC 9(11)        -- Account ID (part of key)
-  TRANCAT-TYPE-CD       PIC X(02)        -- Type code (part of key)
-  TRANCAT-CD            PIC 9(04)        -- Category code (part of key)
-  TRAN-CAT-BAL          PIC S9(09)V99    -- Category balance
+TRAN-CAT-BAL-RECORD (TCATBALF, RECLN=50):             -- CVTRA01Y.cpy
+  TRAN-CAT-KEY:
+    TRANCAT-ACCT-ID     PIC 9(11)        -- Account ID (composite key part 1)
+    TRANCAT-TYPE-CD     PIC X(02)        -- Type code (composite key part 2)
+    TRANCAT-CD          PIC 9(04)        -- Category code (composite key part 3)
+  TRAN-CAT-BAL          PIC S9(09)V99    -- Running category balance for interest calculation
 ```
 
 **Business Rules:**
-- Transactions listed by Card Number (via TRANFILE AIX on TRAN-CARD-NUM)
-- POSTTRAN batch job (CBTRN02C) posts pending transactions and updates account balances
-- Transaction category balance (TCATBALF) updated during posting for interest calculation
-- Transaction report (TRANREPT) can be submitted from online (CORPT00C) or run as standalone batch
-- Amount sign: negative = debit/charge, positive = credit/payment
-- Transaction ID is system-generated 16-character unique key
-- Transaction type codes and category codes define interest rate group via DISCGRP file
+- Transactions listed by Card Number via TRANFILE AIX on TRAN-CARD-NUM; browse uses STARTBR GTEQ
+- POSTTRAN (CBTRN02C) posts DALYTRAN records: validates via XREFFILE, then updates ACCTFILE balance and TCATBALF category balance, then writes to TRANFILE; rejects written to DALYREJS GDG
+- POSTTRAN returns RC=8 when any rejects exist; DISPLAY outputs reject count to SYSOUT
+- Transaction category balance (TCATBALF) is keyed by Account+TypeCode+CategoryCode; read by INTCALC (CBACT04C) with DISCGRP interest rates to compute monthly interest
+- Amount sign: negative = debit/charge (reduces balance); positive = credit/payment (increases balance)
+- Transaction ID generated in CT02 via STARTBR HIGH-VALUES + READPREV + numeric increment; not concurrency-safe under high volume
+- COTRN02C accepts either Account ID or Card Number; resolves the other via CCXREF VSAM lookup
+- No online credit-limit check in CT02; credit limit validation only occurs in CBTRN02C batch posting
+- TRANREPT job uses SORT INCLUDE to filter by TRAN-PROC-TS date range before running CBTRN03C
+- POSTTRAN/TRANREPT require CLOSEFIL before run and OPENFIL after to coordinate with CICS file ownership
+- COMMAREA extension fields `CDEMO-CT00-INFO` / `CDEMO-CT01-INFO` carry pagination state (first/last TRAN-ID, page number, next-page flag) across CICS pseudo-conversational interactions
+- EIBCALEN=0 guard redirects unauthenticated direct transaction invocations to COSGN00C
+
+**Dependencies:**
+- **authentication** — COMMAREA must contain valid CDEMO-USER-ID and CDEMO-CARD-NUM; CT00/CT01/CT02 redirect to COSGN00C if no COMMAREA
+- **accounts** — ACCTFILE updated by POSTTRAN; ACCT-GROUP-ID links to DISCGRP for interest rates
+- **credit-cards** — XREFFILE / CARDFILE used by CBTRN01C validation and CT02 card-account resolution
+- **billing** (downstream) — COBIL00C writes positive transactions to TRANFILE feeding POSTTRAN
+- **reports** (downstream) — CORPT00C submits TRANREPT via extra-partition TDQ; CBSTM03A reads TRANFILE
+- **transaction-types** (optional) — TRANTYPE / TRANCATG VSAM reference data used in TRANREPT; optionally managed via DB2
 
 **User Story Examples:**
 - As a cardholder, I want to view my recent transactions so I can monitor spending
 - As a cardholder, I want to see transaction details including merchant name so I can verify charges
+- As a cardholder, I want to page through my transaction history so I can find older charges
 - As a cardholder, I want to add a transaction manually so I can record a purchase
 - As a system, I want to post batch transactions so account balances stay current
+- As an auditor, I want a daily transaction report so I can reconcile posted amounts
 
 ---
 
 ### 5. Billing
 
 **ID:** `billing`  
-**Purpose:** Process bill payments for a credit card account  
+**Purpose:** Process full-balance bill payments for a credit card account online via CICS  
 **Key Components:**
-- `COBIL00C.cbl` — CICS program; bill payment processing (CB00 / COBIL00)
-- `COBIL00.bms` — BMS map for bill payment screen
+- `COBIL00C.cbl` — CICS program; bill payment processing (CB00 / COBIL00); single-screen pay-in-full flow
+- `COBIL00.bms` — BMS map for bill payment screen (mapset COBIL00, map COBIL0A; 24×80)
+- `app/cpy-bms/COBIL00.CPY` — BMS-generated copybook; COBIL0AI (input map) and COBIL0AO (output map) structures
 
-**CICS Transaction:** `CB00` → Bill Payment
+**CICS Transaction:** `CB00` → Bill Payment  
+**Screen:** COBIL0A (Bill Payment Screen)
+
+**Dependencies (Internal Modules):**
+- `authentication` — COMMAREA must be populated (EIBCALEN > 0); otherwise XCTLs to COSGN00C
+- `accounts` — reads and rewrites ACCTFILE (ACCT-CURR-BAL, ACCT-ACTIVE-STATUS)
+- `transactions` — writes payment TRAN-RECORD to TRANFILE; visible in CT00 Transaction List
+- `credit-cards` — reads XREFFILE alternate index (CXACAIX) to resolve card number from account ID
+
+**VSAM Files Accessed:**
+
+| CICS Dataset | VSAM File | Access Mode | Purpose |
+|---|---|---|---|
+| `ACCTDAT` | ACCTFILE | READ(UPDATE) + REWRITE | Read balance; update balance to zero |
+| `CXACAIX` | XREFFILE (AIX) | READ | Resolve XREF-CARD-NUM from XREF-ACCT-ID |
+| `TRANSACT` | TRANFILE | STARTBR + READPREV + ENDBR + WRITE | Get max TRAN-ID; write payment record |
 
 **Processing Flow:**
-1. User selects account for payment
-2. Enters payment amount
-3. COBIL00C validates amount and account status
-4. Creates a credit transaction record (TRANFILE)
-5. Updates account current balance (ACCTFILE)
+1. User enters 11-digit Account ID in ACTIDIN field, presses ENTER
+2. COBIL00C reads ACCTFILE (with UPDATE intent) to retrieve ACCT-CURR-BAL
+3. Current balance displayed on screen (CURBAL field); user prompted to confirm (Y/N)
+4. User enters 'Y' in CONFIRM field and presses ENTER
+5. COBIL00C reads CXACAIX (XREFFILE AIX) to get XREF-CARD-NUM for the account
+6. COBIL00C browses TRANFILE backwards from HIGH-VALUES to find highest TRAN-ID; new ID = max + 1
+7. TRAN-RECORD written to TRANFILE (type='02', category=2, amount=full balance, source='POS TERM', desc='BILL PAYMENT - ONLINE')
+8. ACCTFILE REWRITE: ACCT-CURR-BAL = ACCT-CURR-BAL − TRAN-AMT (reduces to zero)
+9. Success message displayed with new TRAN-ID; screen cleared for next use
+
+**Hard-Coded Transaction Constants:**
+```
+TRAN-TYPE-CD      = '02'
+TRAN-CAT-CD       = 2
+TRAN-SOURCE       = 'POS TERM'
+TRAN-DESC         = 'BILL PAYMENT - ONLINE'
+TRAN-MERCHANT-ID  = 999999999  (sentinel value)
+TRAN-MERCHANT-NAME= 'BILL PAYMENT'
+TRAN-MERCHANT-CITY= 'N/A'
+TRAN-MERCHANT-ZIP = 'N/A'
+```
+
+**Navigation Keys:**
+| Key | Action |
+|-----|--------|
+| ENTER | Submit / process (account lookup or payment confirmation) |
+| PF3 | Return to previous program or COMEN01C |
+| PF4 | Clear all input fields |
+| Other | "Invalid key" error message |
 
 **Business Rules:**
-- Payment amount must be positive
-- Payment creates a positive (credit) transaction entry
-- Account must exist and be active to accept payment
-- Current balance reduced by payment amount
-- Payment reflected in current cycle credit balance (ACCT-CURR-CYC-CREDIT)
+- Payment is **full-balance only** — the amount is always `ACCT-CURR-BAL`; no partial payment input exists
+- Account ID must not be blank; account must exist in ACCTFILE
+- Balance must be > 0; zero/negative balance returns "You have nothing to pay..."
+- CONFIRM field must be 'Y' or 'y' to process payment; 'N'/'n' clears screen without payment
+- Transaction ID generated sequentially (browse TRANFILE for max + 1); race condition possible on concurrent payments
+- TRANFILE WRITE occurs before ACCTFILE REWRITE; failure between these steps leaves data inconsistent (no atomic rollback)
+- `ACCT-CURR-CYC-CREDIT` is **not** updated by the current code despite prior documentation stating it is — only `ACCT-CURR-BAL` is modified
 
 **User Story Examples:**
-- As a cardholder, I want to make a bill payment so my outstanding balance is reduced
-- As a cardholder, I want to see my current balance before paying so I know what I owe
-- As a system, I want to record payment transactions so the audit trail is complete
+- As a cardholder, I want to pay my outstanding balance in full so my account is cleared
+- As a cardholder, I want to see my current balance on the payment screen so I know my total amount owed before confirming
+- As a cardholder, I want to receive a transaction ID after payment so I have an audit reference
+- As a system, I want to record payment transactions in TRANFILE so the audit trail is complete and visible in transaction history
 
 ---
 
@@ -294,137 +514,243 @@ TRAN-CAT-BAL-RECORD (TCATBALF, RECLN=50):
 **ID:** `reports`  
 **Purpose:** Generate and display transaction reports and account statements  
 **Key Components:**
-- `CORPT00C.cbl` — CICS program; report request/submit screen (CR00 / CORPT00)
-- `CBSTM03A.CBL` — Batch: statement generation (CREASTMT job)
-- `CBSTM03B.CBL` — Batch: statement detail processing
-- `CBTRN03C.cbl` — Batch: daily transaction report (TRANREPT job)
-- `CVTRA07Y.cpy` — Report data structures (REPORT-NAME-HEADER, TRANSACTION-DETAIL-REPORT)
+- `CORPT00C.cbl` — CICS program; report request/submit screen (CR00 / CORPT00); builds inline JCL and writes to JOBS Extra Partition TDQ to submit TRANREPT batch job
+- `CORPT00.bms` — BMS map (CORPT0A mapset); 3270 screen with report type selection (Monthly/Yearly/Custom), date entry fields, and confirmation prompt
+- `CBSTM03A.CBL` — Batch: statement orchestrator (CREASTMT job); iterates all accounts via XREFFILE, calls CBSTM03B for I/O; produces both plain-text and HTML output
+- `CBSTM03B.CBL` — Batch: file I/O subroutine called by CBSTM03A; handles TRNXFILE, XREFFILE, CUSTFILE, ACCTFILE open/close/read via parameter interface
+- `CBTRN03C.cbl` — Batch: daily transaction detail report (TRANREPT job); reads date-sorted TRANFILE, looks up type/category descriptions, writes 133-char fixed-width report with page/account/grand totals
+- `CVTRA07Y.cpy` — Report data structures (REPORT-NAME-HEADER, TRANSACTION-DETAIL-REPORT, REPORT-PAGE-TOTALS, REPORT-ACCOUNT-TOTALS, REPORT-GRAND-TOTALS)
+- `COSTM01.cpy` — TRNX-RECORD layout (composite key: card-number + tran-id) used by CBSTM03A/B for TRNXFILE access
+- `TRANREPT.jcl` — Standalone TRANREPT job: copies TRANSACT VSAM → GDG(+1), SORT-filters by date range, runs CBTRN03C, writes report to GDG
+- `CREASTMT.JCL` — Statement job: creates TRNXFILE VSAM (card+tran-id key), runs CBSTM03A, produces STATEMNT.PS (text) and STATEMNT.HTML output datasets
 
-**CICS Transaction:** `CR00` → Transaction Reports
+**CICS Transaction:** `CR00` → Transaction Reports (screen CORPT0A)
 
 **Report Types:**
-- **Daily Transaction Report (DALYREPT):** Summarizes transactions by account, type, and category within a date range; includes page totals, account totals, and grand total
-- **Account Statement (CREASTMT):** Full statement with transaction detail and totals per account
+- **Daily Transaction Report (DALYREPT):** Summarizes transactions by card/account, type, and category within a date range; includes page totals (every 20 lines), account totals, and grand total; output to GDG `AWS.M2.CARDDEMO.TRANREPT(+1)`
+- **Account Statement (CREASTMT):** Full statement per account with cardholder name, address, current balance, FICO score, and transaction summary; dual output — plain text (`STATEMNT.PS`) and HTML (`STATEMNT.HTML`)
+
+**Online ↔ Batch Integration (CICS TDQ Pattern):**
+- CORPT00C embeds full TRANREPT JCL in working storage (`JOB-DATA`, up to 1000 × 80-byte records)
+- Date parameters are interpolated into JCL SYMNAMES and DATEPARM DD at runtime
+- Each JCL record written to Extra Partition TDQ `JOBS` via `EXEC CICS WRITEQ TD`
+- z/OS Internal Reader picks up the JOBS TDQ and submits the batch job
+
+**Screen Fields (CORPT0A):**
+- `MONTHLY` / `YEARLY` / `CUSTOM` — report type selection (1-char unprotected fields)
+- `SDTMM`, `SDTDD`, `SDTYYYY` — start date (MM/DD/YYYY, enabled for Custom only)
+- `EDTMM`, `EDTDD`, `EDTYYYY` — end date (MM/DD/YYYY, enabled for Custom only)
+- `CONFIRM` — Y/N confirmation before job submission
+- `ERRMSG` — error/status display (line 23, RED attribute)
 
 **Report Output Structure:**
 ```
-TRANSACTION-DETAIL-REPORT line fields:
-  TRAN-REPORT-TRANS-ID    16 chars   -- Transaction ID
-  TRAN-REPORT-ACCOUNT-ID  11 chars   -- Account ID
-  TRAN-REPORT-TYPE-CD     2 chars    -- Type code
-  TRAN-REPORT-TYPE-DESC   15 chars   -- Type description
-  TRAN-REPORT-CAT-CD      4 digits   -- Category code
-  TRAN-REPORT-CAT-DESC    29 chars   -- Category description
-  TRAN-REPORT-SOURCE      10 chars   -- Source
-  TRAN-REPORT-AMT         formatted  -- Amount with sign
+TRANSACTION-DETAIL-REPORT line (133 chars):
+  TRAN-REPORT-TRANS-ID    PIC X(16)        -- Transaction ID
+  TRAN-REPORT-ACCOUNT-ID  PIC X(11)        -- Account ID (from XREFFILE)
+  TRAN-REPORT-TYPE-CD     PIC X(02)        -- Type code
+  TRAN-REPORT-TYPE-DESC   PIC X(15)        -- Type description (from TRANTYPE VSAM)
+  TRAN-REPORT-CAT-CD      PIC 9(04)        -- Category code
+  TRAN-REPORT-CAT-DESC    PIC X(29)        -- Category description (from TRANCATG VSAM)
+  TRAN-REPORT-SOURCE      PIC X(10)        -- Source system/channel
+  TRAN-REPORT-AMT         PIC -ZZZ,ZZZ,ZZZ.ZZ -- Amount with sign
+
+Totals lines:
+  REPORT-PAGE-TOTALS    → "Page Total"    + dots(86) + PIC +ZZZ,ZZZ,ZZZ.ZZ
+  REPORT-ACCOUNT-TOTALS → "Account Total" + dots(84) + PIC +ZZZ,ZZZ,ZZZ.ZZ
+  REPORT-GRAND-TOTALS   → "Grand Total"   + dots(86) + PIC +ZZZ,ZZZ,ZZZ.ZZ
 ```
 
+**VSAM File Dependencies:**
+
+| VSAM File | Used By | Purpose |
+|-----------|---------|---------|
+| TRANSACT.VSAM.KSDS | CBTRN03C (via GDG) | Transaction records (date-filtered, card-sorted) |
+| CARDXREF.VSAM.KSDS | CBTRN03C, CBSTM03B | Card → Account → Customer cross-reference |
+| TRANTYPE.VSAM.KSDS | CBTRN03C | Transaction type descriptions |
+| TRANCATG.VSAM.KSDS | CBTRN03C | Category descriptions (key: type-cd + cat-cd) |
+| ACCTDATA.VSAM.KSDS | CBSTM03B | Account balance, credit limit for statements |
+| CUSTDATA.VSAM.KSDS | CBSTM03B | Customer name and address for statement header |
+| TRXFL.VSAM.KSDS | CBSTM03B | Pre-built TRNXFILE (card+tran-id key) for statements |
+
 **Business Rules:**
-- Reports require start and end date input (YYYY-MM-DD format)
-- TRANREPT can be submitted from CICS (CORPT00C) or run as standalone JCL batch
-- Statement job (CREASTMT) processes all accounts sequentially
-- Report output written to SYSOUT (print) or GDG dataset
+- Reports require start and end date (YYYY-MM-DD); Monthly/Yearly dates auto-computed; Custom validated via CSUTLDTC subroutine
+- Confirmation (Y/N) required before TRANREPT job is submitted from CICS
+- CBTRN03C filters on `TRAN-PROC-TS(1:10)` (processing date, not transaction/purchase date)
+- Page size in CBTRN03C is fixed at 20 lines per page (WS-PAGE-SIZE = 20)
+- TRANREPT uses GDG versioning — each run creates `TRANREPT(+1)`; prior generations preserved for audit
+- CREASTMT overwrites STATEMNT.PS and STATEMNT.HTML on each run (no GDG versioning for statements)
+- CREASTMT processes all accounts/transactions without date range filtering
+- CORPT00C redirects to COSGN00C if EIBCALEN = 0 (unauthenticated access)
+- CBSTM03A intentionally uses ALTER/GO TO patterns as a modernization exercise target
 
 **User Story Examples:**
-- As a cardholder, I want to generate a transaction report for a date range so I can review spending
-- As an administrator, I want to run monthly statements so all customers receive billing summaries
-- As an auditor, I want daily transaction reports so I can reconcile posted amounts
+- As a cardholder, I want to generate a monthly transaction report from the CICS screen so I can review my current-month spending
+- As a cardholder, I want to enter a custom date range for my report so I can investigate charges in a specific period
+- As a system operator, I want to run the TRANREPT batch job for a date range so I can reconcile posted transaction totals
+- As an administrator, I want to run monthly statements so all customers receive billing summaries in text and HTML format
+- As an auditor, I want daily transaction reports stored in GDG so I can compare month-over-month posted amounts
 
 ---
 
 ### 7. User Management
 
 **ID:** `user-management`  
-**Purpose:** Administrative management of system users (list, add, update, delete)  
+**Purpose:** Administrative management of system users (list, add, update, delete) via CICS 3270 screens; exclusively available to Admin-type users  
 **Key Components:**
-- `COADM01C.cbl` — CICS program; Admin Menu (CA00 / COADM01)
-- `COUSR00C.cbl` — CICS program; list users (CU00 / COUSR00)
-- `COUSR01C.cbl` — CICS program; add user (CU01 / COUSR01)
-- `COUSR02C.cbl` — CICS program; update user (CU02 / COUSR02)
-- `COUSR03C.cbl` — CICS program; delete user (CU03 / COUSR03)
-- `CSUSR01Y.cpy` — SEC-USER-DATA structure
-- `CSMEN01.bms` — Main menu BMS map
+- `COADM01C.cbl` — CICS program; Admin Menu (CA00 / COADM01); routes to user management and optional DB2 transaction-type programs via a 6-option table defined in `COADM02Y.cpy`
+- `COUSR00C.cbl` — CICS program; list users (CU00 / COUSR00); paginated VSAM sequential browse, 10 users per page, with row selection for update (`U`) or delete (`D`)
+- `COUSR01C.cbl` — CICS program; add user (CU01 / COUSR01); validates all five required fields, writes new USRSEC record, handles duplicate-key error
+- `COUSR02C.cbl` — CICS program; update user (CU02 / COUSR02); reads USRSEC with exclusive UPDATE lock, allows field edits, rewrites updated record
+- `COUSR03C.cbl` — CICS program; delete user (CU03 / COUSR03); two-step confirmation before hard-deleting USRSEC record
+- `CSUSR01Y.cpy` — `SEC-USER-DATA` record layout (80 bytes including 23-byte filler)
+- `COADM02Y.cpy` — `CARDDEMO-ADMIN-MENU-OPTIONS` table with 6 admin menu entries (program names and display text)
 - `COADM01.bms` — Admin menu BMS map
+- `COUSR00.bms` — `COUSR01.bms` — `COUSR02.bms` — `COUSR03.bms` — BMS maps for each user management screen
+- `DUSRSECJ.jcl` — JCL job; creates and populates USRSEC VSAM KSDS via IEBGENER + IDCAMS REPRO (5 admin + 5 regular seed users)
 
 **CICS Transactions:**
 - `CA00` → Admin Menu
-- `CU00` → List Users
+- `CU00` → List Users (paginated, PF7/PF8 navigation)
 - `CU01` → Add User
 - `CU02` → Update User
 - `CU03` → Delete User
 
+**Public Interfaces:**
+- All interactions via CICS 3270 terminal (BMS maps); no REST or HTTP API
+- Inter-program communication via `CARDDEMO-COMMAREA` (COCOM01Y.cpy); selected User ID passed in `CDEMO-CU00-USR-SELECTED`; action flag (`U`/`D`) in `CDEMO-CU00-USR-SEL-FLG`
+
+**Dependencies:**
+- `authentication` module (prerequisite): `COSGN00C` must establish `CDEMO-USER-TYPE='A'` before any user-management screen is accessible; both modules share the USRSEC VSAM file
+- `transaction-types` module (optional): Admin Menu options 5–6 route to DB2-based programs; requires IBM DB2; guarded by PGMIDERR HANDLE CONDITION in COADM01C
+
 **Data Model:**
-```
-SEC-USER-DATA (USRSEC VSAM file, RECLN=80):
-  SEC-USR-ID      PIC X(08)   -- User ID (primary key, 8 chars)
+```cobol
+SEC-USER-DATA (USRSEC VSAM KSDS, RECLN=80, KEY=8 at offset 0):
+  SEC-USR-ID      PIC X(08)   -- User ID (primary key, 8 chars, left-justified)
   SEC-USR-FNAME   PIC X(20)   -- First name
   SEC-USR-LNAME   PIC X(20)   -- Last name
-  SEC-USR-PWD     PIC X(08)   -- Password (8 chars, plain text)
+  SEC-USR-PWD     PIC X(08)   -- Password (plain text, demo design)
   SEC-USR-TYPE    PIC X(01)   -- 'A'=Admin, 'U'=Regular User
+  SEC-USR-FILLER  PIC X(23)   -- Unused filler
 ```
 
+**VSAM File:** `AWS.M2.CARDDEMO.USRSEC.VSAM.KSDS` — KEYS(8,0), RECORDSIZE(80,80), CISZ(8192)
+
 **Business Rules:**
-- Only Admin users can access user management (CDEMO-USRTYP-ADMIN check in COMMAREA)
-- User ID must be unique in USRSEC file
-- User type determines available menu options (Admin Menu vs Main Menu)
-- Delete requires confirmation step
-- Password stored as plain text in USRSEC (characteristic of mainframe demo design)
-- Initial user security file loaded via DUSRSECJ batch job (IEBGENER)
+- Only Admin users can access user management (`CDEMO-USER-TYPE = 'A'` in COMMAREA); any program with `EIBCALEN = 0` redirects to signon
+- User ID uniqueness enforced by VSAM KSDS primary key; COUSR01C handles `DFHRESP(DUPKEY/DUPREC)` with a user-facing error message
+- User type value (`'A'` or `'U'`) controls menu routing for the entire session after signon
+- All five fields (First Name, Last Name, User ID, Password, User Type) are required on add; sequential validation with targeted cursor placement on the first blank field
+- Delete is a hard delete from USRSEC (no soft-delete or deactivation flag); requires two-step confirmation (view then ENTER)
+- Update and delete use `CICS READ ... UPDATE` for exclusive record locking before modification
+- Password stored as plain text in USRSEC (demo design; must be hashed in any production modernization)
+- List screen displays 10 users per page; page state preserved in COMMAREA (`CDEMO-CU00-USRID-FIRST/LAST`, `CDEMO-CU00-PAGE-NUM`)
+- `CDEMO-ADMIN-OPT-COUNT` in COADM02Y controls how many menu options are shown (set to 4 to hide optional DB2 options 5–6)
+- Initial USRSEC populated via DUSRSECJ JCL (IEBGENER in-stream → IDCAMS REPRO into VSAM); re-running resets all users to seed data
 
 **User Story Examples:**
 - As an administrator, I want to view all system users so I can audit access
 - As an administrator, I want to add a new user so they can access the system
+- As an administrator, I want to update a user's password so they can regain access
 - As an administrator, I want to update a user's type so their permissions are correct
 - As an administrator, I want to delete an inactive user so unauthorized access is prevented
+- As a system operator, I want to initialize the user security file so the application has default users
 
 ---
 
 ### 8. Batch Processing
 
 **ID:** `batch-processing`  
-**Purpose:** Backend batch jobs for account maintenance, transaction posting, interest calculation, and data management  
+**Purpose:** Backend batch jobs for account maintenance, transaction posting, interest calculation, statement generation, data import/export, and VSAM file lifecycle management in the CardDemo mainframe credit card application  
+**Location:** `app/cbl/CB*.cbl`, `app/cbl/COBSWAIT.cbl`, `app/cbl/CSUTLDTC.cbl`, `app/jcl/`
+
 **Key Components:**
-- `CBACT01C.cbl` — Account data processing batch
-- `CBACT02C.cbl` — Account copy/extract batch
-- `CBACT03C.cbl` — Account extract processing
-- `CBACT04C.cbl` — Interest calculation (INTCALC job)
-- `CBCUS01C.cbl` — Customer file processing batch
-- `CBTRN01C.cbl` — Transaction validation batch
-- `CBTRN02C.cbl` — Transaction posting (POSTTRAN)
-- `CBTRN03C.cbl` — Transaction report (TRANREPT)
-- `CBSTM03A.CBL` / `CBSTM03B.CBL` — Statement generation (CREASTMT)
-- `CBIMPORT.cbl` / `CBEXPORT.cbl` — Import/export utilities
-- `COBSWAIT.cbl` — Assembler-based wait utility (WAITSTEP job)
-- `CSUTLDTC.cbl` — Date utility subroutine
+
+*Transaction Processing:*
+- `CBTRN01C.cbl` — Transaction validation batch: verifies card, account, and customer records for each daily transaction; writes rejects to DALYREJS
+- `CBTRN02C.cbl` — Transaction posting (POSTTRAN job): reads DALYTRAN.PS, posts to TRANFILE VSAM, updates ACCTFILE balance and TCATBALF category balances; rejected records to GDG
+- `CBTRN03C.cbl` — Transaction detail report (TRANREPT job): reads filtered/sorted transaction file; looks up type and category descriptions; produces LRECL=133 report GDG
+
+*Interest and Account Processing:*
+- `CBACT04C.cbl` — Interest calculator (INTCALC job): reads TCATBALF sequentially; looks up interest rate from DISCGRP by account group/type/category composite key; writes system-generated interest transactions to SYSTRAN GDG; updates ACCTFILE balances. Accepts PARM=YYYYMMDD (billing cycle date).
+- `CBACT01C.cbl` — Account data extract: reads ACCTFILE sequentially; writes to OUTFILE, ARRYFILE, VBRCFILE for downstream processing
+- `CBACT02C.cbl` — Card data print/copy: reads CARDFILE sequentially using CVACT02Y copybook
+- `CBACT03C.cbl` — XREF data print/copy: reads XREFFILE sequentially using CVACT03Y copybook
+
+*Statement Generation:*
+- `CBSTM03A.CBL` — Statement driver (CREASTMT job): reads TRNXFILE sequentially; calls CBSTM03B subroutine; produces plain-text (STMTFILE, LRECL=80) and HTML (HTMLFILE, LRECL=100) outputs; uses ALTER/GO TO, COMP/COMP-3 variables, 2-dimensional arrays
+- `CBSTM03B.CBL` — Statement detail processor: subroutine called by CBSTM03A; formats individual records; exercises mainframe control block addressing
+
+*Customer and Data Management:*
+- `CBCUS01C.cbl` — Customer file processing: reads CUSTFILE sequentially using CVCUS01Y copybook
+- `CBIMPORT.cbl` — Branch migration import: reads multi-record indexed export file; splits into normalized CUSTOUT/ACCTOUT/XREFOUT/TRNXOUT files; validates checksums; generates statistics and error reports
+- `CBEXPORT.cbl` — Branch migration export: reads CUSTFILE, ACCTFILE, XREFFILE, TRANSACT, CARDFILE; creates typed multi-record export file with processing statistics
+
+*Utilities:*
+- `COBSWAIT.cbl` — Assembler-based wait utility (WAITSTEP job): reads centisecond delay value from SYSIN (e.g. 00003600 = 36 seconds)
+- `CSUTLDTC.cbl` — Date conversion subroutine: called by batch and online programs; uses CSUTLDPY/CSUTLDWY copybooks
 
 **Key JCL Jobs:**
-| Job       | Program   | Function                              |
-|-----------|-----------|---------------------------------------|
-| POSTTRAN  | CBTRN02C  | Post transactions, update balances    |
-| INTCALC   | CBACT04C  | Calculate and apply interest          |
-| CREASTMT  | CBSTM03A  | Generate account statements           |
-| TRANREPT  | CBTRN03C  | Generate daily transaction report     |
-| COMBTRAN  | SORT      | Combine transaction files             |
+| Job       | Program(s)          | Function                                                    |
+|-----------|---------------------|-------------------------------------------------------------|
+| POSTTRAN  | CBTRN02C            | Post daily transactions; update ACCTFILE + TCATBALF         |
+| INTCALC   | CBACT04C            | Compute monthly interest; write SYSTRAN GDG; update balances |
+| CREASTMT  | CBSTM03A/B          | Generate plain-text + HTML account statements               |
+| TRANREPT  | SORT + CBTRN03C     | Filter/sort transactions by date; produce formatted report  |
+| COMBTRAN  | SORT + IDCAMS       | Merge SYSTRAN(0) + TRANSACT.BKUP(0); reload TRANSACT VSAM   |
+| CLOSEFIL  | SDSF                | CEMT SET FILE CLOSE for CICS VSAM files before batch        |
+| OPENFIL   | SDSF                | CEMT SET FILE OPEN to restore CICS access after batch       |
+| WAITSTEP  | COBSWAIT            | Configurable centisecond delay between batch steps          |
+| CBIMPORT  | CBIMPORT            | Import branch migration data into CardDemo VSAM files       |
+| CBEXPORT  | CBEXPORT            | Export CardDemo data for branch migration                   |
 
 **VSAM File Refresh Jobs:**
-- ACCTFILE, CARDFILE, CUSTFILE, TRANFILE — refresh from source data
-- TCATBALF — refresh transaction category balances
-- DISCGRP — load interest rate disclosure groups
-- XREFFILE — define account-card-customer cross reference
+- `ACCTFILE`, `CARDFILE`, `CUSTFILE`, `TRANFILE` — IDCAMS REPRO from source sequential datasets
+- `XREFFILE` — IDCAMS REPRO + AIX path rebuild for alternate index access
+- `TCATBALF` — Reload transaction category balance file
+- `DISCGRP` — Load interest rate disclosure group definitions
+- `DEFGDGB` / `DEFGDGD` — Define GDG bases for versioned output datasets
+
+**Dependencies:**
+- **Internal:** accounts (ACCTFILE read/update), transactions (TRANFILE/TCATBALF update), reports (TRANREPT output consumed by CR00 CICS screen), credit-cards (CARDFILE/XREFFILE read)
+- **Platform:** z/OS JES2, VSAM KSDS, GDG, DFSORT/SYNCSORT, IDCAMS, SDSF, CICS region CICSAWSA
+- **Load Library:** `AWS.M2.CARDDEMO.LOADLIB` (STEPLIB for all batch steps)
+- **Proc Library:** `AWS.M2.CARDDEMO.PROC` (REPROC proc used in TRANREPT)
+
+**Key Copybooks:**
+| Copybook      | Used By              | Provides                              |
+|---------------|----------------------|---------------------------------------|
+| CVTRA01Y.cpy  | CBACT04C, CBTRN02C   | TRAN-CAT-BAL-RECORD (TCATBALF)        |
+| CVTRA02Y.cpy  | CBACT04C             | DIS-GROUP-RECORD (DISCGRP rates)      |
+| CVACT01Y.cpy  | CBSTM03A, CBACT04C   | ACCOUNT-RECORD layout                 |
+| CVACT02Y.cpy  | CBACT02C             | CARD-RECORD layout                    |
+| CVACT03Y.cpy  | CBACT03C, CBSTM03A   | CARD-XREF-RECORD layout               |
+| CVCUS01Y.cpy  | CBCUS01C             | CUSTOMER-RECORD layout                |
+| CVTRA07Y.cpy  | CBTRN03C             | TRANSACTION-DETAIL-REPORT line layout |
 
 **Business Rules:**
-- CICS files must be closed (CLOSEFIL job) before running most batch jobs that update them
-- OPENFIL job reopens CICS files after batch completion
-- Interest calculation reads TCATBALF (category balances) and DISCGRP (interest rates) to compute per-account interest
-- Transaction posting (POSTTRAN) updates ACCT-CURR-BAL and TRAN-CAT-BAL-RECORD
-- GDG (Generation Data Groups) used for versioned report output
-- COBSWAIT (WAITSTEP) provides configurable delay between batch steps
+- CLOSEFIL **must** precede any batch job updating VSAM files shared with CICS (TRANSACT, ACCTDAT, CCXREF, CXACAIX, USRSEC); OPENFIL must follow
+- Interest calculation (INTCALC): DISCGRP composite key = `ACCT-GROUP-ID || TRAN-TYPE-CD || TRAN-CAT-CD`; missing key → error in SYSOUT, record skipped
+- Transaction posting (POSTTRAN): updates `ACCT-CURR-BAL`, `ACCT-CURR-CYC-CREDIT/DEBIT`, and TCATBALF; failed lookups go to DALYREJS GDG(+1)
+- GDG datasets used for: DALYREJS, TRANSACT.BKUP, SYSTRAN, TRANSACT.DALY, TRANSACT.COMBINED, TRANREPT — prior generations retained for audit trail
+- COMBTRAN merges SYSTRAN GDG(0) + TRANSACT.BKUP GDG(0) after INTCALC before CREASTMT can run
+- CBIMPORT validates checksums per imported record group; CBEXPORT reads all five normalized files to produce typed export
+- COBSWAIT (WAITSTEP) centisecond delay specified via SYSIN DD (e.g. `00003600` = 36 seconds)
+
+**Processing Flows:**
+
+*Nightly:* CLOSEFIL → POSTTRAN → OPENFIL  
+*Monthly:* CLOSEFIL → TRANBKP → INTCALC → COMBTRAN → OPENFIL → CREASTMT → TRANREPT  
+*Report only:* TRANREPT (update date range in JCL SYMNAMES first)
 
 **User Story Examples:**
-- As a system operator, I want to run nightly transaction posting so balances are updated each day
-- As a system operator, I want to run monthly interest calculation so statements reflect accrued interest
-- As a system operator, I want to refresh master files so test data is reset to a known state
-- As a system, I want to close CICS files before batch runs so data integrity is maintained
+- As a system operator, I want to run nightly transaction posting so account balances are updated each business day
+- As a system operator, I want to run monthly interest calculation so statements reflect accrued interest charges
+- As a system operator, I want to generate account statements so customers receive accurate billing summaries
+- As a system operator, I want to refresh master files so the test environment is reset to a known state
+- As a system, I want CICS files closed before batch updates so data integrity is maintained between online and batch processing
+- As a system operator, I want to import branch migration data so new customers and accounts are loaded into CardDemo
 
 ---
 
@@ -554,32 +880,87 @@ CREATE TABLE CARDDEMO.AUTHFRDS (
 ### 10. Transaction Types (Optional — DB2)
 
 **ID:** `transaction-types`  
-**Purpose:** Maintain and manage transaction type reference data using DB2  
+**Purpose:** Maintain and manage transaction type reference data using DB2 relational tables; provides admin CICS screens for add/edit/delete/browse, a batch bulk-maintenance program, and daily extract jobs that bridge DB2 data to VSAM-based batch reporting  
 **Location:** `app/app-transaction-type-db2/`  
 **Key Components:**
-- `COTRTUPC.cbl` — CICS; Transaction Type add/edit (CTTU / COTRTUP)
-- `COTRTLIC.cbl` — CICS; Transaction Type list/update/delete (CTLI / COTRTLI)
-- `COBTUPDT.cbl` — Batch; Maintain transaction type table (MNTTRDB2)
+- `COTRTUPC.cbl` — CICS; Transaction Type add/edit/delete single record (CTTU / COTRTUP mapset)
+- `COTRTLIC.cbl` — CICS; Transaction Type list/browse/filter with per-row delete/update (CTLI / COTRTLI mapset)
+- `COBTUPDT.cbl` — Batch; Bulk insert/update/delete from sequential flat-file INPFILE (MNTTRDB2 job)
+- `COTRTUP.bms` / `COTRTLI.bms` — BMS map definitions for both CICS screens
+- `DCLTRTYP.dcl` — DCLGEN host-variable declaration for CARDDEMO.TRANSACTION_TYPE
+- `DCLTRCAT.dcl` — DCLGEN host-variable declaration for CARDDEMO.TRANSACTION_TYPE_CATEGORY
+- `CSDB2RWY.cpy` — Common DB2 working-storage (SQLCA, DSNTIAC variables)
+- `CSDB2RPY.cpy` — Common DB2 procedures (priming query, error formatter)
+- `ddl/TRNTYPE.ddl` / `ddl/TRNTYCAT.ddl` — DB2 CREATE TABLE DDL
+- `ctl/DB2CREAT.ctl` — Full DB2 setup DDL (database, tablespaces, tables, indexes, grants)
+- `ctl/DB2LTTYP.ctl` — Seed INSERT statements for TRANSACTION_TYPE (7 types)
+- `ctl/DB2LTCAT.ctl` — Seed INSERT statements for TRANSACTION_TYPE_CATEGORY
 
 **CICS Transactions:**
-- `CTTU` → Transaction Type add/edit (DB2 UPDATE and INSERT)
-- `CTLI` → Transaction Type list/update/delete (DB2 cursor and DELETE)
+- `CTTU` → Transaction Type add/edit/delete (DB2 SELECT, UPDATE, INSERT, DELETE + EXEC CICS SYNCPOINT)
+- `CTLI` → Transaction Type list/browse with filter (DB2 bidirectional cursors C-TR-TYPE-FORWARD / C-TR-TYPE-BACKWARD + DELETE)
 
 **Integration Points:**
-- **DB2:** All transaction type data stored in DB2 tables (not VSAM)
-- **JCL:** CREADB21 creates DB2 database and loads tables; TRANEXTR extracts latest DB2 data
+- **DB2 (SSID: DAZ1):** All transaction type data stored in CARDDEMO DB2 database (not VSAM)
+  - `CARDDEMO.TRANSACTION_TYPE` — type code (CHAR 2) + description (VARCHAR 50)
+  - `CARDDEMO.TRANSACTION_TYPE_CATEGORY` — type+category composite PK with FK to TRANSACTION_TYPE (ON DELETE RESTRICT)
+- **JCL:** CREADB21 creates DB2 database, tablespaces, tables, indexes and loads seed data; TRANEXTR uses DSNTIAUL to extract current DB2 data to flat files (TRANTYPE.PS, TRANCATG.PS) for TRANREPT batch report; MNTTRDB2 runs COBTUPDT for bulk maintenance
+
+**DB2 Schema:**
+```sql
+-- Primary table
+CREATE TABLE CARDDEMO.TRANSACTION_TYPE (
+    TR_TYPE        CHAR(2)      NOT NULL,   -- e.g. '01'=PURCHASE, '02'=PAYMENT
+    TR_DESCRIPTION VARCHAR(50)  NOT NULL,
+    PRIMARY KEY (TR_TYPE)
+);
+
+-- Category table with FK constraint
+CREATE TABLE CARDDEMO.TRANSACTION_TYPE_CATEGORY (
+    TRC_TYPE_CODE      CHAR(2)     NOT NULL,  -- FK -> TRANSACTION_TYPE
+    TRC_TYPE_CATEGORY  CHAR(4)     NOT NULL,  -- e.g. '0001'
+    TRC_CAT_DATA       VARCHAR(50) NOT NULL,
+    PRIMARY KEY (TRC_TYPE_CODE, TRC_TYPE_CATEGORY),
+    FOREIGN KEY TRC_TYPE_CODE (TRC_TYPE_CODE)
+        REFERENCES CARDDEMO.TRANSACTION_TYPE (TR_TYPE) ON DELETE RESTRICT
+);
+```
+
+**Seed Transaction Types:** 01=PURCHASE, 02=PAYMENT, 03=CREDIT, 04=AUTHORIZATION, 05=REFUND, 06=REVERAL, 07=ADJUSTMENT
+
+**Batch Input Format (MNTTRDB2 / INPFILE):**
+```
+Col 1:    A=Add  U=Update  D=Delete  *=Comment
+Cols 2-3: TR_TYPE (2-char)
+Cols 4-53: TR_DESCRIPTION (50-char)
+```
 
 **Business Rules:**
-- Only accessible from Admin Menu (CA00) — Admin users only
-- DB2 cursor used for list/paginated browse of transaction types
-- Transaction types used in TRANFILE records (TRAN-TYPE-CD field)
-- MNTTRDB2 batch job synchronizes DB2 data
-- TRANEXTR extracts transaction type data for reporting
+- Only accessible from Admin Menu (CA00) — `CDEMO-USER-TYPE = 'A'` required in COMMAREA
+- DB2 bidirectional cursors used for paginated list (7 rows/page); PF7=back, PF8=forward
+- Transaction types used in TRANFILE records (`TRAN-TYPE-CD PIC X(02)`); type + category determines interest rate group via DISCGRP VSAM
+- COTRTUPC uses optimistic change detection — compares old vs new values before issuing UPDATE; skips if unchanged
+- All DML followed by `EXEC CICS SYNCPOINT` to commit DB2 unit of work
+- DB2 FK ON DELETE RESTRICT prevents deleting a type that has associated category rows
+- MNTTRDB2 ABENDs on unexpected SQL errors; no partial-batch rollback
+- TRANEXTR must run before TRANREPT so report contains current type descriptions (GDG backups retained for audit)
+- DB2 connectivity verified at COTRTLIC startup via priming query (`SELECT 1 FROM SYSIBM.SYSDUMMY1`)
+- DSNTIAC utility formats SQLCA diagnostics for user-visible error messages
+
+**JCL Jobs:**
+| Job       | Program   | Function                                              | Frequency  |
+|-----------|-----------|-------------------------------------------------------|------------|
+| CREADB21  | DSNTIAD / DSNTEP4 | One-time: create CARDDEMO DB2 database + load seed data | Once (setup) |
+| MNTTRDB2  | COBTUPDT  | Bulk INSERT/UPDATE/DELETE from flat INPFILE           | On demand  |
+| TRANEXTR  | DSNTIAUL  | Extract type/category data to flat files for TRANREPT | Daily      |
 
 **User Story Examples:**
 - As an administrator, I want to view all transaction type codes so I can understand the classification scheme
 - As an administrator, I want to add a new transaction type so new purchase categories can be tracked
+- As an administrator, I want to correct a type description so reports display accurate labels
 - As an administrator, I want to delete an obsolete transaction type so the reference data stays current
+- As a system operator, I want to bulk-load type updates from a flat file so I can provision environments without online screen entry
+- As a system, I want to extract transaction type data daily so TRANREPT contains current type descriptions
 
 ---
 
