@@ -83,6 +83,13 @@ app/bms/COUSR00.bms = user-management
 app/bms/COUSR01.bms = user-management
 app/bms/COUSR02.bms = user-management
 app/bms/COUSR03.bms = user-management
+app/cpy-bms/COADM01.CPY = user-management
+app/cpy-bms/COUSR00.CPY = user-management
+app/cpy-bms/COUSR01.CPY = user-management
+app/cpy-bms/COUSR02.CPY = user-management
+app/cpy-bms/COUSR03.CPY = user-management
+app/jcl/DUSRSECJ.jcl = user-management
+app/data/EBCDIC/AWS.M2.CARDDEMO.USRSEC.PS = user-management
 
 app/cbl/CBCUS01C.cbl = batch-processing
 app/cbl/CBIMPORT.cbl = batch-processing
