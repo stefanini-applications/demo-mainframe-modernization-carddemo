@@ -382,49 +382,95 @@ SEC-USER-DATA (USRSEC VSAM file, RECLN=80):
 ### 8. Batch Processing
 
 **ID:** `batch-processing`  
-**Purpose:** Backend batch jobs for account maintenance, transaction posting, interest calculation, and data management  
+**Purpose:** Backend batch jobs for account maintenance, transaction posting, interest calculation, statement generation, data import/export, and VSAM file lifecycle management in the CardDemo mainframe credit card application  
+**Location:** `app/cbl/CB*.cbl`, `app/cbl/COBSWAIT.cbl`, `app/cbl/CSUTLDTC.cbl`, `app/jcl/`
+
 **Key Components:**
-- `CBACT01C.cbl` — Account data processing batch
-- `CBACT02C.cbl` — Account copy/extract batch
-- `CBACT03C.cbl` — Account extract processing
-- `CBACT04C.cbl` — Interest calculation (INTCALC job)
-- `CBCUS01C.cbl` — Customer file processing batch
-- `CBTRN01C.cbl` — Transaction validation batch
-- `CBTRN02C.cbl` — Transaction posting (POSTTRAN)
-- `CBTRN03C.cbl` — Transaction report (TRANREPT)
-- `CBSTM03A.CBL` / `CBSTM03B.CBL` — Statement generation (CREASTMT)
-- `CBIMPORT.cbl` / `CBEXPORT.cbl` — Import/export utilities
-- `COBSWAIT.cbl` — Assembler-based wait utility (WAITSTEP job)
-- `CSUTLDTC.cbl` — Date utility subroutine
+
+*Transaction Processing:*
+- `CBTRN01C.cbl` — Transaction validation batch: verifies card, account, and customer records for each daily transaction; writes rejects to DALYREJS
+- `CBTRN02C.cbl` — Transaction posting (POSTTRAN job): reads DALYTRAN.PS, posts to TRANFILE VSAM, updates ACCTFILE balance and TCATBALF category balances; rejected records to GDG
+- `CBTRN03C.cbl` — Transaction detail report (TRANREPT job): reads filtered/sorted transaction file; looks up type and category descriptions; produces LRECL=133 report GDG
+
+*Interest and Account Processing:*
+- `CBACT04C.cbl` — Interest calculator (INTCALC job): reads TCATBALF sequentially; looks up interest rate from DISCGRP by account group/type/category composite key; writes system-generated interest transactions to SYSTRAN GDG; updates ACCTFILE balances. Accepts PARM=YYYYMMDD (billing cycle date).
+- `CBACT01C.cbl` — Account data extract: reads ACCTFILE sequentially; writes to OUTFILE, ARRYFILE, VBRCFILE for downstream processing
+- `CBACT02C.cbl` — Card data print/copy: reads CARDFILE sequentially using CVACT02Y copybook
+- `CBACT03C.cbl` — XREF data print/copy: reads XREFFILE sequentially using CVACT03Y copybook
+
+*Statement Generation:*
+- `CBSTM03A.CBL` — Statement driver (CREASTMT job): reads TRNXFILE sequentially; calls CBSTM03B subroutine; produces plain-text (STMTFILE, LRECL=80) and HTML (HTMLFILE, LRECL=100) outputs; uses ALTER/GO TO, COMP/COMP-3 variables, 2-dimensional arrays
+- `CBSTM03B.CBL` — Statement detail processor: subroutine called by CBSTM03A; formats individual records; exercises mainframe control block addressing
+
+*Customer and Data Management:*
+- `CBCUS01C.cbl` — Customer file processing: reads CUSTFILE sequentially using CVCUS01Y copybook
+- `CBIMPORT.cbl` — Branch migration import: reads multi-record indexed export file; splits into normalized CUSTOUT/ACCTOUT/XREFOUT/TRNXOUT files; validates checksums; generates statistics and error reports
+- `CBEXPORT.cbl` — Branch migration export: reads CUSTFILE, ACCTFILE, XREFFILE, TRANSACT, CARDFILE; creates typed multi-record export file with processing statistics
+
+*Utilities:*
+- `COBSWAIT.cbl` — Assembler-based wait utility (WAITSTEP job): reads centisecond delay value from SYSIN (e.g. 00003600 = 36 seconds)
+- `CSUTLDTC.cbl` — Date conversion subroutine: called by batch and online programs; uses CSUTLDPY/CSUTLDWY copybooks
 
 **Key JCL Jobs:**
-| Job       | Program   | Function                              |
-|-----------|-----------|---------------------------------------|
-| POSTTRAN  | CBTRN02C  | Post transactions, update balances    |
-| INTCALC   | CBACT04C  | Calculate and apply interest          |
-| CREASTMT  | CBSTM03A  | Generate account statements           |
-| TRANREPT  | CBTRN03C  | Generate daily transaction report     |
-| COMBTRAN  | SORT      | Combine transaction files             |
+| Job       | Program(s)          | Function                                                    |
+|-----------|---------------------|-------------------------------------------------------------|
+| POSTTRAN  | CBTRN02C            | Post daily transactions; update ACCTFILE + TCATBALF         |
+| INTCALC   | CBACT04C            | Compute monthly interest; write SYSTRAN GDG; update balances |
+| CREASTMT  | CBSTM03A/B          | Generate plain-text + HTML account statements               |
+| TRANREPT  | SORT + CBTRN03C     | Filter/sort transactions by date; produce formatted report  |
+| COMBTRAN  | SORT + IDCAMS       | Merge SYSTRAN(0) + TRANSACT.BKUP(0); reload TRANSACT VSAM   |
+| CLOSEFIL  | SDSF                | CEMT SET FILE CLOSE for CICS VSAM files before batch        |
+| OPENFIL   | SDSF                | CEMT SET FILE OPEN to restore CICS access after batch       |
+| WAITSTEP  | COBSWAIT            | Configurable centisecond delay between batch steps          |
+| CBIMPORT  | CBIMPORT            | Import branch migration data into CardDemo VSAM files       |
+| CBEXPORT  | CBEXPORT            | Export CardDemo data for branch migration                   |
 
 **VSAM File Refresh Jobs:**
-- ACCTFILE, CARDFILE, CUSTFILE, TRANFILE — refresh from source data
-- TCATBALF — refresh transaction category balances
-- DISCGRP — load interest rate disclosure groups
-- XREFFILE — define account-card-customer cross reference
+- `ACCTFILE`, `CARDFILE`, `CUSTFILE`, `TRANFILE` — IDCAMS REPRO from source sequential datasets
+- `XREFFILE` — IDCAMS REPRO + AIX path rebuild for alternate index access
+- `TCATBALF` — Reload transaction category balance file
+- `DISCGRP` — Load interest rate disclosure group definitions
+- `DEFGDGB` / `DEFGDGD` — Define GDG bases for versioned output datasets
+
+**Dependencies:**
+- **Internal:** accounts (ACCTFILE read/update), transactions (TRANFILE/TCATBALF update), reports (TRANREPT output consumed by CR00 CICS screen), credit-cards (CARDFILE/XREFFILE read)
+- **Platform:** z/OS JES2, VSAM KSDS, GDG, DFSORT/SYNCSORT, IDCAMS, SDSF, CICS region CICSAWSA
+- **Load Library:** `AWS.M2.CARDDEMO.LOADLIB` (STEPLIB for all batch steps)
+- **Proc Library:** `AWS.M2.CARDDEMO.PROC` (REPROC proc used in TRANREPT)
+
+**Key Copybooks:**
+| Copybook      | Used By              | Provides                              |
+|---------------|----------------------|---------------------------------------|
+| CVTRA01Y.cpy  | CBACT04C, CBTRN02C   | TRAN-CAT-BAL-RECORD (TCATBALF)        |
+| CVTRA02Y.cpy  | CBACT04C             | DIS-GROUP-RECORD (DISCGRP rates)      |
+| CVACT01Y.cpy  | CBSTM03A, CBACT04C   | ACCOUNT-RECORD layout                 |
+| CVACT02Y.cpy  | CBACT02C             | CARD-RECORD layout                    |
+| CVACT03Y.cpy  | CBACT03C, CBSTM03A   | CARD-XREF-RECORD layout               |
+| CVCUS01Y.cpy  | CBCUS01C             | CUSTOMER-RECORD layout                |
+| CVTRA07Y.cpy  | CBTRN03C             | TRANSACTION-DETAIL-REPORT line layout |
 
 **Business Rules:**
-- CICS files must be closed (CLOSEFIL job) before running most batch jobs that update them
-- OPENFIL job reopens CICS files after batch completion
-- Interest calculation reads TCATBALF (category balances) and DISCGRP (interest rates) to compute per-account interest
-- Transaction posting (POSTTRAN) updates ACCT-CURR-BAL and TRAN-CAT-BAL-RECORD
-- GDG (Generation Data Groups) used for versioned report output
-- COBSWAIT (WAITSTEP) provides configurable delay between batch steps
+- CLOSEFIL **must** precede any batch job updating VSAM files shared with CICS (TRANSACT, ACCTDAT, CCXREF, CXACAIX, USRSEC); OPENFIL must follow
+- Interest calculation (INTCALC): DISCGRP composite key = `ACCT-GROUP-ID || TRAN-TYPE-CD || TRAN-CAT-CD`; missing key → error in SYSOUT, record skipped
+- Transaction posting (POSTTRAN): updates `ACCT-CURR-BAL`, `ACCT-CURR-CYC-CREDIT/DEBIT`, and TCATBALF; failed lookups go to DALYREJS GDG(+1)
+- GDG datasets used for: DALYREJS, TRANSACT.BKUP, SYSTRAN, TRANSACT.DALY, TRANSACT.COMBINED, TRANREPT — prior generations retained for audit trail
+- COMBTRAN merges SYSTRAN GDG(0) + TRANSACT.BKUP GDG(0) after INTCALC before CREASTMT can run
+- CBIMPORT validates checksums per imported record group; CBEXPORT reads all five normalized files to produce typed export
+- COBSWAIT (WAITSTEP) centisecond delay specified via SYSIN DD (e.g. `00003600` = 36 seconds)
+
+**Processing Flows:**
+
+*Nightly:* CLOSEFIL → POSTTRAN → OPENFIL  
+*Monthly:* CLOSEFIL → TRANBKP → INTCALC → COMBTRAN → OPENFIL → CREASTMT → TRANREPT  
+*Report only:* TRANREPT (update date range in JCL SYMNAMES first)
 
 **User Story Examples:**
-- As a system operator, I want to run nightly transaction posting so balances are updated each day
-- As a system operator, I want to run monthly interest calculation so statements reflect accrued interest
-- As a system operator, I want to refresh master files so test data is reset to a known state
-- As a system, I want to close CICS files before batch runs so data integrity is maintained
+- As a system operator, I want to run nightly transaction posting so account balances are updated each business day
+- As a system operator, I want to run monthly interest calculation so statements reflect accrued interest charges
+- As a system operator, I want to generate account statements so customers receive accurate billing summaries
+- As a system operator, I want to refresh master files so the test environment is reset to a known state
+- As a system, I want CICS files closed before batch updates so data integrity is maintained between online and batch processing
+- As a system operator, I want to import branch migration data so new customers and accounts are loaded into CardDemo
 
 ---
 
