@@ -104,21 +104,27 @@ SEC-USER-DATA (USRSEC file, RECLN=80):
 ### 2. Accounts
 
 **ID:** `accounts`  
-**Purpose:** View and update credit card account details; interest calculation (batch)  
+**Purpose:** View and update credit card account details online (CICS); batch account data validation, extract, and monthly interest calculation. The account is the central financial entity — all cards, transactions, billing, and interest are linked to an account record in ACCTFILE.
+
 **Key Components:**
-- `COACTVWC.cbl` — CICS program; display account details (CAVW / COACTVW)
-- `COACTUPC.cbl` — CICS program; update account information (CAUP / COACTUP)
-- `CBACT01C.cbl` — Batch: account data validation/processing
-- `CBACT02C.cbl` — Batch: account copy/report operations
-- `CBACT03C.cbl` — Batch: account extract processing
-- `CBACT04C.cbl` — Batch: interest calculation (INTCALC job)
-- `CVACT01Y.cpy` — ACCOUNT-RECORD data structure
-- `CVACT02Y.cpy` — CARD-RECORD data structure
-- `CVACT03Y.cpy` — CARD-XREF-RECORD data structure
+- `COACTVWC.cbl` — CICS program; read-only display of account + customer details (CAVW / COACTVW); resolves card number → XREFFILE → ACCTFILE → CUSTFILE
+- `COACTUPC.cbl` — CICS program; full account and customer data update (CAUP / COACTUP); implements optimistic locking with `ACUP-OLD-*` shadow fields and CICS SYNCPOINT ROLLBACK for atomicity
+- `CBACT01C.cbl` — Batch: sequential account data validation/processing; reads ACCTFILE, writes multiple output formats
+- `CBACT02C.cbl` — Batch: sequential card file read; outputs to SYSOUT
+- `CBACT03C.cbl` — Batch: sequential card cross-reference read; outputs CARD-NUM / CUST-ID / ACCT-ID mappings
+- `CBACT04C.cbl` — Batch: monthly interest calculation (INTCALC job); reads TCATBALF sequentially, looks up XREFFILE/ACCTFILE/DISCGRP, writes interest transactions to output TRANSACT file
+- `COACTVW.bms` / `COACTUP.bms` — BMS map definitions for 24×80 3270 screens
+- `CVACT01Y.cpy` — ACCOUNT-RECORD data structure (RECLN=300)
+- `CVACT02Y.cpy` — CARD-RECORD data structure (RECLN=150)
+- `CVACT03Y.cpy` — CARD-XREF-RECORD data structure (RECLN=50)
+- `CVTRA01Y.cpy` — TRAN-CAT-BAL-RECORD (TCATBALF input to CBACT04C)
+- `CVTRA02Y.cpy` — DIS-GROUP-RECORD (DISCGRP interest rate structure)
 
 **CICS Transactions:**
-- `CAVW` → Account View (read-only)
-- `CAUP` → Account Update (editable)
+- `CAVW` → Account View (read-only); BMS mapset COACTVW, map CACTVWA
+- `CAUP` → Account Update (editable); BMS mapset COACTUP, map CACTUPA
+
+**Navigation:** PF3 returns to Main Menu (CM00); PF5 transitions from View to Update
 
 **Data Model:**
 ```
@@ -129,29 +135,63 @@ ACCOUNT-RECORD (ACCTFILE, RECLN=300):
   ACCT-CREDIT-LIMIT       PIC S9(10)V99    -- Credit limit
   ACCT-CASH-CREDIT-LIMIT  PIC S9(10)V99    -- Cash credit limit
   ACCT-OPEN-DATE          PIC X(10)        -- YYYY-MM-DD
-  ACCT-EXPIRAION-DATE     PIC X(10)        -- YYYY-MM-DD
+  ACCT-EXPIRAION-DATE     PIC X(10)        -- YYYY-MM-DD (note: typo in source copybook)
   ACCT-REISSUE-DATE       PIC X(10)        -- YYYY-MM-DD
-  ACCT-CURR-CYC-CREDIT    PIC S9(10)V99    -- Current cycle credits
-  ACCT-CURR-CYC-DEBIT     PIC S9(10)V99    -- Current cycle debits
+  ACCT-CURR-CYC-CREDIT    PIC S9(10)V99    -- Current cycle credits (payments received)
+  ACCT-CURR-CYC-DEBIT     PIC S9(10)V99    -- Current cycle debits (charges made)
   ACCT-ADDR-ZIP           PIC X(10)        -- ZIP code
-  ACCT-GROUP-ID           PIC X(10)        -- Disclosure group ID
+  ACCT-GROUP-ID           PIC X(10)        -- Disclosure group ID → links to DISCGRP
+  FILLER                  PIC X(178)       -- Unused (allows future field additions)
 
 CARD-XREF-RECORD (XREFFILE, RECLN=50):
   XREF-CARD-NUM           PIC X(16)        -- Card number (primary key)
   XREF-CUST-ID            PIC 9(09)        -- Customer ID
-  XREF-ACCT-ID            PIC 9(11)        -- Account ID
+  XREF-ACCT-ID            PIC 9(11)        -- Account ID (alternate index key)
+  FILLER                  PIC X(14)
+
+TRAN-CAT-BAL-RECORD (TCATBALF — input to interest calculation):
+  TRANCAT-ACCT-ID         PIC 9(11)        -- Account ID
+  TRANCAT-TYPE-CD         PIC X(02)        -- Transaction type code
+  TRANCAT-CD              PIC 9(04)        -- Transaction category code
+  TRAN-CAT-BAL            PIC S9(09)V99    -- Category balance (interest basis)
+
+DIS-GROUP-RECORD (DISCGRP — interest rate lookup):
+  DIS-ACCT-GROUP-ID       PIC X(10)        -- Maps from ACCT-GROUP-ID
+  DIS-TRAN-TYPE-CD        PIC X(02)
+  DIS-TRAN-CAT-CD         PIC 9(04)
+  DIS-INT-RATE            PIC S9(09)V99    -- Annual interest rate (%)
 ```
 
+**Processing Flows:**
+- **Account Lookup Chain (CAVW/CAUP):** Card number (COMMAREA) → READ XREFFILE AIX → get ACCT-ID + CUST-ID → READ ACCTFILE → READ CUSTFILE → display
+- **Interest Calculation (CBACT04C):** Sequential read TCATBALF → per record: random READ XREFFILE AIX (by ACCT-ID) + READ ACCTFILE + READ DISCGRP → COMPUTE monthly interest = `(TRAN-CAT-BAL × DIS-INT-RATE) / 1200` → WRITE interest transaction to TRANSACT file
+- **Optimistic Locking (CAUP):** Old field values stored as `ACUP-OLD-*` at view time; on update submit, freshly-read VSAM data is compared against old values; mismatch → reject with "data changed" error; on write: READ UPDATE (CICS lock) → REWRITE ACCTFILE → REWRITE CUSTFILE; if CUSTFILE REWRITE fails → `EXEC CICS SYNCPOINT ROLLBACK`
+
 **Business Rules:**
-- Account can be looked up by Card Number (via XREFFILE AIX) or Account ID
-- Interest calculation (CBACT04C) reads TCATBALF and DISCGRP to compute per-group interest
-- Account status must be 'Y' (Active) for most transactions to proceed
-- Credit limit enforced during transaction add (prevents over-limit)
-- Batch interest job (INTCALC) updates ACCT-CURR-BAL with computed interest
+- Account can be looked up by Card Number (via XREFFILE AIX) or Account ID (direct input on view screen)
+- `ACCT-ACTIVE-STATUS = 'Y'` required for transactions and billing payments to proceed
+- Interest calculation formula: `(TRAN-CAT-BAL × DIS-INT-RATE) / 1200` (annual rate ÷ 12 months)
+- If specific DISCGRP key (group+type+category) not found, CBACT04C falls back to `'DEFAULT   '` group key
+- Credit limit enforced during transaction add by COTRN02C (not within the accounts module itself)
+- Batch jobs (CBACT01C–04C) require CLOSEFIL JCL step before running and OPENFIL after to restore CICS access
+- COACTUPC validates: active status (Y/N), numeric balances/limits, dates (YYYY-MM-DD), US phone (NNN)NNN-NNNN, SSN NNN-NN-NNNN, ZIP, FICO score 0–850
+- Account update atomically updates both ACCTFILE and CUSTFILE; SYNCPOINT ROLLBACK if second write fails
+- `ACCT-EXPIRAION-DATE` field name has a typo (missing 'T') in CVACT01Y.cpy — do not rename without updating all consumers
+
+**Dependencies:**
+- **authentication** — COMMAREA CDEMO-USER-ID and CDEMO-CARD-NUM must be set before account screens
+- **ACCTFILE, XREFFILE, CUSTFILE** — must be VSAM-loaded before online use
+- **TCATBALF, DISCGRP** — required inputs for CBACT04C interest calculation
+- **credit-cards, transactions, billing** — downstream consumers of ACCT-ID from COMMAREA and ACCT-ACTIVE-STATUS
+
+**JCL Job:**
+- `INTCALC` — runs CBACT04C; parameter = date (YYYYMMDD); outputs GDG versioned TRANSACT(+1) file; must be preceded by CLOSEFIL
 
 **User Story Examples:**
 - As a cardholder, I want to view my account balance and credit limit so I know my available credit
 - As a cardholder, I want to update my ZIP code so my billing address is current
+- As a cardholder, I want to see current cycle credits and debits so I can track billing cycle activity
+- As an administrator, I want to change an account's active status so access can be suspended when needed
 - As a system, I want to calculate monthly interest so balances are updated at cycle end
 
 ---
