@@ -261,31 +261,74 @@ TRAN-CAT-BAL-RECORD (TCATBALF, RECLN=50):
 ### 5. Billing
 
 **ID:** `billing`  
-**Purpose:** Process bill payments for a credit card account  
+**Purpose:** Process full-balance bill payments for a credit card account online via CICS  
 **Key Components:**
-- `COBIL00C.cbl` — CICS program; bill payment processing (CB00 / COBIL00)
-- `COBIL00.bms` — BMS map for bill payment screen
+- `COBIL00C.cbl` — CICS program; bill payment processing (CB00 / COBIL00); single-screen pay-in-full flow
+- `COBIL00.bms` — BMS map for bill payment screen (mapset COBIL00, map COBIL0A; 24×80)
+- `app/cpy-bms/COBIL00.CPY` — BMS-generated copybook; COBIL0AI (input map) and COBIL0AO (output map) structures
 
-**CICS Transaction:** `CB00` → Bill Payment
+**CICS Transaction:** `CB00` → Bill Payment  
+**Screen:** COBIL0A (Bill Payment Screen)
+
+**Dependencies (Internal Modules):**
+- `authentication` — COMMAREA must be populated (EIBCALEN > 0); otherwise XCTLs to COSGN00C
+- `accounts` — reads and rewrites ACCTFILE (ACCT-CURR-BAL, ACCT-ACTIVE-STATUS)
+- `transactions` — writes payment TRAN-RECORD to TRANFILE; visible in CT00 Transaction List
+- `credit-cards` — reads XREFFILE alternate index (CXACAIX) to resolve card number from account ID
+
+**VSAM Files Accessed:**
+
+| CICS Dataset | VSAM File | Access Mode | Purpose |
+|---|---|---|---|
+| `ACCTDAT` | ACCTFILE | READ(UPDATE) + REWRITE | Read balance; update balance to zero |
+| `CXACAIX` | XREFFILE (AIX) | READ | Resolve XREF-CARD-NUM from XREF-ACCT-ID |
+| `TRANSACT` | TRANFILE | STARTBR + READPREV + ENDBR + WRITE | Get max TRAN-ID; write payment record |
 
 **Processing Flow:**
-1. User selects account for payment
-2. Enters payment amount
-3. COBIL00C validates amount and account status
-4. Creates a credit transaction record (TRANFILE)
-5. Updates account current balance (ACCTFILE)
+1. User enters 11-digit Account ID in ACTIDIN field, presses ENTER
+2. COBIL00C reads ACCTFILE (with UPDATE intent) to retrieve ACCT-CURR-BAL
+3. Current balance displayed on screen (CURBAL field); user prompted to confirm (Y/N)
+4. User enters 'Y' in CONFIRM field and presses ENTER
+5. COBIL00C reads CXACAIX (XREFFILE AIX) to get XREF-CARD-NUM for the account
+6. COBIL00C browses TRANFILE backwards from HIGH-VALUES to find highest TRAN-ID; new ID = max + 1
+7. TRAN-RECORD written to TRANFILE (type='02', category=2, amount=full balance, source='POS TERM', desc='BILL PAYMENT - ONLINE')
+8. ACCTFILE REWRITE: ACCT-CURR-BAL = ACCT-CURR-BAL − TRAN-AMT (reduces to zero)
+9. Success message displayed with new TRAN-ID; screen cleared for next use
+
+**Hard-Coded Transaction Constants:**
+```
+TRAN-TYPE-CD      = '02'
+TRAN-CAT-CD       = 2
+TRAN-SOURCE       = 'POS TERM'
+TRAN-DESC         = 'BILL PAYMENT - ONLINE'
+TRAN-MERCHANT-ID  = 999999999  (sentinel value)
+TRAN-MERCHANT-NAME= 'BILL PAYMENT'
+TRAN-MERCHANT-CITY= 'N/A'
+TRAN-MERCHANT-ZIP = 'N/A'
+```
+
+**Navigation Keys:**
+| Key | Action |
+|-----|--------|
+| ENTER | Submit / process (account lookup or payment confirmation) |
+| PF3 | Return to previous program or COMEN01C |
+| PF4 | Clear all input fields |
+| Other | "Invalid key" error message |
 
 **Business Rules:**
-- Payment amount must be positive
-- Payment creates a positive (credit) transaction entry
-- Account must exist and be active to accept payment
-- Current balance reduced by payment amount
-- Payment reflected in current cycle credit balance (ACCT-CURR-CYC-CREDIT)
+- Payment is **full-balance only** — the amount is always `ACCT-CURR-BAL`; no partial payment input exists
+- Account ID must not be blank; account must exist in ACCTFILE
+- Balance must be > 0; zero/negative balance returns "You have nothing to pay..."
+- CONFIRM field must be 'Y' or 'y' to process payment; 'N'/'n' clears screen without payment
+- Transaction ID generated sequentially (browse TRANFILE for max + 1); race condition possible on concurrent payments
+- TRANFILE WRITE occurs before ACCTFILE REWRITE; failure between these steps leaves data inconsistent (no atomic rollback)
+- `ACCT-CURR-CYC-CREDIT` is **not** updated by the current code despite prior documentation stating it is — only `ACCT-CURR-BAL` is modified
 
 **User Story Examples:**
-- As a cardholder, I want to make a bill payment so my outstanding balance is reduced
-- As a cardholder, I want to see my current balance before paying so I know what I owe
-- As a system, I want to record payment transactions so the audit trail is complete
+- As a cardholder, I want to pay my outstanding balance in full so my account is cleared
+- As a cardholder, I want to see my current balance on the payment screen so I know my total amount owed before confirming
+- As a cardholder, I want to receive a transaction ID after payment so I have an audit reference
+- As a system, I want to record payment transactions in TRANFILE so the audit trail is complete and visible in transaction history
 
 ---
 
