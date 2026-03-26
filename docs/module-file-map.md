@@ -34,6 +34,7 @@ app/cbl/CBTRN02C.cbl = transactions, batch-processing
 app/cbl/CBTRN03C.cbl = transactions, reports, batch-processing
 app/cbl/CBSTM03A.CBL = transactions, reports, batch-processing
 app/cbl/CBSTM03B.CBL = transactions, reports, batch-processing
+app/cbl/CORPT00C.cbl = transactions, reports
 app/bms/COTRN00.bms = transactions
 app/bms/COTRN01.bms = transactions
 app/bms/COTRN02.bms = transactions
@@ -44,11 +45,20 @@ app/cpy/CVTRA03Y.cpy = transactions
 app/cpy/CVTRA04Y.cpy = transactions
 app/cpy/CVTRA06Y.cpy = transactions
 app/cpy/CVTRA07Y.cpy = transactions, reports
+app/jcl/POSTTRAN.jcl = transactions, batch-processing
+app/jcl/TRANREPT.jcl = transactions, reports, batch-processing
+app/jcl/COMBTRAN.jcl = transactions, batch-processing
+app/jcl/TRANFILE.jcl = transactions, batch-processing
+app/jcl/TRANIDX.jcl = transactions, batch-processing
+app/jcl/TRANBKP.jcl = transactions, batch-processing
+app/jcl/TRANCATG.jcl = transactions, batch-processing
+app/jcl/TRANTYPE.jcl = transactions, batch-processing
+app/jcl/REPTFILE.jcl = transactions, reports, batch-processing
 
 app/cbl/COBIL00C.cbl = billing
 app/bms/COBIL00.bms = billing
 
-app/cbl/CORPT00C.cbl = reports
+app/cbl/CORPT00C.cbl = transactions, reports
 app/bms/CORPT00.bms = reports
 
 app/cbl/COADM01C.cbl = user-management
