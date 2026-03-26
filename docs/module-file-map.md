@@ -54,6 +54,7 @@ app/cpy/CVTRA07Y.cpy = transactions, reports
 
 app/cbl/COBIL00C.cbl = billing
 app/bms/COBIL00.bms = billing
+app/cpy-bms/COBIL00.CPY = billing
 
 app/cbl/CORPT00C.cbl = reports
 app/bms/CORPT00.bms = reports
