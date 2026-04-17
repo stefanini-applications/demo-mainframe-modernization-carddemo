@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Batch Job Detail - CardDemo</title>
+  <link rel="stylesheet" href="styles/reset.css">
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/global.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div class="app-layout">
+    <header class="app-header" role="banner">
+      <a href="dashboard.html" class="app-header__brand">💳 CardDemo</a>
+      <span class="app-header__spacer"></span>
+      <span class="app-header__user">👤 ADMIN001 <span class="badge badge--primary">Admin</span></span>
+      <button class="app-header__menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.app-sidebar').classList.toggle('is-open')">☰</button>
+    </header>
+    <nav class="app-sidebar" role="navigation" aria-label="Main navigation">
+      <ul class="nav-list">
+        <li><a href="dashboard.html" class="nav-item">🏠 Dashboard</a></li>
+        <li><a href="accounts-list.html" class="nav-item">🏦 Accounts</a></li>
+        <li><a href="credit-cards-list.html" class="nav-item">💳 Credit Cards</a></li>
+        <li><a href="transactions-list.html" class="nav-item">💸 Transactions</a></li>
+        <li><a href="billing-form.html" class="nav-item">💰 Billing</a></li>
+        <li><a href="reports-list.html" class="nav-item">📊 Reports</a></li>
+        <li><a href="users-list.html" class="nav-item">👥 User Management</a></li>
+        <li><a href="batch-list.html" class="nav-item">⚙️ Batch Jobs</a></li>
+        <li><a href="authorization-list.html" class="nav-item">🔐 Authorizations</a></li>
+        <li><a href="transaction-types-list.html" class="nav-item">🏷️ Trans. Types</a></li>
+      </ul>
+    </nav>
+    <main class="app-main" id="main-content">
+      <div class="app-main__content">
+
+        <nav class="breadcrumb"><span class="breadcrumb__item"><a href="batch-list.html">Batch Jobs</a></span><span class="breadcrumb__separator">›</span><span class="breadcrumb__item" id="breadcrumbId">Job Detail</span></nav>
+        <div class="page-header">
+          <div><h1 class="page-title" id="pageTitle">Job Detail</h1></div>
+          <div class="page-actions"><a href="batch-list.html" class="btn btn--secondary">← Back to List</a></div>
+        </div>
+        <div class="detail-grid">
+          <div class="card"><div class="card__header"><h2 class="card__title">Job Information</h2></div><div class="card__body" id="jobInfo"></div></div>
+          <div class="card"><div class="card__header"><h2 class="card__title">Execution Summary</h2></div><div class="card__body" id="execInfo"></div></div>
+        </div>
+        <div class="card mt-4"><div class="card__header"><h2 class="card__title">Job Log (SYSOUT)</h2></div><div class="card__body" id="jobLog" style="font-family:monospace;font-size:12px;background:var(--color-surface);padding:16px;border-radius:4px;overflow-x:auto;white-space:pre"></div></div>
+      </div>
+    </main>
+  </div>
+  <script src="scripts/mock-data.js"></script>
+  <script src="scripts/utils.js"></script>
+<script>
+    var logs={
+      'POSTTRAN': 'CBTRN02C - CARDDEMO TRANSACTION POSTING\nSTEP 1: INIT VSAM FILES\nSTEP 2: READ DALYTRAN SEQUENTIAL FILE\n  - RECORDS READ: 142\n  - RECORDS VALIDATED: 139\n  - RECORDS REJECTED: 3\nSTEP 3: POST TO TRANFILE\n  - TRANSACTIONS POSTED: 139\n  - ACCTFILE UPDATES: 89\n  - TCATBALF UPDATES: 139\nSTEP 4: WRITE DALYREJS GDG (+1)\n  - RECORDS WRITTEN: 3\nSTEP 5: RETURN CODE = 0008 (REJECTS EXIST)\nJOB COMPLETED: 2025-03-15 02:14:37',
+      'TRANREPT': 'CBTRN03C - CARDDEMO TRANSACTION REPORT\nSTEP 1: SORT TRANSACT FILE BY CARD/DATE\nSTEP 2: READ SORTED FILE\n  - RECORDS READ: 2847\n  - DATE FILTER: 2025-01-01 TO 2025-03-15\n  - RECORDS SELECTED: 1203\nSTEP 3: GENERATE REPORT LINES\n  - ACCOUNTS PROCESSED: 20\n  - PAGES GENERATED: 15\nSTEP 4: WRITE TRANREPT GDG (+1)\nJOB COMPLETED - RC=0000',
+      'INTCALC': 'CBACT04C - INTEREST CALCULATION\nSTEP 1: READ TCATBALF SEQUENTIAL\n  - RECORDS READ: 450\nSTEP 2: LOOKUP DISCGRP INTEREST RATES\n  - GROUPS FOUND: 430\n  - FALLBACK TO DEFAULT: 20\nSTEP 3: COMPUTE MONTHLY INTEREST\n  - FORMULA: (BAL * RATE) / 1200\n  - INTEREST TRANSACTIONS WRITTEN: 450\nJOB COMPLETED - RC=0000',
+      'CBTRN01C': 'CBTRN01C - TRANSACTION VALIDATION\nSTEP 1: READ DALYTRAN\n  - INPUT RECORDS: 180\nSTEP 2: VALIDATE vs CUSTFILE, CARDFILE, ACCTFILE\n  - VALID: 177\n  - INVALID: 3\n  - ERRORS: CARD NOT FOUND x2, ACCT INACTIVE x1\nRC=0008',
+      'CLOSEFIL': 'IDCAMS CLOSE FILE UTILITY\nCLOSING CICS MANAGED VSAM FILES...\n  ACCTFILE  - CLOSED OK\n  CARDFILE  - CLOSED OK\n  CUSTFILE  - CLOSED OK\n  TRANFILE  - CLOSED OK\n  XREFFILE  - CLOSED OK\n  TCATBALF  - CLOSED OK\nRC=0000',
+      'OPENFIL': 'IDCAMS OPEN FILE UTILITY\nOPENING CICS MANAGED VSAM FILES...\n  ACCTFILE  - OPEN OK\n  CARDFILE  - OPEN OK\n  CUSTFILE  - OPEN OK\n  TRANFILE  - OPEN OK\n  XREFFILE  - OPEN OK\n  TCATBALF  - OPEN OK\nRC=0000'
+    };
+    document.addEventListener('DOMContentLoaded',function(){
+      var id=getParam('id');
+      if(!id){window.location.href='batch-list.html';return;}
+      var j=getById('batchJobs',id);
+      if(!j){document.querySelector('.app-main__content').innerHTML='<div class="alert alert--error"><span class="alert__icon">⚠️</span><div class="alert__content">Job not found.</div></div>';return;}
+      document.getElementById('breadcrumbId').textContent=j.id;
+      document.getElementById('pageTitle').textContent=j.jobName+' — '+j.id;
+      function df(l,v){return '<div class="detail-field"><div class="detail-field__label">'+l+'</div><div class="detail-field__value">'+v+'</div></div>';}
+      document.getElementById('jobInfo').innerHTML=df('Job ID','<span class="font-mono">'+escapeHtml(j.id)+'</span>')+df('Job Name',escapeHtml(j.jobName))+df('Program',escapeHtml(j.program))+df('Parameter',escapeHtml(j.parameter||'N/A'))+df('Steps','<span class="text-sm">'+(j.steps||[]).join(' → ')+'</span>');
+      document.getElementById('execInfo').innerHTML=df('Status',getStatusBadge(j.status))+df('Start Time',escapeHtml(j.startTime||'N/A'))+df('Duration',escapeHtml(j.duration||'N/A'))+df('Return Code','<span class="badge '+(j.rc==='0000'||j.rc===0?'badge--success':'badge--error')+'">RC='+escapeHtml(String(j.rc||'N/A'))+'</span>');
+      document.getElementById('jobLog').textContent=logs[j.jobName]||('JOB LOG FOR '+j.jobName+'\nNO DETAILED LOG AVAILABLE.\nSTATUS: '+j.status+'\nRC: '+(j.rc||'N/A'));
+    });
+</script>
+</body>
+</html>

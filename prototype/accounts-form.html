@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Form - CardDemo</title>
+  <link rel="stylesheet" href="styles/reset.css">
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/global.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+<a href="#main" class="skip-link">Skip to main content</a>
+<div class="app-layout">
+  <header class="app-header" role="banner">
+    <a href="dashboard.html" class="app-header__brand">&#x1F4B3; CardDemo</a>
+    <button class="app-header__menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.app-sidebar').classList.toggle('is-open')">&#9776;</button>
+    <span class="app-header__user">&#x1F464; ADMIN001 <span class="badge badge--primary">Admin</span></span>
+  </header>
+  <nav class="app-sidebar" role="navigation" aria-label="Main navigation">
+    <ul class="nav-list">
+      <li><a href="dashboard.html" class="nav-item">&#x1F3E0; Dashboard</a></li>
+      <li><a href="accounts-list.html" class="nav-item">&#x1F3E6; Accounts</a></li>
+      <li><a href="credit-cards-list.html" class="nav-item">&#x1F4B3; Credit Cards</a></li>
+      <li><a href="transactions-list.html" class="nav-item">&#x1F4B8; Transactions</a></li>
+      <li><a href="billing-form.html" class="nav-item">&#x1F4B0; Billing</a></li>
+      <li><a href="reports-list.html" class="nav-item">&#x1F4CA; Reports</a></li>
+      <li><a href="users-list.html" class="nav-item">&#x1F465; Users</a></li>
+      <li><a href="batch-list.html" class="nav-item">&#x2699;&#xFE0F; Batch Jobs</a></li>
+      <li><a href="authorization-list.html" class="nav-item">&#x1F510; Authorizations</a></li>
+      <li><a href="transaction-types-list.html" class="nav-item">&#x1F3F7;&#xFE0F; Trans. Types</a></li>
+    </ul>
+  </nav>
+  <main class="app-main" id="main" role="main">
+    <div class="app-main__content">
+      <nav class="breadcrumb" aria-label="breadcrumb">
+        <div class="breadcrumb__item"><a href="accounts-list.html">Accounts</a></div>
+        <div class="breadcrumb__item" id="breadcrumb-current">New Account</div>
+      </nav>
+      <div class="page-header">
+        <div>
+          <h1 class="page-title" id="page-title">New Account</h1>
+          <p class="page-subtitle" id="page-subtitle">Create a new credit card account</p>
+        </div>
+        <a href="accounts-list.html" class="btn btn--ghost">&#x2190; Back to List</a>
+      </div>
+
+      <div class="card">
+        <div class="card__body">
+          <form id="account-form" onsubmit="handleSubmit(event)" novalidate>
+
+            <div class="form-section">
+              <div class="form-section__title">Account Details</div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-group__label" for="customerId">
+                    Customer ID <span class="required">*</span>
+                  </label>
+                  <select id="customerId" name="customerId" class="form-group__input" required>
+                    <option value="">Select Customer...</option>
+                  </select>
+                  <span class="form-group__hint">Select the primary account holder</span>
+                </div>
+                <div class="form-group">
+                  <label class="form-group__label" for="groupId">
+                    Account Group <span class="required">*</span>
+                  </label>
+                  <select id="groupId" name="groupId" class="form-group__input" required>
+                    <option value="">Select Group...</option>
+                    <option value="STANDARD">Standard</option>
+                    <option value="GOLD">Gold</option>
+                    <option value="PREMIUM">Premium</option>
+                    <option value="PLATINUM">Platinum</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-group__label" for="activeStatus">
+                    Status <span class="required">*</span>
+                  </label>
+                  <select id="activeStatus" name="activeStatus" class="form-group__input" required>
+                    <option value="Y">Active</option>
+                    <option value="N">Inactive</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-group__label" for="addrZip">ZIP Code</label>
+                  <input type="text" id="addrZip" name="addrZip"
+                         class="form-group__input" placeholder="10001"
+                         maxlength="9" pattern="[0-9]{5}(-[0-9]{4})?">
+                  <span class="form-group__hint">5-digit ZIP (e.g. 10001)</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="form-section__title">Credit Limits</div>
+              <div class="form-row form-row--3">
+                <div class="form-group">
+                  <label class="form-group__label" for="creditLimit">
+                    Credit Limit <span class="required">*</span>
+                  </label>
+                  <input type="number" id="creditLimit" name="creditLimit"
+                         class="form-group__input" placeholder="5000.00"
+                         step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-group__label" for="cashCreditLimit">
+                    Cash Credit Limit <span class="required">*</span>
+                  </label>
+                  <input type="number" id="cashCreditLimit" name="cashCreditLimit"
+                         class="form-group__input" placeholder="1000.00"
+                         step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-group__label" for="currBal">Current Balance</label>
+                  <input type="number" id="currBal" name="currBal"
+                         class="form-group__input" placeholder="0.00" step="0.01">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="form-section__title">Dates</div>
+              <div class="form-row form-row--3">
+                <div class="form-group">
+                  <label class="form-group__label" for="openDate">
+                    Open Date <span class="required">*</span>
+                  </label>
+                  <input type="date" id="openDate" name="openDate"
+                         class="form-group__input" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-group__label" for="expirationDate">
+                    Expiration Date <span class="required">*</span>
+                  </label>
+                  <input type="date" id="expirationDate" name="expirationDate"
+                         class="form-group__input" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-group__label" for="reissueDate">Reissue Date</label>
+                  <input type="date" id="reissueDate" name="reissueDate"
+                         class="form-group__input">
+                </div>
+              </div>
+            </div>
+
+            <div class="card__footer" style="margin:-1.5rem; margin-top:0; padding:1rem 1.5rem">
+              <div class="btn-group">
+                <button type="submit" class="btn btn--primary">&#x1F4BE; Save Account</button>
+                <a href="accounts-list.html" class="btn btn--ghost">Cancel</a>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="scripts/mock-data.js"></script>
+<script src="scripts/utils.js"></script>
+<script>
+markActiveNav();
+const editId = getParam('id');
+const isEdit = !!editId;
+
+document.addEventListener('DOMContentLoaded', function () {
+  // Populate customer dropdown
+  const customers  = getData('customers');
+  const custSelect = document.getElementById('customerId');
+  customers.forEach(c => {
+    const opt       = document.createElement('option');
+    opt.value       = c.id;
+    opt.textContent = c.id + ' – ' + c.firstName + ' ' + c.lastName;
+    custSelect.appendChild(opt);
+  });
+
+  if (isEdit) {
+    const account = getById('accounts', editId);
+    if (account) {
+      document.getElementById('page-title').textContent       = 'Edit Account ' + account.id;
+      document.getElementById('page-subtitle').textContent    = 'Update account information';
+      document.getElementById('breadcrumb-current').textContent = account.id;
+      document.getElementById('customerId').value       = account.customerId;
+      document.getElementById('groupId').value          = account.groupId;
+      document.getElementById('activeStatus').value     = account.activeStatus;
+      document.getElementById('addrZip').value          = account.addrZip || '';
+      document.getElementById('creditLimit').value      = account.creditLimit;
+      document.getElementById('cashCreditLimit').value  = account.cashCreditLimit;
+      document.getElementById('currBal').value          = account.currBal;
+      document.getElementById('openDate').value         = account.openDate;
+      document.getElementById('expirationDate').value   = account.expirationDate;
+      document.getElementById('reissueDate').value      = account.reissueDate || '';
+    }
+  } else {
+    document.getElementById('openDate').value = new Date().toISOString().split('T')[0];
+  }
+});
+
+function handleSubmit(e) {
+  e.preventDefault();
+  const form = e.target;
+
+  // Basic validation
+  if (!form.customerId.value || !form.groupId.value ||
+      !form.creditLimit.value || !form.cashCreditLimit.value ||
+      !form.openDate.value || !form.expirationDate.value) {
+    showToast('Please fill in all required fields.', 'error');
+    return;
+  }
+
+  const data = {
+    customerId:      form.customerId.value,
+    groupId:         form.groupId.value,
+    activeStatus:    form.activeStatus.value,
+    addrZip:         form.addrZip.value,
+    creditLimit:     parseFloat(form.creditLimit.value) || 0,
+    cashCreditLimit: parseFloat(form.cashCreditLimit.value) || 0,
+    currBal:         parseFloat(form.currBal.value) || 0,
+    openDate:        form.openDate.value,
+    expirationDate:  form.expirationDate.value,
+    reissueDate:     form.reissueDate.value,
+    currCycCredit:   0,
+    currCycDebit:    0,
+  };
+
+  if (isEdit) {
+    updateItem('accounts', editId, data);
+    showToast('Account updated successfully!', 'success');
+    setTimeout(() => window.location.href = 'accounts-detail.html?id=' + editId, 1000);
+  } else {
+    const newId = String(mockData.accounts.length + 1).padStart(11, '0');
+    data.id = newId;
+    createItem('accounts', data);
+    showToast('Account created successfully!', 'success');
+    setTimeout(() => window.location.href = 'accounts-detail.html?id=' + newId, 1000);
+  }
+}
+</script>
+</body>
+</html>

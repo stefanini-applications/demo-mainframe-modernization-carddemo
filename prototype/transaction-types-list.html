@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transaction Types - CardDemo</title>
+  <link rel="stylesheet" href="styles/reset.css">
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/global.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div class="app-layout">
+    <header class="app-header" role="banner">
+      <a href="dashboard.html" class="app-header__brand">💳 CardDemo</a>
+      <span class="app-header__spacer"></span>
+      <span class="app-header__user">👤 ADMIN001 <span class="badge badge--primary">Admin</span></span>
+      <button class="app-header__menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.app-sidebar').classList.toggle('is-open')">☰</button>
+    </header>
+    <nav class="app-sidebar" role="navigation" aria-label="Main navigation">
+      <ul class="nav-list">
+        <li><a href="dashboard.html" class="nav-item">🏠 Dashboard</a></li>
+        <li><a href="accounts-list.html" class="nav-item">🏦 Accounts</a></li>
+        <li><a href="credit-cards-list.html" class="nav-item">💳 Credit Cards</a></li>
+        <li><a href="transactions-list.html" class="nav-item">💸 Transactions</a></li>
+        <li><a href="billing-form.html" class="nav-item">💰 Billing</a></li>
+        <li><a href="reports-list.html" class="nav-item">📊 Reports</a></li>
+        <li><a href="users-list.html" class="nav-item">👥 User Management</a></li>
+        <li><a href="batch-list.html" class="nav-item">⚙️ Batch Jobs</a></li>
+        <li><a href="authorization-list.html" class="nav-item">🔐 Authorizations</a></li>
+        <li><a href="transaction-types-list.html" class="nav-item">🏷️ Trans. Types</a></li>
+      </ul>
+    </nav>
+    <main class="app-main" id="main-content">
+      <div class="app-main__content">
+
+        <div class="page-header">
+          <div><h1 class="page-title">Transaction Types</h1><p class="page-subtitle">Manage transaction type codes and categories</p></div>
+          <div class="page-actions"><a href="transaction-types-form.html" class="btn btn--primary">+ Add Type</a></div>
+        </div>
+        <div class="toolbar">
+          <div class="toolbar__search search-bar">
+            <i class="search-bar__icon">🔍</i>
+            <input type="search" id="searchInput" class="search-bar__input" placeholder="Search type code or description..." aria-label="Search types">
+          </div>
+        </div>
+        <div class="table-container">
+          <table class="table">
+            <thead><tr><th>Type Code</th><th>Description</th><th>Categories</th><th>Actions</th></tr></thead>
+            <tbody id="ttBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="scripts/mock-data.js"></script>
+  <script src="scripts/utils.js"></script>
+<script>
+    var all=[], filtered=[];
+    document.addEventListener('DOMContentLoaded',function(){all=getData('transactionTypes');filtered=all.slice();render();var ds=debounce(function(){applyFilter();},300);document.getElementById('searchInput').addEventListener('input',ds);});
+    function applyFilter(){var q=document.getElementById('searchInput').value.toLowerCase();filtered=all.filter(function(t){return!q||t.code.toLowerCase().includes(q)||t.description.toLowerCase().includes(q);});render();}
+    function render(){
+      document.getElementById('ttBody').innerHTML=filtered.length?filtered.map(function(t){
+        return '<tr><td><span class="badge badge--primary font-mono">'+escapeHtml(t.code)+'</span></td><td>'+escapeHtml(t.description)+'</td><td><span class="badge badge--secondary">'+(t.categories||[]).length+' categories</span></td><td style="display:flex;gap:8px"><a href="transaction-types-detail.html?id='+encodeURIComponent(t.id)+'" class="btn btn--secondary btn--sm">View</a><a href="transaction-types-form.html?id='+encodeURIComponent(t.id)+'" class="btn btn--primary btn--sm">Edit</a></td></tr>';
+      }).join(''):'<tr><td colspan="4"><div class="table-empty"><div class="table-empty__icon">🏷️</div><div class="table-empty__text">No transaction types found</div></div></td></tr>';
+    }
+</script>
+</body>
+</html>

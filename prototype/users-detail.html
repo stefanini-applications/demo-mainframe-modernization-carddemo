@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Detail - CardDemo</title>
+  <link rel="stylesheet" href="styles/reset.css">
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/global.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div class="app-layout">
+    <header class="app-header" role="banner">
+      <a href="dashboard.html" class="app-header__brand">💳 CardDemo</a>
+      <span class="app-header__spacer"></span>
+      <span class="app-header__user">👤 ADMIN001 <span class="badge badge--primary">Admin</span></span>
+      <button class="app-header__menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.app-sidebar').classList.toggle('is-open')">☰</button>
+    </header>
+    <nav class="app-sidebar" role="navigation" aria-label="Main navigation">
+      <ul class="nav-list">
+        <li><a href="dashboard.html" class="nav-item">🏠 Dashboard</a></li>
+        <li><a href="accounts-list.html" class="nav-item">🏦 Accounts</a></li>
+        <li><a href="credit-cards-list.html" class="nav-item">💳 Credit Cards</a></li>
+        <li><a href="transactions-list.html" class="nav-item">💸 Transactions</a></li>
+        <li><a href="billing-form.html" class="nav-item">💰 Billing</a></li>
+        <li><a href="reports-list.html" class="nav-item">📊 Reports</a></li>
+        <li><a href="users-list.html" class="nav-item">👥 User Management</a></li>
+        <li><a href="batch-list.html" class="nav-item">⚙️ Batch Jobs</a></li>
+        <li><a href="authorization-list.html" class="nav-item">🔐 Authorizations</a></li>
+        <li><a href="transaction-types-list.html" class="nav-item">🏷️ Trans. Types</a></li>
+      </ul>
+    </nav>
+    <main class="app-main" id="main-content">
+      <div class="app-main__content">
+
+        <nav class="breadcrumb"><span class="breadcrumb__item"><a href="users-list.html">User Management</a></span><span class="breadcrumb__separator">›</span><span class="breadcrumb__item" id="breadcrumbId">User Detail</span></nav>
+        <div class="page-header">
+          <div><h1 class="page-title" id="pageTitle">User Detail</h1></div>
+          <div class="page-actions"><a href="users-list.html" class="btn btn--secondary">← Back to List</a><a id="editBtn" href="#" class="btn btn--primary">Edit User</a></div>
+        </div>
+        <div class="card"><div class="card__header"><h2 class="card__title">User Information</h2></div><div class="card__body" id="userInfo"></div></div>
+      </div>
+    </main>
+  </div>
+  <script src="scripts/mock-data.js"></script>
+  <script src="scripts/utils.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded',function(){
+      var id=getParam('id');
+      if(!id){window.location.href='users-list.html';return;}
+      var u=getById('users',id);
+      if(!u){document.querySelector('.app-main__content').innerHTML='<div class="alert alert--error"><span class="alert__icon">⚠️</span><div class="alert__content">User not found.</div></div>';return;}
+      document.getElementById('breadcrumbId').textContent=u.id;
+      document.getElementById('pageTitle').textContent=u.firstName+' '+u.lastName;
+      document.getElementById('editBtn').href='users-form.html?id='+encodeURIComponent(u.id);
+      function df(l,v){return '<div class="detail-field"><div class="detail-field__label">'+l+'</div><div class="detail-field__value">'+v+'</div></div>';}
+      var typeBadge=u.type==='A'?'<span class="badge badge--warning">Admin</span>':'<span class="badge badge--secondary">Regular User</span>';
+      document.getElementById('userInfo').innerHTML=df('User ID','<span class="font-mono">'+escapeHtml(u.id)+'</span>')+df('First Name',escapeHtml(u.firstName||'N/A'))+df('Last Name',escapeHtml(u.lastName||'N/A'))+');df('User Type',typeBadge)+df('Password','••
+    });
+</script>
+</body>
+</html>

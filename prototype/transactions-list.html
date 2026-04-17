@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transactions - CardDemo</title>
+  <link rel="stylesheet" href="styles/reset.css">
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/global.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div class="app-layout">
+    <header class="app-header" role="banner">
+      <a href="dashboard.html" class="app-header__brand">💳 CardDemo</a>
+      <span class="app-header__spacer"></span>
+      <span class="app-header__user">👤 ADMIN001 <span class="badge badge--primary">Admin</span></span>
+      <button class="app-header__menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.app-sidebar').classList.toggle('is-open')">☰</button>
+    </header>
+    <nav class="app-sidebar" role="navigation" aria-label="Main navigation">
+      <ul class="nav-list">
+        <li><a href="dashboard.html" class="nav-item">🏠 Dashboard</a></li>
+        <li><a href="accounts-list.html" class="nav-item">🏦 Accounts</a></li>
+        <li><a href="credit-cards-list.html" class="nav-item">💳 Credit Cards</a></li>
+        <li><a href="transactions-list.html" class="nav-item">💸 Transactions</a></li>
+        <li><a href="billing-form.html" class="nav-item">💰 Billing</a></li>
+        <li><a href="reports-list.html" class="nav-item">📊 Reports</a></li>
+        <li><a href="users-list.html" class="nav-item">👥 User Management</a></li>
+        <li><a href="batch-list.html" class="nav-item">⚙️ Batch Jobs</a></li>
+        <li><a href="authorization-list.html" class="nav-item">🔐 Authorizations</a></li>
+        <li><a href="transaction-types-list.html" class="nav-item">🏷️ Trans. Types</a></li>
+      </ul>
+    </nav>
+    <main class="app-main" id="main-content">
+      <div class="app-main__content">
+        <div class="page-header">
+          <div><h1 class="page-title">Transactions</h1><p class="page-subtitle">View and manage credit card transactions</p></div>
+          <div class="page-actions"><a href="transactions-form.html" class="btn btn--primary">+ New Transaction</a></div>
+        </div>
+        <div class="toolbar">
+          <div class="toolbar__search search-bar">
+            <i class="search-bar__icon">🔍</i>
+            <input type="search" id="searchInput" class="search-bar__input" placeholder="Search description, merchant, card..." aria-label="Search transactions">
+          </div>
+          <div class="toolbar__filters">
+            <select id="typeFilter" class="form-group__select" style="width:auto">
+              <option value="">All Types</option>
+              <option value="01">01 - Purchase</option>
+              <option value="02">02 - Payment</option>
+              <option value="03">03 - Credit</option>
+              <option value="04">04 - Authorization</option>
+              <option value="05">05 - Refund</option>
+              <option value="06">06 - Reversal</option>
+              <option value="07">07 - Adjustment</option>
+            </select>
+          </div>
+          <span class="toolbar__info" id="resultCount"></span>
+        </div>
+        <div class="table-container">
+          <table class="table">
+            <thead><tr><th onclick="sortBy('id')">Trans ID ↕</th><th>Card Number</th><th onclick="sortBy('typeCode')">Type ↕</th><th>Description</th><th onclick="sortBy('amount')">Amount ↕</th><th>Merchant</th><th onclick="sortBy('procTs')">Date ↕</th><th>Actions</th></tr></thead>
+            <tbody id="txBody"></tbody>
+          </table>
+        </div>
+        <div id="paginationContainer"></div>
+      </div>
+    </main>
+  </div>
+  <script src="scripts/mock-data.js"></script>
+  <script src="scripts/utils.js"></script>
+<script>
+    var cp=1,pp=10,sf='procTs',sd=-1,all=[],filtered=[];
+    document.addEventListener('DOMContentLoaded',function(){
+      all=getData('transactions'); filtered=all.slice(); render();
+      var ds=debounce(function(){cp=1;applyFilters();},300);
+      document.getElementById('searchInput').addEventListener('input',ds);
+      document.getElementById('typeFilter').addEventListener('change',function(){cp=1;applyFilters();});
+    });
+    function applyFilters(){
+      var q=document.getElementById('searchInput').value.toLowerCase();
+      var t=document.getElementById('typeFilter').value;
+      filtered=all.filter(function(tx){ return (!q||tx.desc.toLowerCase().includes(q)||tx.merchantName.toLowerCase().includes(q)||tx.cardNum.includes(q)||tx.id.includes(q))&&(!t||tx.typeCode===t); });
+      render();
+    }
+    function sortBy(f){ if(sf===f) sd=-sd; else{sf=f;sd=1;} render(); }
+    function render(){
+      var sorted=filtered.slice().sort(function(a,b){ var av=a[sf],bv=b[sf]; if(typeof av==='number') return sd*(av-bv); return sd*String(av||'').localeCompare(String(bv||'')); });
+      var paged=paginate(sorted,cp,pp);
+      document.getElementById('resultCount').textContent='Showing '+(paged.total?((cp-1)*pp+1):0)+'-'+Math.min(cp*pp,paged.total)+' of '+paged.total;
+      document.getElementById('txBody').innerHTML=paged.items.length?paged.items.map(function(t){
+        return '<tr><td><a href="transactions-detail.html?id='+encodeURIComponent(t.id)+'" class="font-mono text-xs" style="color:var(--color-primary)">'+escapeHtml(t.id.slice(-8))+'</a></td><td class="font-mono text-xs">'+maskCardNum(t.cardNum)+'</td><td><span class="badge badge--secondary">'+escapeHtml(t.typeCode)+'</span></td><td class="text-sm">'+escapeHtml(t.desc)+'</td><td>'+formatAmount(t.amount)+'</td><td class="text-sm">'+escapeHtml(t.merchantName)+'</td><td class="text-sm">'+escapeHtml(t.procTs.split(' ')[0])+'</td><td><a href="transactions-detail.html?id='+encodeURIComponent(t.id)+'" class="btn btn--secondary btn--sm">View</a></td></tr>';
+      }).join(''):'<tr><td colspan="8"><div class="table-empty"><div class="table-empty__icon">🔍</div><div class="table-empty__text">No transactions found</div></div></td></tr>';
+      renderPagination('paginationContainer',paged.totalPages,cp,'goToPage');
+    }
+    function goToPage(p){cp=p;render();window.scrollTo(0,0);}
+</script>
+</body>
+</html>

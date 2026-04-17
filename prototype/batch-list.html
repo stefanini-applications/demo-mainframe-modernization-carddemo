@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Batch Jobs - CardDemo</title>
+  <link rel="stylesheet" href="styles/reset.css">
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/global.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div class="app-layout">
+    <header class="app-header" role="banner">
+      <a href="dashboard.html" class="app-header__brand">💳 CardDemo</a>
+      <span class="app-header__spacer"></span>
+      <span class="app-header__user">👤 ADMIN001 <span class="badge badge--primary">Admin</span></span>
+      <button class="app-header__menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.app-sidebar').classList.toggle('is-open')">☰</button>
+    </header>
+    <nav class="app-sidebar" role="navigation" aria-label="Main navigation">
+      <ul class="nav-list">
+        <li><a href="dashboard.html" class="nav-item">🏠 Dashboard</a></li>
+        <li><a href="accounts-list.html" class="nav-item">🏦 Accounts</a></li>
+        <li><a href="credit-cards-list.html" class="nav-item">💳 Credit Cards</a></li>
+        <li><a href="transactions-list.html" class="nav-item">💸 Transactions</a></li>
+        <li><a href="billing-form.html" class="nav-item">💰 Billing</a></li>
+        <li><a href="reports-list.html" class="nav-item">📊 Reports</a></li>
+        <li><a href="users-list.html" class="nav-item">👥 User Management</a></li>
+        <li><a href="batch-list.html" class="nav-item">⚙️ Batch Jobs</a></li>
+        <li><a href="authorization-list.html" class="nav-item">🔐 Authorizations</a></li>
+        <li><a href="transaction-types-list.html" class="nav-item">🏷️ Trans. Types</a></li>
+      </ul>
+    </nav>
+    <main class="app-main" id="main-content">
+      <div class="app-main__content">
+
+        <div class="page-header">
+          <div><h1 class="page-title">Batch Jobs</h1><p class="page-subtitle">Monitor and run batch processing jobs</p></div>
+        </div>
+        <div class="toolbar">
+          <div class="toolbar__filters">
+            <select id="statusFilter" class="form-group__select" style="width:auto" onchange="applyFilter()">
+              <option value="">All Statuses</option>
+              <option value="Completed">Completed</option>
+              <option value="Running">Running</option>
+              <option value="Pending">Pending</option>
+              <option value="Failed">Failed</option>
+            </select>
+            <select id="typeFilter" class="form-group__select" style="width:auto" onchange="applyFilter()">
+              <option value="">All Types</option>
+              <option value="POSTTRAN">POSTTRAN</option>
+              <option value="TRANREPT">TRANREPT</option>
+              <option value="INTCALC">INTCALC</option>
+              <option value="CBTRN01C">CBTRN01C</option>
+              <option value="CLOSEFIL">CLOSEFIL</option>
+              <option value="OPENFIL">OPENFIL</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-container">
+          <table class="table">
+            <thead><tr><th>Job ID</th><th>Job Name</th><th>Program</th><th>Status</th><th>Started</th><th>Duration</th><th>Return Code</th><th>Actions</th></tr></thead>
+            <tbody id="batchBody"></tbody>
+          </table>
+        </div>
+        <div class="card mt-4">
+          <div class="card__header"><h2 class="card__title">Run a Batch Job</h2></div>
+          <div class="card__body">
+            <div class="form-row" style="align-items:flex-end">
+              <div class="form-group">
+                <label class="form-group__label" for="runJobSelect">Select Job to Run</label>
+                <select id="runJobSelect" class="form-group__select">
+                  <option value="POSTTRAN">POSTTRAN — Post daily transactions</option>
+                  <option value="TRANREPT">TRANREPT — Generate transaction report</option>
+                  <option value="INTCALC">INTCALC — Monthly interest calculation</option>
+                  <option value="CBTRN01C">CBTRN01C — Transaction validation</option>
+                  <option value="CLOSEFIL">CLOSEFIL — Close CICS files for batch</option>
+                  <option value="OPENFIL">OPENFIL — Reopen CICS files</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-group__label" for="runDate">Run Date (YYYYMMDD)</label>
+                <input type="text" id="runDate" class="form-group__input" maxlength="8" placeholder="20250315">
+              </div>
+              <div><button class="btn btn--primary" onclick="runJob()">▶ Run Job</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="scripts/mock-data.js"></script>
+  <script src="scripts/utils.js"></script>
+<script>
+    var all=[], filtered=[];
+    document.addEventListener('DOMContentLoaded',function(){all=getData('batchJobs');filtered=all.slice();render();});
+    function applyFilter(){var s=document.getElementById('statusFilter').value;var t=document.getElementById('typeFilter').value;filtered=all.filter(function(j){return(!s||j.status===s)&&(!t||j.jobName===t);});render();}
+    function render(){
+      document.getElementById('batchBody').innerHTML=filtered.length?filtered.map(function(j){
+        return '<tr><td class="font-mono text-xs">'+escapeHtml(j.id)+'</td><td><a href="batch-detail.html?id='+encodeURIComponent(j.id)+'" style="color:var(--color-primary);font-weight:600">'+escapeHtml(j.jobName)+'</a></td><td class="font-mono text-xs">'+escapeHtml(j.program)+'</td><td>'+getStatusBadge(j.status)+'</td><td class="text-sm">'+escapeHtml(j.startTime||'—')+'</td><td class="text-sm">'+escapeHtml(j.duration||'—')+'</td><td><span class="badge '+(j.rc==='0000'||j.rc===0?'badge--success':'badge--error')+'">RC='+escapeHtml(String(j.rc||'—'))+'</span></td><td><a href="batch-detail.html?id='+encodeURIComponent(j.id)+'" class="btn btn--secondary btn--sm">Details</a></td></tr>';
+      }).join(''):'<tr><td colspan="8"><div class="table-empty"><div class="table-empty__icon">⚙️</div><div class="table-empty__text">No jobs found</div></div></td></tr>';
+    }
+    function runJob(){
+      var jn=document.getElementById('runJobSelect').value;
+      var rd=document.getElementById('runDate').value||new Date().toISOString().split('T')[0].replace(/-/g,'');
+      var ts=new Date().toISOString().replace('T',' ').split('.')[0];
+      var programs={'POSTTRAN':'CBTRN02C','TRANREPT':'CBTRN03C','INTCALC':'CBACT04C','CBTRN01C':'CBTRN01C','CLOSEFIL':'IDCAMS','OPENFIL':'IDCAMS'};
+      var newJob={id:'JOB'+Date.now().toString().slice(-8),jobName:jn,program:programs[jn]||jn,status:'Running',startTime:ts,duration:'',rc:'',parameter:rd,steps:['INIT','ALLOCATE','EXECUTE','FINALIZE']};
+      createItem('batchJobs',newJob);
+      all=getData('batchJobs');filtered=all.slice();render();
+      showToast(jn+' submitted. Simulating execution...','info');
+      setTimeout(function(){
+        var rc=Math.random()<0.9?'0000':'0008';
+        updateItem('batchJobs',newJob.id,{status:rc==='0000'?'Completed':'Failed',duration:'00:00:'+(Math.floor(Math.random()*59)+1).toString().padStart(2,'0'),rc:rc});
+        all=getData('batchJobs');applyFilter();
+        showToast(jn+' '+(rc==='0000'?'completed successfully.':'failed with RC='+rc),rc==='0000'?'success':'error');
+      },2000);
+    }
+</script>
+</body>
+</html>

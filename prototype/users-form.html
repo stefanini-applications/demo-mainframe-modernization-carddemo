@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Form - CardDemo</title>
+  <link rel="stylesheet" href="styles/reset.css">
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/global.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div class="app-layout">
+    <header class="app-header" role="banner">
+      <a href="dashboard.html" class="app-header__brand">💳 CardDemo</a>
+      <span class="app-header__spacer"></span>
+      <span class="app-header__user">👤 ADMIN001 <span class="badge badge--primary">Admin</span></span>
+      <button class="app-header__menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.app-sidebar').classList.toggle('is-open')">☰</button>
+    </header>
+    <nav class="app-sidebar" role="navigation" aria-label="Main navigation">
+      <ul class="nav-list">
+        <li><a href="dashboard.html" class="nav-item">🏠 Dashboard</a></li>
+        <li><a href="accounts-list.html" class="nav-item">🏦 Accounts</a></li>
+        <li><a href="credit-cards-list.html" class="nav-item">💳 Credit Cards</a></li>
+        <li><a href="transactions-list.html" class="nav-item">💸 Transactions</a></li>
+        <li><a href="billing-form.html" class="nav-item">💰 Billing</a></li>
+        <li><a href="reports-list.html" class="nav-item">📊 Reports</a></li>
+        <li><a href="users-list.html" class="nav-item">👥 User Management</a></li>
+        <li><a href="batch-list.html" class="nav-item">⚙️ Batch Jobs</a></li>
+        <li><a href="authorization-list.html" class="nav-item">🔐 Authorizations</a></li>
+        <li><a href="transaction-types-list.html" class="nav-item">🏷️ Trans. Types</a></li>
+      </ul>
+    </nav>
+    <main class="app-main" id="main-content">
+      <div class="app-main__content">
+
+        <nav class="breadcrumb"><span class="breadcrumb__item"><a href="users-list.html">User Management</a></span><span class="breadcrumb__</span><span class="breadcrumb__item" id="breadcrumbTitle">New User</span></nav>separator">
+        <div class="page-header"><h1 class="page-title" id="pageTitle">Add New User</h1></div>
+        <form id="userForm" novalidate>
+          <div class="card mb-6">
+            <div class="card__header"><h2 class="card__title">User Information</h2></div>
+            <div class="card__body">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-group__label form-group__label--required" for="userId">User ID (max 8 chars)</label>
+                  <input type="text" id="userId" class="form-group__input" maxlength="8" placeholder="JDOE0001">
+                  <span class="form-group__error" id="userIdError"></span>
+                </div>
+                <div class="form-group">
+                  <label class="form-group__label form-group__label--required" for="userType">User Type</label>
+                  <select id="userType" class="form-group__select">
+                    <option value="U">U - Regular User</option>
+                    <option value="A">A - Admin</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-group__label form-group__label--required" for="firstName">First Name</label>
+                  <input type="text" id="firstName" class="form-group__input" maxlength="20" placeholder="John">
+                  <span class="form-group__error" id="firstNameError"></span>
+                </div>
+                <div class="form-group">
+                  <label class="form-group__label form-group__label--required" for="lastName">Last Name</label>
+                  <input type="text" id="lastName" class="form-group__input" maxlength="20" placeholder="Doe">
+                  <span class="form-group__error" id="lastNameError"></span>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-group__label form-group__label--required" for="password">Password (max 8 chars)</label>
+                  <input type="password" id="password" class="form-group__input" maxlength="8" placeholder="Min 6 chars">
+                  <span class="form-group__error" id="passwordError"></span>
+                </div>
+                <div class="form-group">
+                  <label class="form-group__label form-group__label--required" for="confirmPwd">Confirm Password</label>
+                  <input type="password" id="confirmPwd" class="form-group__input" maxlength="8">
+                  <span class="form-group__error" id="confirmPwdError"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn--primary btn--lg" id="submitBtn">Create User</button>
+            <a href="users-list.html" class="btn btn--secondary btn--lg">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+  <script src="scripts/mock-data.js"></script>
+  <script src="scripts/utils.js"></script>
+<script>
+    var isEdit=!!getParam('id');
+    document.addEventListener('DOMContentLoaded',function(){
+      if(isEdit){
+        var u=getById('users',getParam('id'));
+        if(!u){window.location.href='users-list.html';return;}
+        document.getElementById('pageTitle').textContent='Edit User: '+u.id;
+        document.getElementById('breadcrumbTitle').textContent='Edit '+u.id;
+        document.getElementById('userId').value=u.id;document.getElementById('userId').readOnly=true;
+        document.getElementById('userType').value=u.type||'U';
+        document.getElementById('firstName').value=u.firstName||'';
+        document.getElementById('lastName').value=u.lastName||'';
+        document.getElementById('submitBtn').textContent='Save Changes';
+        document.getElementById('password').placeholder='Leave blank to keep current';
+        document.getElementById('password').required=false;
+        document.getElementById('confirmPwd').required=false;
+      }
+    });
+    document.getElementById('userForm').addEventListener('submit',function(e){
+      e.preventDefault();
+      var errors=[];
+      function se(id,msg){var el=document.getElementById(id+'Error');if(el)el.textContent=msg||'';var inp=document.getElementById(id);if(inp)inp.classList.toggle('has-error',!!msg);if(msg)errors.push(msg);}
+      var uid=document.getElementById('userId').value.trim();
+      se('userId',!uid?'User ID is required.':/\s/.test(uid)?'No spaces allowed in User ID.':'');
+      se('firstName',!document.getElementById('firstName').value.trim()?'First name is required.':'');
+      se('lastName',!document.getElementById('lastName').value.trim()?'Last name is required.':'');
+      var pw=document.getElementById('password').value;var cp2=document.getElementById('confirmPwd').value;
+      if(!isEdit||pw){
+        se('password',!pw?'Password is required.':pw.length<6?'Minimum 6 characters.':'');
+        se('confirmPwd',pw!==cp2?'Passwords do not match.':'');
+      } else {se('password','');se('confirmPwd','');}
+      if(errors.length) return;
+      var data={id:uid.toUpperCase(),firstName:document.getElementById('firstName').value.trim(),lastName:document.getElementById('lastName').value.trim(),type:document.getElementById('userType').value};
+      if(pw) data.password=pw.toUpperCase();
+      if(isEdit){updateItem('users',getParam('id'),data);}else{createItem('users',data);}
+      showToast((isEdit?'User updated.':'User created.'),'success');
+      setTimeout(function(){window.location.href='users-detail.html?id='+encodeURIComponent(uid.toUpperCase());},800);
+    });
+</script>
+</body>
+</html>

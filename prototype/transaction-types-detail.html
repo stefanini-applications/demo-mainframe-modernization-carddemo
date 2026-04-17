@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transaction Type Detail - CardDemo</title>
+  <link rel="stylesheet" href="styles/reset.css">
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/global.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div class="app-layout">
+    <header class="app-header" role="banner">
+      <a href="dashboard.html" class="app-header__brand">💳 CardDemo</a>
+      <span class="app-header__spacer"></span>
+      <span class="app-header__user">👤 ADMIN001 <span class="badge badge--primary">Admin</span></span>
+      <button class="app-header__menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.app-sidebar').classList.toggle('is-open')">☰</button>
+    </header>
+    <nav class="app-sidebar" role="navigation" aria-label="Main navigation">
+      <ul class="nav-list">
+        <li><a href="dashboard.html" class="nav-item">🏠 Dashboard</a></li>
+        <li><a href="accounts-list.html" class="nav-item">🏦 Accounts</a></li>
+        <li><a href="credit-cards-list.html" class="nav-item">💳 Credit Cards</a></li>
+        <li><a href="transactions-list.html" class="nav-item">💸 Transactions</a></li>
+        <li><a href="billing-form.html" class="nav-item">💰 Billing</a></li>
+        <li><a href="reports-list.html" class="nav-item">📊 Reports</a></li>
+        <li><a href="users-list.html" class="nav-item">👥 User Management</a></li>
+        <li><a href="batch-list.html" class="nav-item">⚙️ Batch Jobs</a></li>
+        <li><a href="authorization-list.html" class="nav-item">🔐 Authorizations</a></li>
+        <li><a href="transaction-types-list.html" class="nav-item">🏷️ Trans. Types</a></li>
+      </ul>
+    </nav>
+    <main class="app-main" id="main-content">
+      <div class="app-main__content">
+
+        <nav class="breadcrumb"><span class="breadcrumb__item"><a href="transaction-types-list.html">Transaction Types</a></span><span class="breadcrumb__separator">›</span><span class="breadcrumb__item" id="breadcrumbId">Detail</span></nav>
+        <div class="page-header">
+          <div><h1 class="page-title" id="pageTitle">Type Detail</h1></div>
+          <div class="page-actions"><a href="transaction-types-list.html" class="btn btn--secondary">← Back</a><a id="editBtn" href="#" class="btn btn--primary">Edit Type</a></div>
+        </div>
+        <div class="card mb-6"><div class="card__header"><h2 class="card__title">Type Information</h2></div><div class="card__body" id="typeInfo"></div></div>
+        <div class="card"><div class="card__header"><h2 class="card__title">Categories</h2></div><div class="card__body" id="catTable"></div></div>
+      </div>
+    </main>
+  </div>
+  <script src="scripts/mock-data.js"></script>
+  <script src="scripts/utils.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded',function(){
+      var id=getParam('id');
+      if(!id){window.location.href='transaction-types-list.html';return;}
+      var t=getById('transactionTypes',id);
+      if(!t){document.querySelector('.app-main__content').innerHTML='<div class="alert alert--error"><span class="alert__icon">⚠️</span><div class="alert__content">Transaction type not found.</div></div>';return;}
+      document.getElementById('breadcrumbId').textContent=t.code;
+      document.getElementById('pageTitle').textContent=t.code+' — '+t.description;
+      document.getElementById('editBtn').href='transaction-types-form.html?id='+encodeURIComponent(t.id);
+      function df(l,v){return '<div class="detail-field"><div class="detail-field__label">'+l+'</div><div class="detail-field__value">'+v+'</div></div>';}
+      document.getElementById('typeInfo').innerHTML=df('Type Code','<span class="badge badge--primary font-mono" style="font-size:1rem">'+escapeHtml(t.code)+'</span>')+df('Description',escapeHtml(t.description))+df('Total Categories',String((t.categories||[]).length));
+      var cats=t.categories||[];
+      document.getElementById('catTable').innerHTML=cats.length?'<div class="table-container"><table class="table"><thead><tr><th>Category Code</th><th>Description</th></tr></thead><tbody>'+cats.map(function(c){return '<tr><td><span class="badge badge--secondary font-mono">'+escapeHtml(c.code)+'</span></td><td>'+escapeHtml(c.description)+'</td></tr>';}).join('')+'</tbody></table></div>':'<p class="text-secondary">No categories defined.</p>';
+    });
+</script>
+</body>
+</html>

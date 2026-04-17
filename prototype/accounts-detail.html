@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Detail - CardDemo</title>
+  <link rel="stylesheet" href="styles/reset.css">
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/global.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+<a href="#main" class="skip-link">Skip to main content</a>
+<div class="app-layout">
+  <header class="app-header" role="banner">
+    <a href="dashboard.html" class="app-header__brand">&#x1F4B3; CardDemo</a>
+    <button class="app-header__menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.app-sidebar').classList.toggle('is-open')">&#9776;</button>
+    <span class="app-header__user">&#x1F464; ADMIN001 <span class="badge badge--primary">Admin</span></span>
+  </header>
+  <nav class="app-sidebar" role="navigation" aria-label="Main navigation">
+    <ul class="nav-list">
+      <li><a href="dashboard.html" class="nav-item">&#x1F3E0; Dashboard</a></li>
+      <li><a href="accounts-list.html" class="nav-item">&#x1F3E6; Accounts</a></li>
+      <li><a href="credit-cards-list.html" class="nav-item">&#x1F4B3; Credit Cards</a></li>
+      <li><a href="transactions-list.html" class="nav-item">&#x1F4B8; Transactions</a></li>
+      <li><a href="billing-form.html" class="nav-item">&#x1F4B0; Billing</a></li>
+      <li><a href="reports-list.html" class="nav-item">&#x1F4CA; Reports</a></li>
+      <li><a href="users-list.html" class="nav-item">&#x1F465; Users</a></li>
+      <li><a href="batch-list.html" class="nav-item">&#x2699;&#xFE0F; Batch Jobs</a></li>
+      <li><a href="authorization-list.html" class="nav-item">&#x1F510; Authorizations</a></li>
+      <li><a href="transaction-types-list.html" class="nav-item">&#x1F3F7;&#xFE0F; Trans. Types</a></li>
+    </ul>
+  </nav>
+  <main class="app-main" id="main" role="main">
+    <div class="app-main__content">
+      <nav class="breadcrumb" aria-label="breadcrumb">
+        <div class="breadcrumb__item"><a href="accounts-list.html">Accounts</a></div>
+        <div class="breadcrumb__item" id="breadcrumb-current">Detail</div>
+      </nav>
+      <div id="not-found" class="alert alert--error hidden">Account not found.</div>
+      <div id="page-content" class="hidden">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title" id="page-title">Account Detail</h1>
+            <p class="page-subtitle" id="page-subtitle"></p>
+          </div>
+          <div class="btn-group">
+            <a href="accounts-list.html" class="btn btn--ghost">&#x2190; Back</a>
+            <a id="edit-btn" href="#" class="btn btn--primary">Edit Account</a>
+          </div>
+        </div>
+
+        <div class="cols-2 mb-6">
+          <div class="card">
+            <div class="card__header"><h2 class="card__title">Account Information</h2></div>
+            <div class="card__body">
+              <table class="info-table" id="account-info"></table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card__header"><h2 class="card__title">Balance &amp; Limits</h2></div>
+            <div class="card__body">
+              <table class="info-table" id="balance-info"></table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-6">
+          <div class="card__header"><h2 class="card__title">Customer Information</h2></div>
+          <div class="card__body">
+            <div class="detail-grid" id="customer-info"></div>
+          </div>
+        </div>
+
+        <div class="card mb-6">
+          <div class="card__header">
+            <h2 class="card__title">Credit Cards</h2>
+            <a id="new-card-btn" href="credit-cards-form.html" class="btn btn--primary btn--sm">+ Issue Card</a>
+          </div>
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Card Number</th>
+                  <th>Embossed Name</th>
+                  <th>Expiry</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="cards-table"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card__header">
+            <h2 class="card__title">Recent Transactions</h2>
+            <a id="view-txns-btn" href="transactions-list.html" class="btn btn--ghost btn--sm">View All</a>
+          </div>
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Description</th>
+                  <th>Merchant</th>
+                  <th>Amount</th>
+                  <th>Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="txns-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="scripts/mock-data.js"></script>
+<script src="scripts/utils.js"></script>
+<script>
+markActiveNav();
+document.addEventListener('DOMContentLoaded', function () {
+  const id      = getParam('id');
+  const account = getById('accounts', id);
+  if (!account) {
+    document.getElementById('not-found').classList.remove('hidden');
+    return;
+  }
+
+  document.getElementById('page-content').classList.remove('hidden');
+  document.getElementById('page-title').textContent =
+    'Account ' + account.id;
+  document.getElementById('page-subtitle').textContent =
+    account.groupId + '  •  ' + (account.activeStatus === 'Y' ? 'Active' : 'Inactive');
+  document.getElementById('breadcrumb-current').textContent = account.id;
+  document.getElementById('edit-btn').href =
+    'accounts-form.html?id=' + account.id;
+  document.getElementById('new-card-btn').href =
+    'credit-cards-form.html?acctId=' + account.id;
+
+  document.getElementById('account-info').innerHTML = [
+    ['Account ID',       account.id],
+    ['Customer ID',      account.customerId],
+    ['Group',            account.groupId],
+    ['Status',           getStatusBadge(account.activeStatus)],
+    ['Open Date',        formatDate(account.openDate)],
+    ['Expiration Date',  formatDate(account.expirationDate)],
+    ['Reissue Date',     formatDate(account.reissueDate)],
+    ['ZIP Code',         account.addrZip],
+  ].map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join('');
+
+  const util = account.creditLimit > 0
+    ? ((account.currBal / account.creditLimit) * 100).toFixed(1)
+    : 0;
+  document.getElementById('balance-info').innerHTML = [
+    ['Current Balance',   `<span class="font-semibold">${formatCurrency(account.currBal)}</span>`],
+    ['Credit Limit',      formatCurrency(account.creditLimit)],
+    ['Cash Credit Limit', formatCurrency(account.cashCreditLimit)],
+    ['Available Credit',  formatCurrency(account.creditLimit - account.currBal)],
+    ['Utilization',       `<span class="${util > 80 ? 'text-error' : 'text-success'}">${util}%</span>`],
+    ['Cycle Credits',     `<span class="amount-positive">+${formatCurrency(account.currCycCredit)}</span>`],
+    ['Cycle Debits',      `<span class="amount-negative">-${formatCurrency(account.currCycDebit)}</span>`],
+  ].map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join('');
+
+  const customer = getById('customers', account.customerId);
+  if (customer) {
+    document.getElementById('customer-info').innerHTML = [
+      ['Full Name',           customer.firstName + ' ' + (customer.middleName ? customer.middleName + ' ' : '') + customer.lastName],
+      ['Address',             customer.addrLine1 + (customer.addrLine2 ? ', ' + customer.addrLine2 : '')],
+      ['City / State / ZIP',  (customer.addrCity ? customer.addrCity + ', ' : '') + customer.addrState + ' ' + customer.addrZip],
+      ['Phone 1',             customer.phone1],
+      ['Phone 2',             customer.phone2 || 'N/A'],
+      ['Date of Birth',       formatDate(customer.dob)],
+      ['FICO Score',          `<span class="font-semibold ${customer.ficoScore >= 750 ? 'text-success' : 'text-warning'}">${customer.ficoScore}</span>`],
+      ['Primary Card Holder', customer.primaryCardHolder === 'Y' ? 'Yes' : 'No'],
+    ].map(([k, v]) =>
+      `<div class="detail-item"><div class="detail-label">${k}</div><div class="detail-value">${v}</div></div>`
+    ).join('');
+  }
+
+  const cards = getData('creditCards').filter(c => c.acctId === account.id);
+  document.getElementById('cards-table').innerHTML = cards.length
+    ? cards.map(c => `<tr>
+        <td class="font-mono">
+          <a href="credit-cards-detail.html?id=${c.id}" style="color:var(--color-primary)">${maskCardNum(c.id)}</a>
+        </td>
+        <td>${c.embossedName}</td>
+        <td>${c.expirationDate}</td>
+        <td>${getStatusBadge(c.activeStatus)}</td>
+        <td>
+          <div class="btn-group">
+            <a href="credit-cards-detail.html?id=${c.id}" class="btn btn--ghost btn--sm">View</a>
+            <a href="credit-cards-form.html?id=${c.id}"   class="btn btn--secondary btn--sm">Edit</a>
+          </div>
+        </td>
+      </tr>`).join('')
+    : '<tr><td colspan="5" class="text-center text-secondary" style="padding:2rem">No cards found</td></tr>';
+
+  const cardNums = cards.map(c => c.id);
+  const txns     = getData('transactions').filter(t => cardNums.includes(t.cardNum)).slice(0, 10);
+  document.getElementById('txns-table').innerHTML = txns.length
+    ? txns.map(t => `<tr>
+        <td class="font-mono text-sm">
+          <a href="transactions-detail.html?id=${t.id}" style="color:var(--color-primary)">${t.id.slice(-6)}</a>
+        </td>
+        <td>${t.desc}</td>
+        <td>${t.merchantName}</td>
+        <td class="${t.amount < 0 ? 'amount-negative' : 'amount-positive'}">${formatCurrency(t.amount)}</td>
+        <td class="text-sm">${formatDateTime(t.origTs)}</td>
+        <td><a href="transactions-detail.html?id=${t.id}" class="btn btn--ghost btn--sm">View</a></td>
+      </tr>`).join('')
+    : '<tr><td colspan="6" class="text-center text-secondary" style="padding:2rem">No transactions found</td></tr>';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accounts - CardDemo</title>
+  <link rel="stylesheet" href="styles/reset.css">
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/global.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+<a href="#main" class="skip-link">Skip to main content</a>
+<div class="app-layout">
+  <header class="app-header" role="banner">
+    <a href="dashboard.html" class="app-header__brand">&#x1F4B3; CardDemo</a>
+    <button class="app-header__menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.app-sidebar').classList.toggle('is-open')">&#9776;</button>
+    <span class="app-header__user">&#x1F464; ADMIN001 <span class="badge badge--primary">Admin</span></span>
+  </header>
+  <nav class="app-sidebar" role="navigation" aria-label="Main navigation">
+    <ul class="nav-list">
+      <li><a href="dashboard.html" class="nav-item">&#x1F3E0; Dashboard</a></li>
+      <li><a href="accounts-list.html" class="nav-item">&#x1F3E6; Accounts</a></li>
+      <li><a href="credit-cards-list.html" class="nav-item">&#x1F4B3; Credit Cards</a></li>
+      <li><a href="transactions-list.html" class="nav-item">&#x1F4B8; Transactions</a></li>
+      <li><a href="billing-form.html" class="nav-item">&#x1F4B0; Billing</a></li>
+      <li><a href="reports-list.html" class="nav-item">&#x1F4CA; Reports</a></li>
+      <li><a href="users-list.html" class="nav-item">&#x1F465; Users</a></li>
+      <li><a href="batch-list.html" class="nav-item">&#x2699;&#xFE0F; Batch Jobs</a></li>
+      <li><a href="authorization-list.html" class="nav-item">&#x1F510; Authorizations</a></li>
+      <li><a href="transaction-types-list.html" class="nav-item">&#x1F3F7;&#xFE0F; Trans. Types</a></li>
+    </ul>
+  </nav>
+  <main class="app-main" id="main" role="main">
+    <div class="app-main__content">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Accounts</h1>
+          <p class="page-subtitle">Manage credit card accounts</p>
+        </div>
+        <a href="accounts-form.html" class="btn btn--primary">+ New Account</a>
+      </div>
+
+      <div class="card">
+        <div class="card__body--compact">
+          <div class="filter-bar">
+            <div class="search-bar">
+              <span class="search-bar__icon">&#x1F50D;</span>
+              <input type="text" id="search-input" class="search-bar__input"
+                     placeholder="Search by account ID, customer ID, group..."
+                     oninput="handleSearch()">
+            </div>
+            <select id="status-filter" class="form-group__input" style="width:auto" onchange="handleSearch()">
+              <option value="">All Statuses</option>
+              <option value="Y">Active</option>
+              <option value="N">Inactive</option>
+            </select>
+            <select id="group-filter" class="form-group__input" style="width:auto" onchange="handleSearch()">
+              <option value="">All Groups</option>
+              <option value="STANDARD">Standard</option>
+              <option value="GOLD">Gold</option>
+              <option value="PREMIUM">Premium</option>
+              <option value="PLATINUM">Platinum</option>
+            </select>
+          </div>
+          <div id="count-label" class="count-label"></div>
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Account ID</th>
+                  <th>Customer ID</th>
+                  <th>Group</th>
+                  <th>Balance</th>
+                  <th>Credit Limit</th>
+                  <th>Utilization</th>
+                  <th>Open Date</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="accounts-table-body"></tbody>
+            </table>
+          </div>
+          <div id="pagination-container"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="scripts/mock-data.js"></script>
+<script src="scripts/utils.js"></script>
+<script>
+markActiveNav();
+let currentPage = 1;
+const perPage = 10;
+let filtered = [];
+
+function handleSearch() {
+  currentPage = 1;
+  renderTable();
+}
+
+function renderTable() {
+  const q      = document.getElementById('search-input').value;
+  const status = document.getElementById('status-filter').value;
+  const group  = document.getElementById('group-filter').value;
+  let items = getData('accounts');
+  if (q)      items = filterItems(items, q, ['id','customerId','groupId','addrZip']);
+  if (status) items = items.filter(a => a.activeStatus === status);
+  if (group)  items = items.filter(a => a.groupId === group);
+  filtered = items;
+  const page = paginate(items, currentPage, perPage);
+  document.getElementById('count-label').textContent =
+    'Showing ' + page.items.length + ' of ' + page.total + ' accounts';
+
+  document.getElementById('accounts-table-body').innerHTML = page.items.map(a => {
+    const util      = a.creditLimit > 0 ? Math.round((a.currBal / a.creditLimit) * 100) : 0;
+    const utilColor = util > 80 ? 'text-error' : util > 60 ? 'text-warning' : 'text-success';
+    return `<tr>
+      <td class="font-mono font-semibold">
+        <a href="accounts-detail.html?id=${a.id}" style="color:var(--color-primary)">${a.id}</a>
+      </td>
+      <td class="font-mono">${a.customerId}</td>
+      <td><span class="chip">${a.groupId}</span></td>
+      <td class="font-semibold">${formatCurrency(a.currBal)}</td>
+      <td>${formatCurrency(a.creditLimit)}</td>
+      <td class="${utilColor} font-semibold">${util}%</td>
+      <td>${formatDate(a.openDate)}</td>
+      <td>${getStatusBadge(a.activeStatus)}</td>
+      <td>
+        <div class="btn-group">
+          <a href="accounts-detail.html?id=${a.id}" class="btn btn--ghost btn--sm">View</a>
+          <a href="accounts-form.html?id=${a.id}"   class="btn btn--secondary btn--sm">Edit</a>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  renderPagination('pagination-container', page.totalPages, currentPage, 'goToPage');
+}
+
+function goToPage(p) { currentPage = p; renderTable(); }
+document.addEventListener('DOMContentLoaded', renderTable);
+</script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Make a Payment - CardDemo</title>
+  <link rel="stylesheet" href="styles/reset.css">
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/global.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div class="app-layout">
+    <header class="app-header" role="banner">
+      <a href="dashboard.html" class="app-header__brand">💳 CardDemo</a>
+      <span class="app-header__spacer"></span>
+      <span class="app-header__user">👤 ADMIN001 <span class="badge badge--primary">Admin</span></span>
+      <button class="app-header__menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.app-sidebar').classList.toggle('is-open')">☰</button>
+    </header>
+    <nav class="app-sidebar" role="navigation" aria-label="Main navigation">
+      <ul class="nav-list">
+        <li><a href="dashboard.html" class="nav-item">🏠 Dashboard</a></li>
+        <li><a href="accounts-list.html" class="nav-item">🏦 Accounts</a></li>
+        <li><a href="credit-cards-list.html" class="nav-item">💳 Credit Cards</a></li>
+        <li><a href="transactions-list.html" class="nav-item">💸 Transactions</a></li>
+        <li><a href="billing-form.html" class="nav-item">💰 Billing</a></li>
+        <li><a href="reports-list.html" class="nav-item">📊 Reports</a></li>
+        <li><a href="users-list.html" class="nav-item">👥 User Management</a></li>
+        <li><a href="batch-list.html" class="nav-item">⚙️ Batch Jobs</a></li>
+        <li><a href="authorization-list.html" class="nav-item">🔐 Authorizations</a></li>
+        <li><a href="transaction-types-list.html" class="nav-item">🏷️ Trans. Types</a></li>
+      </ul>
+    </nav>
+    <main class="app-main" id="main-content">
+      <div class="app-main__content">
+
+        <div class="page-header"><h1 class="page-title">Make a Payment</h1><p class="page-subtitle">Pay your credit card bill</p></div>
+        <!-- Step 1 -->
+        <div id="step1">
+          <div class="card mb-6">
+            <div class="card__header"><h2 class="card__title">Step 1 — Look Up Account Balance</h2></div>
+            <div class="card__body">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-group__label form-group__label--required" for="lookupCardNum">Card Number</label>
+                  <input type="text" id="lookupCardNum" class="form-group__input" maxlength="16" placeholder="16-digit card number">
+                  <span class="form-group__error" id="lookupError"></span>
+                </div>
+                <div class="form-group" style="align-self:flex-end">
+                  <button type="button" class="btn btn--primary btn--lg" onclick="lookupAccount()">Look Up Balance</button>
+                </div>
+              </div>
+              <div id="demoHint" class="alert alert--info"><span class="alert__icon">ℹ️</span><div class="alert__content">Demo card numbers: 4111111111111001 through 4111111111111021</div></div>
+            </div>
+          </div>
+        </div>
+        <!-- Step 2 -->
+        <div id="step2" class="hidden">
+          <div id="balanceCard" class="card mb-6"></div>
+          <div class="card mb-6">
+            <div class="card__header"><h2 class="card__title">Step 2 — Confirm Payment</h2></div>
+            <div class="card__body">
+              <div id="paymentSummary"></div>
+              <div class="form-actions mt-4">
+                <button type="button" class="btn btn--primary btn--lg" onclick="submitPayment()">💰 Submit Full Payment</button>
+                <button type="button" class="btn btn--secondary btn--lg" onclick="resetForm()">← Back</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="scripts/mock-data.js"></script>
+  <script src="scripts/utils.js"></script>
+<script>
+    var currentAccount=null, currentCard=null;
+    function lookupAccount(){
+      var cn=document.getElementById('lookupCardNum').value.trim();
+      var err=document.getElementById('lookupError');
+      if(!cn||cn.length!==16){err.textContent='Please enter a valid 16-digit card number.';return;}
+      var cards=getData('cards'); var card=cards.find(function(c){return c.cardNum===cn;});
+      if(!card){err.textContent='Card number not found.';return;}
+      err.textContent='';
+      var accounts=getData('accounts'); var acct=accounts.find(function(a){return a.id===card.acctId;});
+      if(!acct){err.textContent='No account linked to this card.';return;}
+      currentCard=card; currentAccount=acct;
+      document.getElementById('balanceCard').innerHTML='<div class="card__header"><h2 class="card__title">Account Balance</h2></div><div class="card__body"><div class="detail-grid-3"><div class="detail-field"><div class="detail-field__label">Account ID</div><div class="detail-field__value font-mono">'+acct.id+'</div></div><div class="detail-field"><div class="detail-field__label">Current Balance</div><div class="detail-field__value" style="color:var(--color-error);font-size:var(--font-size-xl);font-weight:600">'+formatCurrency(acct.currentBal)+'</div></div><div class="detail-field"><div class="detail-field__label">Credit Limit</div><div class="detail-field__value">'+formatCurrency(acct.creditLimit)+'</div></div></div></div>';
+      document.getElementById('paymentSummary').innerHTML='<div class="alert alert--success"><span class="alert__icon">✅</span><div class="alert__content"><strong>Payment of '+formatCurrency(Math.abs(acct.currentBal))+' will be applied to account '+acct.id+'</strong><br>A PAYMENT transaction will be posted and your balance will be reduced to $0.00.</div></div>';
+      document.getElementById('step2').classList.remove('hidden');
+    }
+    function submitPayment(){
+      if(!currentAccount) return;
+      var amt=Math.abs(currentAccount.currentBal);
+      var ts=new Date().toISOString().replace('T',' ').split('.')[0]+'.000000';
+      var newId='TX'+Date.now().toString().padStart(16,'0').slice(-16);
+      createItem('transactions',{id:newId,typeCode:'02',catCode:'0001',source:'ONLINE',desc:'BILL PAYMENT - ACCOUNT '+currentAccount.id,amount:amt,merchantId:'000000000',merchantName:'CARDDEMO PAYMENTS',merchantCity:'',merchantZip:'',cardNum:currentCard.cardNum,origTs:ts,procTs:ts});
+      updateItem('accounts',currentAccount.id,{currentBal:0});
+      createItem('payments',{id:'PAY'+Date.now(),acctId:currentAccount.id,amount:amt,date:ts.split(' ')[0],status:'Posted',method:'Online',transactionId:newId});
+      showToast('Payment of '+formatCurrency(amt)+' submitted successfully.','success');
+      setTimeout(function(){window.location.href='billing-list.html';},1000);
+    }
+    function resetForm(){document.getElementById('step2').classList.add('hidden');document.getElementById('lookupCardNum').value='';currentAccount=null;currentCard=null;}
+</script>
+</body>
+</html>
