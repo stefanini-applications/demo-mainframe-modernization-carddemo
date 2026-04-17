@@ -10,172 +10,210 @@
   <link rel="stylesheet" href="styles/components.css">
 </head>
 <body>
-  <a href="#main-content" class="skip-link">Skip to main content</a>
-  <div class="app-layout">
-    <header class="app-header" role="banner">
-      <a href="dashboard.html" class="app-header__brand">💳 CardDemo</a>
-      <span class="app-header__spacer"></span>
-      <span class="app-header__user">👤 ADMIN001 <span class="badge badge--primary">Admin</span></span>
-      <button class="app-header__menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.app-sidebar').classList.toggle('is-open')">☰</button>
-    </header>
-    <nav class="app-sidebar" role="navigation" aria-label="Main navigation">
-      <ul class="nav-list">
-        <li><a href="dashboard.html" class="nav-item">🏠 Dashboard</a></li>
-        <li><a href="accounts-list.html" class="nav-item">🏦 Accounts</a></li>
-        <li><a href="credit-cards-list.html" class="nav-item">💳 Credit Cards</a></li>
-        <li><a href="transactions-list.html" class="nav-item">💸 Transactions</a></li>
-        <li><a href="billing-form.html" class="nav-item">💰 Billing</a></li>
-        <li><a href="reports-list.html" class="nav-item">📊 Reports</a></li>
-        <li><a href="users-list.html" class="nav-item">👥 User Management</a></li>
-        <li><a href="batch-list.html" class="nav-item">⚙️ Batch Jobs</a></li>
-        <li><a href="authorization-list.html" class="nav-item">🔐 Authorizations</a></li>
-        <li><a href="transaction-types-list.html" class="nav-item">🏷️ Trans. Types</a></li>
-      </ul>
-    </nav>
-    <main class="app-main" id="main-content">
-      <div class="app-main__content">
-        <nav class="breadcrumb" aria-label="Breadcrumb">
-          <span class="breadcrumb__item"><a href="dashboard.html">Dashboard</a></span>
-          <span class="breadcrumb__separator" aria-hidden="true">›</span>
-          <span class="breadcrumb__item"><a href="accounts-list.html">Accounts</a></span>
-          <span class="breadcrumb__separator" aria-hidden="true">›</span>
-          <span class="breadcrumb__item" id="breadcrumbId">Account Detail</span>
-        </nav>
-
-        <div class="page-header" id="pageHeader">
-          <div><h1 class="page-title" id="pageTitle">Account Detail</h1></div>
-          <div class="page-actions">
-            <a href="accounts-list.html" class="btn btn--secondary">← Back to List</a>
-            <a href="#" id="editBtn" class="btn btn--primary">Edit Account</a>
-            <a href="billing-form.html" id="payBtn" class="btn btn--ghost">Make Payment</a>
+<a href="#main" class="skip-link">Skip to main content</a>
+<div class="app-layout">
+  <header class="app-header" role="banner">
+    <a href="dashboard.html" class="app-header__brand">&#x1F4B3; CardDemo</a>
+    <button class="app-header__menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.app-sidebar').classList.toggle('is-open')">&#9776;</button>
+    <span class="app-header__user">&#x1F464; ADMIN001 <span class="badge badge--primary">Admin</span></span>
+  </header>
+  <nav class="app-sidebar" role="navigation" aria-label="Main navigation">
+    <ul class="nav-list">
+      <li><a href="dashboard.html" class="nav-item">&#x1F3E0; Dashboard</a></li>
+      <li><a href="accounts-list.html" class="nav-item">&#x1F3E6; Accounts</a></li>
+      <li><a href="credit-cards-list.html" class="nav-item">&#x1F4B3; Credit Cards</a></li>
+      <li><a href="transactions-list.html" class="nav-item">&#x1F4B8; Transactions</a></li>
+      <li><a href="billing-form.html" class="nav-item">&#x1F4B0; Billing</a></li>
+      <li><a href="reports-list.html" class="nav-item">&#x1F4CA; Reports</a></li>
+      <li><a href="users-list.html" class="nav-item">&#x1F465; Users</a></li>
+      <li><a href="batch-list.html" class="nav-item">&#x2699;&#xFE0F; Batch Jobs</a></li>
+      <li><a href="authorization-list.html" class="nav-item">&#x1F510; Authorizations</a></li>
+      <li><a href="transaction-types-list.html" class="nav-item">&#x1F3F7;&#xFE0F; Trans. Types</a></li>
+    </ul>
+  </nav>
+  <main class="app-main" id="main" role="main">
+    <div class="app-main__content">
+      <nav class="breadcrumb" aria-label="breadcrumb">
+        <div class="breadcrumb__item"><a href="accounts-list.html">Accounts</a></div>
+        <div class="breadcrumb__item" id="breadcrumb-current">Detail</div>
+      </nav>
+      <div id="not-found" class="alert alert--error hidden">Account not found.</div>
+      <div id="page-content" class="hidden">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title" id="page-title">Account Detail</h1>
+            <p class="page-subtitle" id="page-subtitle"></p>
+          </div>
+          <div class="btn-group">
+            <a href="accounts-list.html" class="btn btn--ghost">&#x2190; Back</a>
+            <a id="edit-btn" href="#" class="btn btn--primary">Edit Account</a>
           </div>
         </div>
 
-        <div id="notFound" class="alert alert--error" style="display:none">
-          <span class="alert__icon">⚠️</span>
-          <div class="alert__content">Account not found.</div>
-        </div>
-
-        <div id="detailContent">
-          <div class="detail-grid">
-            <div class="card">
-              <div class="card__header"><h2 class="card__title">Account Information</h2><span id="statusBadge"></span></div>
-              <div class="card__body" id="accountInfo"></div>
-            </div>
-            <div class="card">
-              <div class="card__header"><h2 class="card__title">Customer Information</h2></div>
-              <div class="card__body" id="customerInfo"></div>
-            </div>
-          </div>
-
-          <div class="card mb-6">
-            <div class="card__header">
-              <h2 class="card__title">Associated Cards</h2>
-              <a href="credit-cards-list.html" class="btn btn--ghost btn--sm">View All Cards</a>
-            </div>
-            <div class="table-container" style="border:none;box-shadow:none;">
-              <table class="table">
-                <thead><tr><th>Card Number</th><th>Embossed Name</th><th>Expiry</th><th>Status</th><th>Actions</th></tr></thead>
-                <tbody id="cardsBody"></tbody>
-              </table>
-            </div>
-          </div>
-
+        <div class="cols-2 mb-6">
           <div class="card">
-            <div class="card__header">
-              <h2 class="card__title">Recent Transactions</h2>
-              <a href="transactions-list.html" class="btn btn--ghost btn--sm">View All</a>
+            <div class="card__header"><h2 class="card__title">Account Information</h2></div>
+            <div class="card__body">
+              <table class="info-table" id="account-info"></table>
             </div>
-            <div class="table-container" style="border:none;box-shadow:none;">
-              <table class="table">
-                <thead><tr><th>Trans ID</th><th>Date</th><th>Description</th><th>Merchant</th><th>Amount</th></tr></thead>
-                <tbody id="txBody"></tbody>
-              </table>
+          </div>
+          <div class="card">
+            <div class="card__header"><h2 class="card__title">Balance &amp; Limits</h2></div>
+            <div class="card__body">
+              <table class="info-table" id="balance-info"></table>
             </div>
+          </div>
+        </div>
+
+        <div class="card mb-6">
+          <div class="card__header"><h2 class="card__title">Customer Information</h2></div>
+          <div class="card__body">
+            <div class="detail-grid" id="customer-info"></div>
+          </div>
+        </div>
+
+        <div class="card mb-6">
+          <div class="card__header">
+            <h2 class="card__title">Credit Cards</h2>
+            <a id="new-card-btn" href="credit-cards-form.html" class="btn btn--primary btn--sm">+ Issue Card</a>
+          </div>
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Card Number</th>
+                  <th>Embossed Name</th>
+                  <th>Expiry</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="cards-table"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card__header">
+            <h2 class="card__title">Recent Transactions</h2>
+            <a id="view-txns-btn" href="transactions-list.html" class="btn btn--ghost btn--sm">View All</a>
+          </div>
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Description</th>
+                  <th>Merchant</th>
+                  <th>Amount</th>
+                  <th>Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="txns-table"></tbody>
+            </table>
           </div>
         </div>
       </div>
-    </main>
-  </div>
+    </div>
+  </main>
+</div>
+<script src="scripts/mock-data.js"></script>
+<script src="scripts/utils.js"></script>
+<script>
+markActiveNav();
+document.addEventListener('DOMContentLoaded', function () {
+  const id      = getParam('id');
+  const account = getById('accounts', id);
+  if (!account) {
+    document.getElementById('not-found').classList.remove('hidden');
+    return;
+  }
 
-  <script src="scripts/mock-data.js"></script>
-  <script src="scripts/utils.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      var id = getParam('id');
-      if (!id) { showNotFound(); return; }
-      var account = getById('accounts', id);
-      if (!account) { showNotFound(); return; }
+  document.getElementById('page-content').classList.remove('hidden');
+  document.getElementById('page-title').textContent =
+    'Account ' + account.id;
+  document.getElementById('page-subtitle').textContent =
+    account.groupId + '  •  ' + (account.activeStatus === 'Y' ? 'Active' : 'Inactive');
+  document.getElementById('breadcrumb-current').textContent = account.id;
+  document.getElementById('edit-btn').href =
+    'accounts-form.html?id=' + account.id;
+  document.getElementById('new-card-btn').href =
+    'credit-cards-form.html?acctId=' + account.id;
 
-      document.getElementById('breadcrumbId').textContent = account.id;
-      document.getElementById('pageTitle').textContent = 'Account ' + account.id;
-      document.getElementById('editBtn').href = 'accounts-form.html?id=' + encodeURIComponent(id);
-      document.getElementById('payBtn').href = 'billing-form.html?acctId=' + encodeURIComponent(id);
-      document.getElementById('statusBadge').innerHTML = getStatusBadge(account.activeStatus);
+  document.getElementById('account-info').innerHTML = [
+    ['Account ID',       account.id],
+    ['Customer ID',      account.customerId],
+    ['Group',            account.groupId],
+    ['Status',           getStatusBadge(account.activeStatus)],
+    ['Open Date',        formatDate(account.openDate)],
+    ['Expiration Date',  formatDate(account.expirationDate)],
+    ['Reissue Date',     formatDate(account.reissueDate)],
+    ['ZIP Code',         account.addrZip],
+  ].map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join('');
 
-      document.getElementById('accountInfo').innerHTML =
-        field('Account ID', account.id, true) +
-        field('Active Status', getStatusBadge(account.activeStatus)) +
-        field('Current Balance', formatCurrency(account.currBal)) +
-        field('Credit Limit', formatCurrency(account.creditLimit)) +
-        field('Cash Credit Limit', formatCurrency(account.cashCreditLimit)) +
-        field('Cycle Credits', formatCurrency(account.currCycCredit)) +
-        field('Cycle Debits', formatCurrency(account.currCycDebit)) +
-        field('Group ID', account.groupId.trim()) +
-        field('ZIP Code', account.addrZip) +
-        field('Open Date', formatDate(account.openDate)) +
-        field('Expiration Date', formatDate(account.expirationDate)) +
-        field('Reissue Date', formatDate(account.reissueDate));
+  const util = account.creditLimit > 0
+    ? ((account.currBal / account.creditLimit) * 100).toFixed(1)
+    : 0;
+  document.getElementById('balance-info').innerHTML = [
+    ['Current Balance',   `<span class="font-semibold">${formatCurrency(account.currBal)}</span>`],
+    ['Credit Limit',      formatCurrency(account.creditLimit)],
+    ['Cash Credit Limit', formatCurrency(account.cashCreditLimit)],
+    ['Available Credit',  formatCurrency(account.creditLimit - account.currBal)],
+    ['Utilization',       `<span class="${util > 80 ? 'text-error' : 'text-success'}">${util}%</span>`],
+    ['Cycle Credits',     `<span class="amount-positive">+${formatCurrency(account.currCycCredit)}</span>`],
+    ['Cycle Debits',      `<span class="amount-negative">-${formatCurrency(account.currCycDebit)}</span>`],
+  ].map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join('');
 
-      var cust = getById('customers', account.customerId);
-      if (cust) {
-        document.getElementById('customerInfo').innerHTML =
-          field('Customer ID', cust.id, true) +
-          field('Name', cust.firstName + ' ' + cust.middleName + ' ' + cust.lastName) +
-          field('Address', [cust.addrLine1, cust.addrLine2, cust.addrLine3].filter(Boolean).join(', ')) +
-          field('City/State/ZIP', cust.addrState + ' ' + cust.addrZip + ' ' + cust.addrCountry) +
-          field('Phone 1', cust.phone1) +
-          field('Phone 2', cust.phone2 || 'N/A') +
-          field('DOB', formatDate(cust.dob)) +
-          field('FICO Score', cust.ficoScore) +
-          field('Primary Card Holder', cust.primaryCardHolder === 'Y' ? 'Yes' : 'No');
-      } else {
-        document.getElementById('customerInfo').innerHTML = '<p class="text-muted">Customer record not found (ID: ' + escapeHtml(account.customerId) + ')</p>';
-      }
+  const customer = getById('customers', account.customerId);
+  if (customer) {
+    document.getElementById('customer-info').innerHTML = [
+      ['Full Name',           customer.firstName + ' ' + (customer.middleName ? customer.middleName + ' ' : '') + customer.lastName],
+      ['Address',             customer.addrLine1 + (customer.addrLine2 ? ', ' + customer.addrLine2 : '')],
+      ['City / State / ZIP',  (customer.addrCity ? customer.addrCity + ', ' : '') + customer.addrState + ' ' + customer.addrZip],
+      ['Phone 1',             customer.phone1],
+      ['Phone 2',             customer.phone2 || 'N/A'],
+      ['Date of Birth',       formatDate(customer.dob)],
+      ['FICO Score',          `<span class="font-semibold ${customer.ficoScore >= 750 ? 'text-success' : 'text-warning'}">${customer.ficoScore}</span>`],
+      ['Primary Card Holder', customer.primaryCardHolder === 'Y' ? 'Yes' : 'No'],
+    ].map(([k, v]) =>
+      `<div class="detail-item"><div class="detail-label">${k}</div><div class="detail-value">${v}</div></div>`
+    ).join('');
+  }
 
-      var cards = getData('creditCards').filter(function(c) { return c.acctId === id; });
-      document.getElementById('cardsBody').innerHTML = cards.length ? cards.map(function(c) {
-        return '<tr>' +
-          '<td><a href="credit-cards-detail.html?id=' + encodeURIComponent(c.id) + '" class="font-mono" style="color:var(--color-primary)">' + maskCardNum(c.id) + '</a></td>' +
-          '<td>' + escapeHtml(c.embossedName) + '</td>' +
-          '<td>' + escapeHtml(c.expirationDate) + '</td>' +
-          '<td>' + getStatusBadge(c.activeStatus) + '</td>' +
-          '<td class="table__actions"><a href="credit-cards-detail.html?id=' + encodeURIComponent(c.id) + '" class="btn btn--secondary btn--sm">View</a></td>' +
-          '</tr>';
-      }).join('') : '<tr><td colspan="5" class="text-muted" style="padding:1rem">No cards found for this account.</td></tr>';
+  const cards = getData('creditCards').filter(c => c.acctId === account.id);
+  document.getElementById('cards-table').innerHTML = cards.length
+    ? cards.map(c => `<tr>
+        <td class="font-mono">
+          <a href="credit-cards-detail.html?id=${c.id}" style="color:var(--color-primary)">${maskCardNum(c.id)}</a>
+        </td>
+        <td>${c.embossedName}</td>
+        <td>${c.expirationDate}</td>
+        <td>${getStatusBadge(c.activeStatus)}</td>
+        <td>
+          <div class="btn-group">
+            <a href="credit-cards-detail.html?id=${c.id}" class="btn btn--ghost btn--sm">View</a>
+            <a href="credit-cards-form.html?id=${c.id}"   class="btn btn--secondary btn--sm">Edit</a>
+          </div>
+        </td>
+      </tr>`).join('')
+    : '<tr><td colspan="5" class="text-center text-secondary" style="padding:2rem">No cards found</td></tr>';
 
-      var txs = getData('transactions').filter(function(t) {
-        return cards.some(function(c) { return c.id === t.cardNum; });
-      }).slice(-5).reverse();
-      document.getElementById('txBody').innerHTML = txs.length ? txs.map(function(t) {
-        return '<tr>' +
-          '<td><a href="transactions-detail.html?id=' + encodeURIComponent(t.id) + '" class="font-mono text-xs" style="color:var(--color-primary)">' + escapeHtml(t.id.slice(-8)) + '</a></td>' +
-          '<td class="text-sm">' + escapeHtml(t.procTs.split(' ')[0]) + '</td>' +
-          '<td class="text-sm">' + escapeHtml(t.desc) + '</td>' +
-          '<td class="text-sm">' + escapeHtml(t.merchantName) + '</td>' +
-          '<td>' + formatAmount(t.amount) + '</td>' +
-          '</tr>';
-      }).join('') : '<tr><td colspan="5" class="text-muted" style="padding:1rem">No transactions found.</td></tr>';
-    });
-
-    function field(label, value, mono) {
-      return '<div class="detail-field"><div class="detail-field__label">' + escapeHtml(label) + '</div><div class="detail-field__value' + (mono ? ' font-mono' : '') + '">' + (value || 'N/A') + '</div></div>';
-    }
-
-    function showNotFound() {
-      document.getElementById('notFound').style.display = 'flex';
-      document.getElementById('detailContent').style.display = 'none';
-    }
-  </script>
+  const cardNums = cards.map(c => c.id);
+  const txns     = getData('transactions').filter(t => cardNums.includes(t.cardNum)).slice(0, 10);
+  document.getElementById('txns-table').innerHTML = txns.length
+    ? txns.map(t => `<tr>
+        <td class="font-mono text-sm">
+          <a href="transactions-detail.html?id=${t.id}" style="color:var(--color-primary)">${t.id.slice(-6)}</a>
+        </td>
+        <td>${t.desc}</td>
+        <td>${t.merchantName}</td>
+        <td class="${t.amount < 0 ? 'amount-negative' : 'amount-positive'}">${formatCurrency(t.amount)}</td>
+        <td class="text-sm">${formatDateTime(t.origTs)}</td>
+        <td><a href="transactions-detail.html?id=${t.id}" class="btn btn--ghost btn--sm">View</a></td>
+      </tr>`).join('')
+    : '<tr><td colspan="6" class="text-center text-secondary" style="padding:2rem">No transactions found</td></tr>';
+});
+</script>
 </body>
 </html>
