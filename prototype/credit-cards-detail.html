@@ -12,97 +12,191 @@
 <body>
   <a href="#main-content" class="skip-link">Skip to main content</a>
   <div class="app-layout">
-    <header class="app-header" role="banner">
-      <a href="dashboard.html" class="app-header__brand">� CardDemo</a>
-      <span class="app-header__spacer"></span>
-      <span class="app-header__user">👤 ADMIN001 <span class="badge badge--primary">Admin</span></span>
-      <button class="app-header__menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.app-sidebar').classList.toggle('is-open')">☰</button>
-    </header>
-    <nav class="app-sidebar" role="navigation" aria-label="Main navigation">
-      <ul class="nav-list">
-        <li><a href="dashboard.html" class="nav-item">🏠 Dashboard</a></li>
-        <li><a href="accounts-list.html" class="nav-item">🏦 Accounts</a></li>
-        <li><a href="credit-cards-list.html" class="nav-item">💳 Credit Cards</a></li>
-        <li><a href="transactions-list.html" class="nav-item">💸 Transactions</a></li>
-        <li><a href="billing-form.html" class="nav-item">💰 Billing</a></li>
-        <li><a href="reports-list.html" class="nav-item">📊 Reports</a></li>
-        <li><a href="users-list.html" class="nav-item">👥 User Management</a></li>
-        <li><a href="batch-list.html" class="nav-item">⚙️ Batch Jobs</a></li>
-        <li><a href="authorization-list.html" class="nav-item">� Authorizations</a></li>
-        <li><a href="transaction-types-list.html" class="nav-item">🏷️ Trans. Types</a></li>
-      </ul>
-    </nav>
-    <main class="app-main" id="main-content">
-      <div class="app-main__content">
-        <nav class="breadcrumb" aria-label="Breadcrumb">
-          <span class="breadcrumb__item"><a href="dashboard.html">Dashboard</a></span>
-          <span class="breadcrumb__separator">›</span>
-          <span class="breadcrumb__item"><a href="credit-cards-list.html">Credit Cards</a></span>
-          <span class="breadcrumb__separator">›</span>
-          <span class="breadcrumb__item" id="breadcrumbId">Card Detail</span>
-        </nav>
-        <div class="page-header">
-          <div><h1 class="page-title" id="pageTitle">Card Detail</h1></div>
-          <div class="page-actions">
-            <a href="credit-cards-list.html" class="btn btn--secondary">← Back</a>
-            <a href="#" id="editBtn" class="btn btn--primary">Edit Card</a>
-            <button id="toggleStatusBtn" class="btn btn--ghost" onclick="toggleStatus()">Toggle Status</button>
-          </div>
-        </div>
-        <div class="detail-grid">
-          <div>
-            <div id="cardVisual" class="mb-6"></div>
-            <div class="card">
-              <div class="card__header"><h2 class="card__title">Card Details</h2><span id="statusBadge"></span></div>
-              <div class="card__body" id="cardInfo"></div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card__header"><h2 class="card__title">Linked Account</h2></div>
-            <div class="card__body" id="acctInfo"></div>
-          </div>
-        </div>
-        <div class="card mt-4">
-          <div class="card__header"><h2 class="card__title">Recent Transactions</h2><a href="transactions-list.html" class="btn btn--ghost btn--sm">View All</a></div>
-          <div class="table-container" style="border:none;box-shadow:none;">
-            <table class="table"><thead><tr><th>Trans ID</th><th>Date</th><th>Description</th><th>Merchant</th><th>Amount</th></tr></thead>
-            <tbody id="txBody"></tbody></table>
-          </div>
+  <header class="app-header" role="banner">
+    <a href="dashboard.html" class="app-header__brand">💳 CardDemo</a>
+    <button class="app-header__menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.app-sidebar').classList.toggle('is-open')">☰</button>
+    <span class="app-header__user">👤 ADMIN001 <span class="badge badge--primary">Admin</span></span>
+  </header>
+  <nav class="app-sidebar" role="navigation" aria-label="Main navigation">
+    <ul class="nav-list">
+      <li><a href="dashboard.html" class="nav-item">🏠 Dashboard</a></li>
+      <li><a href="accounts-list.html" class="nav-item">🏦 Accounts</a></li>
+      <li><a href="credit-cards-list.html" class="nav-item">💳 Credit Cards</a></li>
+      <li><a href="transactions-list.html" class="nav-item">💸 Transactions</a></li>
+      <li><a href="billing-form.html" class="nav-item">💰 Billing</a></li>
+      <li><a href="reports-list.html" class="nav-item">📊 Reports</a></li>
+      <li><a href="users-list.html" class="nav-item">👥 Users</a></li>
+      <li><a href="batch-list.html" class="nav-item">⚙️ Batch Jobs</a></li>
+      <li><a href="authorization-list.html" class="nav-item">🔐 Authorizations</a></li>
+      <li><a href="transaction-types-list.html" class="nav-item">🏷️ Trans. Types</a></li>
+    </ul>
+  </nav>
+  <main class="app-main" id="main-content">
+    <div class="app-main__content">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <span class="breadcrumb__item"><a href="dashboard.html">Dashboard</a></span>
+        <span class="breadcrumb__separator">›</span>
+        <span class="breadcrumb__item"><a href="credit-cards-list.html">Credit Cards</a></span>
+        <span class="breadcrumb__separator">›</span>
+        <span class="breadcrumb__item" id="breadcrumbId">Card Detail</span>
+      </nav>
+
+      <div class="page-header">
+        <div><h1 class="page-title" id="pageTitle">Card Detail</h1></div>
+        <div class="page-actions">
+          <a href="credit-cards-list.html" class="btn btn--secondary">← Back to List</a>
+          <a href="#" id="editBtn" class="btn btn--primary">Edit Card</a>
         </div>
       </div>
-    </main>
+
+      <div class="detail-grid">
+        <!-- Left column: visual + card details -->
+        <div>
+          <div id="cardVisualContainer" class="mb-6"></div>
+          <div class="card">
+            <div class="card__header">
+              <h2 class="card__title">Card Details</h2>
+              <span id="statusBadge"></span>
+            </div>
+            <div class="card__body" id="cardInfo"></div>
+          </div>
+        </div>
+
+        <!-- Right column: linked account -->
+        <div class="card">
+          <div class="card__header">
+            <h2 class="card__title">Linked Account</h2>
+          </div>
+          <div class="card__body" id="acctInfo"></div>
+        </div>
+      </div>
+
+      <!-- Recent transactions -->
+      <div class="card mt-4">
+        <div class="card__header">
+          <h2 class="card__title">Recent Transactions</h2>
+          <a id="allTxLink" href="transactions-list.html" class="btn btn--ghost btn--sm">View All</a>
+        </div>
+        <div class="table-container" style="border:none;box-shadow:none;">
+          <table class="table" aria-label="Recent transactions">
+            <thead>
+              <tr>
+                <th>Trans ID</th>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Merchant</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody id="txBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
   </div>
   <script src="scripts/mock-data.js"></script>
   <script src="scripts/utils.js"></script>
-<script>
+  <script>
     var cardId, card;
-    document.addEventListener('DOMContentLoaded', function(){
+
+    document.addEventListener('DOMContentLoaded', function () {
       cardId = getParam('id');
-      if(!cardId){ window.location.href='credit-cards-list.html'; return; }
+      if (!cardId) { window.location.href = 'credit-cards-list.html'; return; }
       card = getById('creditCards', cardId);
-      if(!card){ document.querySelector('.app-main__content').innerHTML='<div class="alert alert--error"><span class="alert__icon">⚠️</span><div class="alert__content">Card not found.</div></div>'; return; }
-      renderCard();
+      if (!card) {
+        document.querySelector('.app-main__content').innerHTML =
+          '<div class="alert alert--error"><span class="alert__icon">⚠️</span>' +
+          '<div class="alert__content">Credit card not found. <a href="credit-cards-list.html">Return to list</a>.</div></div>';
+        return;
+      }
+      renderDetail();
     });
-    function renderCard(){
-      document.getElementById('breadcrumbId').textContent = maskCardNum(card.id);
-      document.getElementById('pageTitle').textContent = 'Card ' + maskCardNum(card.id);
-      document.getElementById('editBtn').href = 'credit-cards-form.html?id='+encodeURIComponent(card.id);
+
+    function cardVisualHTML(c) {
+      var last4 = c.id.slice(-4);
+      var masked = '**** **** **** ' + last4;
+      var network = c.id.charAt(0) === '4' ? 'VISA' : 'MASTERCARD';
+      var expParts = c.expirationDate.split('-');
+      var expDisplay = expParts.length >= 2 ? expParts[1] + '/' + expParts[0].slice(2) : c.expirationDate;
+      var inactiveClass = c.activeStatus === 'N' ? ' credit-card-visual--inactive' : '';
+      return '<div class="credit-card-visual' + inactiveClass + '" role="img" ' +
+             'aria-label="Credit card ending ' + last4 + '">' +
+               '<div class="credit-card-visual__network">' + escapeHtml(network) + '</div>' +
+               '<div class="credit-card-visual__number">' + escapeHtml(masked) + '</div>' +
+               '<div class="credit-card-visual__footer">' +
+                 '<div>' +
+                   '<div class="credit-card-visual__expiry-label">VALID THRU</div>' +
+                   '<div class="credit-card-visual__expiry">' + escapeHtml(expDisplay) + '</div>' +
+                 '</div>' +
+                 '<div class="credit-card-visual__name">' + escapeHtml(c.embossedName) + '</div>' +
+               '</div>' +
+             '</div>';
+    }
+
+    function df(label, value, mono) {
+      var cls = mono ? ' font-mono' : '';
+      return '<div class="detail-field">' +
+               '<div class="detail-field__label">' + escapeHtml(label) + '</div>' +
+               '<div class="detail-field__value' + cls + '">' + (value != null ? value : 'N/A') + '</div>' +
+             '</div>';
+    }
+
+    function renderDetail() {
+      var last4 = card.id.slice(-4);
+      document.getElementById('breadcrumbId').textContent = '**** **** **** ' + last4;
+      document.getElementById('pageTitle').textContent = 'Card ending ' + last4;
+      document.getElementById('editBtn').href = 'credit-cards-form.html?id=' + encodeURIComponent(card.id);
       document.getElementById('statusBadge').innerHTML = getStatusBadge(card.activeStatus);
-      document.getElementById('toggleStatusBtn').textContent = card.activeStatus==='Y' ? 'Deactivate Card' : 'Activate Card';
-      document.getElementById('cardVisual').innerHTML = '<div class="credit-card-visual'+(card.activeStatus==='N'?' credit-card-visual--inactive':'')+'" role="img" aria-label="Credit card ending '+card.id.slice(-4)+'"><div class="credit-card-visual__chip"></div><div class="credit-card-visual__number">'+formatCardNum(card.id)+'</div><div class="credit-card-visual__bottom"><div><div class="credit-card-visual__label">Card Holder</div><div class="credit-card-visual__name">'+escapeHtml(card.embossedName)+'</div></div><div class="credit-card-visual__expiry"><div class="credit-card-visual__label">Expires</div><div>'+escapeHtml(card.expirationDate)+'</div></div></div></div>';
-      document.getElementById('cardInfo').innerHTML = df('Card Number (PAN)', card.id, true)+df('Account ID', card.acctId, true)+df('Embossed Name', card.embossedName)+df('CVV', '***')+df('Expiration Date', card.expirationDate)+df('Active Status', getStatusBadge(card.activeStatus));
+      document.getElementById('cardVisualContainer').innerHTML = cardVisualHTML(card);
+
+      var expParts = card.expirationDate.split('-');
+      var expDisplay = expParts.length >= 2 ? expParts[1] + '/' + expParts[0].slice(2) : card.expirationDate;
+      document.getElementById('cardInfo').innerHTML =
+        df('Card Number (PAN)', '<span class="font-mono">' + escapeHtml(card.id) + '</span>') +
+        df('Account ID', '<a href="accounts-detail.html?id=' + encodeURIComponent(card.acctId) +
+           '" style="color:var(--color-primary)" class="font-mono">' + escapeHtml(card.acctId) + '</a>') +
+        df('Embossed Name', escapeHtml(card.embossedName)) +
+        df('CVV', '<span class="font-mono">***</span>') +
+        df('Expiration Date', '<span class="font-mono">' + escapeHtml(expDisplay) + '</span>') +
+        df('Active Status', getStatusBadge(card.activeStatus));
+
       var acct = getById('accounts', card.acctId);
-      if(acct){ document.getElementById('acctInfo').innerHTML = df('Account ID','<a href="accounts-detail.html?id='+encodeURIComponent(acct.id)+'" style="color:var(--color-primary)">'+escapeHtml(acct.id)+'</a>')+df('Balance',formatCurrency(acct.currBal))+df('Credit Limit',formatCurrency(acct.creditLimit))+df('Status',getStatusBadge(acct.activeStatus))+df('Group',acct.groupId.trim()); }
-      var txs = getData('transactions').filter(function(t){ return t.cardNum===card.id; }).slice(-5).reverse();
-      document.getElementById('txBody').innerHTML = txs.length ? txs.map(function(t){ return '<tr><td><a href="transactions-detail.html?id='+encodeURIComponent(t.id)+'" class="font-mono text-xs" style="color:var(--color-primary)">'+escapeHtml(t.id.slice(-8))+'</a></td><td class="text-sm">'+escapeHtml(t.procTs.split(' ')[0])+'</td><td class="text-sm">'+escapeHtml(t.desc)+'</td><td class="text-sm">'+escapeHtml(t.merchantName)+'</td><td>'+formatAmount(t.amount)+'</td></tr>'; }).join('') : '<tr><td colspan="5" class="text-muted" style="padding:1rem">No transactions.</td></tr>';
+      if (acct) {
+        document.getElementById('acctInfo').innerHTML =
+          df('Account ID', '<a href="accounts-detail.html?id=' + encodeURIComponent(acct.id) +
+             '" style="color:var(--color-primary)" class="font-mono">' + escapeHtml(acct.id) + '</a>') +
+          df('Current Balance', formatCurrency(acct.currBal)) +
+          df('Credit Limit', formatCurrency(acct.creditLimit)) +
+          df('Cash Credit Limit', formatCurrency(acct.cashCreditLimit)) +
+          df('Open Date', formatDate(acct.openDate)) +
+          df('Account Status', getStatusBadge(acct.activeStatus)) +
+          df('Group', escapeHtml((acct.groupId || '').trim()));
+      } else {
+        document.getElementById('acctInfo').innerHTML =
+          '<p class="text-muted">Account information not available.</p>';
+      }
+
+      var txs = getData('transactions')
+        .filter(function (t) { return t.cardNum === card.id; })
+        .sort(function (a, b) { return b.procTs.localeCompare(a.procTs); })
+        .slice(0, 5);
+
+      document.getElementById('txBody').innerHTML = txs.length
+        ? txs.map(function (t) {
+            return '<tr>' +
+              '<td><a href="transactions-detail.html?id=' + encodeURIComponent(t.id) + '" ' +
+                 'class="font-mono text-xs" style="color:var(--color-primary)">' +
+                 escapeHtml(t.id.slice(-8)) + '</a></td>' +
+              '<td class="text-sm">' + escapeHtml(t.procTs.split(' ')[0]) + '</td>' +
+              '<td class="text-sm">' + escapeHtml(t.desc) + '</td>' +
+              '<td class="text-sm">' + escapeHtml(t.merchantName) + '</td>' +
+              '<td>' + formatAmount(t.amount) + '</td>' +
+              '</tr>';
+          }).join('')
+        : '<tr><td colspan="5" class="text-muted" style="padding:1.25rem;text-align:center">' +
+          'No transactions found for this card.</td></tr>';
     }
-    function df(l,v,mono){ return '<div class="detail-field"><div class="detail-field__label">'+escapeHtml(l)+'</div><div class="detail-field__value'+(mono?' font-mono':'')+'">'+(v||'N/A')+'</div></div>'; }
-    function toggleStatus(){
-      card.activeStatus = card.activeStatus==='Y' ? 'N' : 'Y';
-      updateItem('creditCards', card.id, {activeStatus: card.activeStatus});
-      showToast('Card '+(card.activeStatus==='Y'?'activated':'deactivated')+' successfully.', 'success');
-      renderCard();
-    }
-</script>
+  </script>
 </body>
 </html>
