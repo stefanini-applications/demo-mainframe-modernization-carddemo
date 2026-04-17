@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Authorizations - CardDemo</title>
+  <link rel="stylesheet" href="styles/reset.css">
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/global.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div class="app-layout">
+    <header class="app-header" role="banner">
+      <a href="dashboard.html" class="app-header__brand">💳 CardDemo</a>
+      <span class="app-header__spacer"></span>
+      <span class="app-header__user">👤 ADMIN001 <span class="badge badge--primary">Admin</span></span>
+      <button class="app-header__menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.app-sidebar').classList.toggle('is-open')">☰</button>
+    </header>
+    <nav class="app-sidebar" role="navigation" aria-label="Main navigation">
+      <ul class="nav-list">
+        <li><a href="dashboard.html" class="nav-item">🏠 Dashboard</a></li>
+        <li><a href="accounts-list.html" class="nav-item">🏦 Accounts</a></li>
+        <li><a href="credit-cards-list.html" class="nav-item">💳 Credit Cards</a></li>
+        <li><a href="transactions-list.html" class="nav-item">💸 Transactions</a></li>
+        <li><a href="billing-form.html" class="nav-item">💰 Billing</a></li>
+        <li><a href="reports-list.html" class="nav-item">📊 Reports</a></li>
+        <li><a href="users-list.html" class="nav-item">👥 User Management</a></li>
+        <li><a href="batch-list.html" class="nav-item">⚙️ Batch Jobs</a></li>
+        <li><a href="authorization-list.html" class="nav-item">🔐 Authorizations</a></li>
+        <li><a href="transaction-types-list.html" class="nav-item">🏷️ Trans. Types</a></li>
+      </ul>
+    </nav>
+    <main class="app-main" id="main-content">
+      <div class="app-main__content">
+
+        <div class="page-header">
+          <div><h1 class="page-title">Authorizations</h1><p class="page-subtitle">Credit card authorization requests and status</p></div>
+        </div>
+        <div class="toolbar">
+          <div class="toolbar__search search-bar">
+            <i class="search-bar__icon">🔍</i>
+            <input type="search" id="searchInput" class="search-bar__input" placeholder="Search card, merchant..." aria-label="Search authorizations">
+          </div>
+          <div class="toolbar__filters">
+            <select id="statusFilter" class="form-group__select" style="width:auto" onchange="applyFilter()">
+              <option value="">All Statuses</option>
+              <option value="Approved">Approved</option>
+              <option value="Declined">Declined</option>
+              <option value="Pending">Pending</option>
+            </select>
+            <select id="fraudFilter" class="form-group__select" style="width:auto" onchange="applyFilter()">
+              <option value="">All</option>
+              <option value="true">Fraud Flagged</option>
+              <option value="false">Clean</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-container">
+          <table class="table">
+            <thead><tr><th>Auth ID</th><th>Card Number</th><th>Amount</th><th>Merchant</th><th>Status</th><th>Fraud</th><th>Timestamp</th><th>Actions</th></tr></thead>
+            <tbody id="authBody"></tbody>
+          </table>
+        </div>
+        <div id="paginationContainer"></div>
+      </div>
+    </main>
+  </div>
+  <script src="scripts/mock-data.js"></script>
+  <script src="scripts/utils.js"></script>
+<script>
+    var cp=1,pp=10,all=[],filtered=[];
+    document.addEventListener('DOMContentLoaded',function(){all=getData('authorizations');filtered=all.slice();render();var ds=debounce(function(){cp=1;applyFilter();},300);document.getElementById('searchInput').addEventListener('input',ds);});
+    function applyFilter(){
+      var q=document.getElementById('searchInput').value.toLowerCase();
+      var s=document.getElementById('statusFilter').value;
+      var f=document.getElementById('fraudFilter').value;
+      filtered=all.filter(function(a){return(!q||a.cardNum.includes(q)||a.merchantName.toLowerCase().includes(q)||a.id.includes(q))&&(!s||a.status===s)&&(f===''||(f==='true'?a.fraudFlag:!a.fraudFlag));});
+      cp=1;render();
+    }
+    function render(){
+      var paged=paginate(filtered,cp,pp);
+      document.getElementById('authBody').innerHTML=paged.items.length?paged.items.map(function(a){
+        var fraud=a.fraudFlag?'<span class="badge badge--error">⚠️ FRAUD</span>':'<span class="badge badge--success">Clean</span>';
+        return '<tr><td class="font-mono text-xs">'+escapeHtml(a.id)+'</td><td class="font-mono text-xs">'+maskCardNum(a.cardNum)+'</td><td>'+formatAmount(a.amount)+'</td><td class="text-sm">'+escapeHtml(a.merchantName)+'</td><td>'+getStatusBadge(a.status)+'</td><td>'+fraud+'</td><td class="text-sm">'+escapeHtml(a.timestamp||'')+'</td><td style="display:flex;gap:8px"><a href="authorization-detail.html?id='+encodeURIComponent(a.id)+'" class="btn btn--secondary btn--sm">View</a>'+(a.fraudFlag?'<button class="btn btn--ghost btn--sm" onclick="clearFraud(''+a.id+'')">Clear</button>':'<button class="btn btn--error btn--sm" onclick="flagFraud(''+a.id+'')">Flag</button>')+'</td></tr>';
+      }).join(''):'<tr><td colspan="8"><div class="table-empty"><div class="table-empty__icon">🔐</div><div class="table-empty__text">No authorizations found</div></div></td></tr>';
+      renderPagination('paginationContainer',paged.totalPages,cp,'goToPage');
+    }
+    function goToPage(p){cp=p;render();}
+    function flagFraud(id){updateItem('authorizations',id,{fraudFlag:true,status:'Declined'});all=getData('authorizations');applyFilter();showToast('Authorization flagged as fraud.','warning');}
+    function clearFraud(id){updateItem('authorizations',id,{fraudFlag:false});all=getData('authorizations');applyFilter();showToast('Fraud flag removed.','success');}
+</script>
+</body>
+</html>

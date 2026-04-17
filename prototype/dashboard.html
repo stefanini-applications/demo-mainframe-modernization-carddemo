@@ -8,279 +8,133 @@
   <link rel="stylesheet" href="styles/variables.css">
   <link rel="stylesheet" href="styles/global.css">
   <link rel="stylesheet" href="styles/components.css">
-  <style>
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-6); }
-    .quick-actions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-6); }
-    .quick-action-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-2); padding: var(--space-6) var(--space-4); background: var(--color-background); border: 1px solid var(--border-color); border-radius: var(--border-radius); box-shadow: var(--shadow-sm); cursor: pointer; text-decoration: none; color: var(--color-text-primary); transition: all 0.2s; min-height: 100px; }
-    .quick-action-btn:hover { border-color: var(--color-primary); box-shadow: var(--shadow); color: var(--color-primary); transform: translateY(-2px); }
-    .quick-action-btn .icon { font-size: 1.75rem; }
-    .quick-action-btn .label { font-size: var(--font-size-sm); font-weight: 600; text-align: center; }
-    .dashboard-grid { display: grid; grid-template-columns: 2fr 1fr; gap: var(--space-6); }
-    .amount--negative { color: var(--color-error); font-weight: 600; }
-    .amount--positive { color: var(--color-success); font-weight: 600; }
-    @media (max-width: 900px) { .dashboard-grid { grid-template-columns: 1fr; } }
-  </style>
 </head>
 <body>
-  <a href="#main-content" class="skip-link">Skip to main content</a>
-
-  <header class="app-header">
-    <div class="app-header__left">
-      <button class="hamburger" id="hamburger" aria-label="Toggle navigation">
-        <span></span><span></span><span></span>
-      </button>
-      <a href="dashboard.html" class="app-header__logo">💳 CardDemo</a>
-    </div>
-    <div class="app-header__right">
-      <span class="app-header__user" id="headerUser"></span>
-      <a href="index.html" class="btn btn--ghost btn--sm" id="signOutBtn">Sign Out</a>
-    </div>
+<a href="#main" class="skip-link">Skip to main content</a>
+<div class="app-layout">
+  <header class="app-header" role="banner">
+    <a href="dashboard.html" class="app-header__brand">💳 CardDemo</a>
+    <button class="app-header__menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.app-sidebar').classList.toggle('is-open')">☰</button>
+    <span class="app-header__user">👤 ADMIN001 <span class="badge badge--primary">Admin</span></span>
   </header>
-
-  <div class="app-layout">
-    <aside class="sidebar" id="sidebar">
-      <nav class="sidebar__nav" aria-label="Main navigation">
-        <div class="sidebar__section">
-          <span class="sidebar__section-title">Main Menu</span>
-          <a href="dashboard.html" class="sidebar__nav-item sidebar__nav-item--active">
-            <span class="sidebar__icon">📊</span> Dashboard
-          </a>
-          <a href="accounts-list.html" class="sidebar__nav-item">
-            <span class="sidebar__icon">🏦</span> Accounts
-          </a>
-          <a href="credit-cards-list.html" class="sidebar__nav-item">
-            <span class="sidebar__icon">💳</span> Credit Cards
-          </a>
-          <a href="transactions-list.html" class="sidebar__nav-item">
-            <span class="sidebar__icon">💰</span> Transactions
-          </a>
-          <a href="billing-list.html" class="sidebar__nav-item">
-            <span class="sidebar__icon">🧾</span> Billing
-          </a>
-          <a href="reports-list.html" class="sidebar__nav-item">
-            <span class="sidebar__icon">📈</span> Reports
-          </a>
-        </div>
-        <div class="sidebar__section sidebar__section--admin" id="adminMenu" style="display:none">
-          <span class="sidebar__section-title">Admin Menu</span>
-          <a href="user-management-list.html" class="sidebar__nav-item">
-            <span class="sidebar__icon">👥</span> Users
-          </a>
-          <a href="transaction-types-list.html" class="sidebar__nav-item">
-            <span class="sidebar__icon">🏷️</span> Transaction Types
-          </a>
-          <a href="authorization-list.html" class="sidebar__nav-item">
-            <span class="sidebar__icon">🔐</span> Authorizations
-          </a>
-          <a href="batch-processing-list.html" class="sidebar__nav-item">
-            <span class="sidebar__icon">⚙️</span> Batch Jobs
-          </a>
-        </div>
-      </nav>
-    </aside>
-
-    <main class="main-content" id="main-content">
-      <nav class="breadcrumb">
-        <span class="breadcrumb__item"><a href="dashboard.html">Home</a></span>
-        <span class="breadcrumb__separator">›</span>
-        <span class="breadcrumb__item">Dashboard</span>
-      </nav>
-
+  <nav class="app-sidebar" role="navigation" aria-label="Main navigation">
+    <ul class="nav-list">
+      <li><a href="dashboard.html" class="nav-item">🏠 Dashboard</a></li>
+      <li><a href="accounts-list.html" class="nav-item">🏦 Accounts</a></li>
+      <li><a href="credit-cards-list.html" class="nav-item">💳 Credit Cards</a></li>
+      <li><a href="transactions-list.html" class="nav-item">💸 Transactions</a></li>
+      <li><a href="billing-form.html" class="nav-item">💰 Billing</a></li>
+      <li><a href="reports-list.html" class="nav-item">📊 Reports</a></li>
+      <li><a href="users-list.html" class="nav-item">👥 Users</a></li>
+      <li><a href="batch-list.html" class="nav-item">⚙️ Batch Jobs</a></li>
+      <li><a href="authorization-list.html" class="nav-item">🔐 Authorizations</a></li>
+      <li><a href="transaction-types-list.html" class="nav-item">🏷️ Trans. Types</a></li>
+    </ul>
+  </nav>
+  <main class="app-main" id="main" role="main">
+    <div class="app-main__content">
       <div class="page-header">
         <div>
-          <h1 class="page-header__title" id="welcomeMsg">Welcome back!</h1>
-          <p class="page-header__subtitle" id="welcomeDate"></p>
+          <h1 class="page-title">Dashboard</h1>
+          <p class="page-subtitle">Welcome back, ADMIN001. Here's what's happening today.</p>
         </div>
       </div>
 
-      <!-- Stats Grid -->
-      <div class="stats-grid" id="statsGrid">
-        <div class="stat-card card">
-          <div class="card__body">
-            <div class="stat-card__icon">🏦</div>
-            <div class="stat-card__value" id="statAccounts">-</div>
-            <div class="stat-card__label">Total Accounts</div>
-          </div>
-        </div>
-        <div class="stat-card card">
-          <div class="card__body">
-            <div class="stat-card__icon">💳</div>
-            <div class="stat-card__value" id="statCards">-</div>
-            <div class="stat-card__label">Active Cards</div>
-          </div>
-        </div>
-        <div class="stat-card card">
-          <div class="card__body">
-            <div class="stat-card__icon">💰</div>
-            <div class="stat-card__value" id="statTransactions">-</div>
-            <div class="stat-card__label">Transactions</div>
-          </div>
-        </div>
-        <div class="stat-card card">
-          <div class="card__body">
-            <div class="stat-card__icon">📈</div>
-            <div class="stat-card__value" id="statReports">-</div>
-            <div class="stat-card__label">Reports Generated</div>
-          </div>
-        </div>
-      </div>
+      <div class="cols-4 mb-6" id="stats-container"></div>
 
-      <!-- Quick Actions -->
-      <div class="card" style="margin-bottom: var(--space-6)">
-        <div class="card__header">
-          <h2 style="font-size: var(--font-size-lg); font-weight: 600;">Quick Actions</h2>
-        </div>
+      <div class="card mb-6">
+        <div class="card__header"><h2 class="card__title">Quick Actions</h2></div>
         <div class="card__body">
-          <div class="quick-actions-grid">
-            <a href="accounts-form.html" class="quick-action-btn">
-              <span class="icon">🏦</span>
-              <span class="label">New Account</span>
-            </a>
-            <a href="transactions-form.html" class="quick-action-btn">
-              <span class="icon">💰</span>
-              <span class="label">New Transaction</span>
-            </a>
-            <a href="billing-form.html" class="quick-action-btn">
-              <span class="icon">🧾</span>
-              <span class="label">Make Payment</span>
-            </a>
-            <a href="reports-form.html" class="quick-action-btn">
-              <span class="icon">📈</span>
-              <span class="label">Generate Report</span>
-            </a>
-            <a href="credit-cards-form.html" class="quick-action-btn">
-              <span class="icon">💳</span>
-              <span class="label">Add Card</span>
-            </a>
-            <a href="user-management-form.html" class="quick-action-btn" id="adminQuickAction" style="display:none">
-              <span class="icon">👥</span>
-              <span class="label">Add User</span>
-            </a>
+          <div class="quick-actions">
+            <a href="accounts-form.html" class="quick-action-btn"><span class="quick-action-btn__icon">🏦</span>New Account</a>
+            <a href="credit-cards-form.html" class="quick-action-btn"><span class="quick-action-btn__icon">💳</span>Issue Card</a>
+            <a href="transactions-form.html" class="quick-action-btn"><span class="quick-action-btn__icon">💸</span>Post Transaction</a>
+            <a href="billing-form.html" class="quick-action-btn"><span class="quick-action-btn__icon">💰</span>Process Payment</a>
+            <a href="reports-form.html" class="quick-action-btn"><span class="quick-action-btn__icon">📊</span>Run Report</a>
+            <a href="users-form.html" class="quick-action-btn"><span class="quick-action-btn__icon">👥</span>Add User</a>
           </div>
         </div>
       </div>
 
-      <!-- Recent Transactions + System Status -->
-      <div class="dashboard-grid">
-        <!-- Recent Transactions -->
+      <div class="cols-2">
         <div class="card">
           <div class="card__header">
-            <div class="section-header" style="margin-bottom:0">
-              <h2 style="font-size: var(--font-size-lg); font-weight: 600;">Recent Transactions</h2>
-              <a href="transactions-list.html" class="btn btn--ghost btn--sm">View All</a>
-            </div>
+            <h2 class="card__title">Recent Transactions</h2>
+            <a href="transactions-list.html" class="btn btn--ghost btn--sm">View All</a>
           </div>
-          <div class="card__body" style="padding:0">
-            <div class="data-table">
-              <table class="table table--hoverable">
-                <thead>
-                  <tr>
-                    <th>Transaction ID</th>
-                    <th>Type</th>
-                    <th>Amount</th>
-                    <th>Merchant</th>
-                    <th>Date</th>
-                  </tr>
-                </thead>
-                <tbody id="recentTransactionsBody">
-                  <tr><td colspan="5" style="text-align:center;padding:var(--space-6)"><div class="spinner"></div></td></tr>
-                </tbody>
-              </table>
-            </div>
+          <div class="table-container">
+            <table class="table table--compact" id="recent-transactions">
+              <thead><tr><th>Description</th><th>Card</th><th>Amount</th><th>Date</th></tr></thead>
+              <tbody id="recent-transactions-body"></tbody>
+            </table>
           </div>
         </div>
 
-        <!-- System Status -->
         <div class="card">
           <div class="card__header">
-            <h2 style="font-size: var(--font-size-lg); font-weight: 600;">System Status</h2>
+            <h2 class="card__title">Batch Job Status</h2>
+            <a href="batch-list.html" class="btn btn--ghost btn--sm">View All</a>
           </div>
-          <div class="card__body">
-            <div id="systemStatus">
-              <div class="spinner"></div>
-            </div>
+          <div class="table-container">
+            <table class="table table--compact">
+              <thead><tr><th>Job</th><th>Function</th><th>Status</th><th>Last Run</th></tr></thead>
+              <tbody id="batch-status-body"></tbody>
+            </table>
           </div>
         </div>
       </div>
-    </main>
-  </div>
+    </div>
+  </main>
+</div>
+<script src="scripts/mock-data.js"></script>
+<script src="scripts/utils.js"></script>
+<script>
+markActiveNav();
+document.addEventListener('DOMContentLoaded', function() {
+  const accounts = getData('accounts');
+  const cards = getData('creditCards');
+  const transactions = getData('transactions');
+  const users = getData('users');
+  const activeAccounts = accounts.filter(a => a.activeStatus === 'Y').length;
+  const activeCards = cards.filter(c => c.activeStatus === 'Y').length;
+  const totalBal = accounts.reduce((s, a) => s + a.currBal, 0);
 
-  <div id="toast-container" class="toast-container"></div>
+  const stats = [
+    { icon: '🏦', value: accounts.length, label: 'Total Accounts', sub: activeAccounts + ' active' },
+    { icon: '💳', value: cards.length, label: 'Credit Cards', sub: activeCards + ' active' },
+    { icon: '💸', value: transactions.length, label: 'Transactions', sub: 'This period' },
+    { icon: '👥', value: users.length, label: 'System Users', sub: users.filter(u=>u.type==='A').length + ' admins' }
+  ];
 
-  <script src="scripts/mock-data.js"></script>
-  <script src="scripts/utils.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      checkAuth();
-      const user = getCurrentUser();
-      if (!user) return;
+  document.getElementById('stats-container').innerHTML = stats.map(s => `
+    <div class="stat-card">
+      <div class="stat-card__icon">${s.icon}</div>
+      <div class="stat-card__value">${s.value}</div>
+      <div class="stat-card__label">${s.label}</div>
+      <div class="text-sm text-secondary mt-4">${s.sub}</div>
+    </div>
+  `).join('');
 
-      initPage('dashboard.html');
+  const recentTxns = [...transactions].reverse().slice(0, 8);
+  document.getElementById('recent-transactions-body').innerHTML = recentTxns.map(t => `
+    <tr>
+      <td>${t.desc}</td>
+      <td class="font-mono text-sm">...${t.cardNum.slice(-4)}</td>
+      <td class="${t.amount < 0 ? 'amount-negative' : 'amount-positive'}">${formatCurrency(t.amount)}</td>
+      <td class="text-sm text-secondary">${formatDateTime(t.origTs)}</td>
+    </tr>
+  `).join('');
 
-      document.getElementById('headerUser').textContent = user.userName + ' (' + user.userType + ')';
-
-      if (isAdmin()) {
-        document.getElementById('adminMenu').style.display = 'block';
-        document.getElementById('adminQuickAction').style.display = 'flex';
-      }
-
-      document.getElementById('welcomeMsg').textContent = 'Welcome back, ' + user.userName + '!';
-      document.getElementById('welcomeDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-
-      document.getElementById('hamburger').addEventListener('click', function() {
-        document.getElementById('sidebar').classList.toggle('is-open');
-      });
-
-      document.getElementById('signOutBtn').addEventListener('click', function(e) {
-        e.preventDefault();
-        mockData.session = { userId: '', userType: '', userName: '', cardNum: '', acctId: '' };
-        window.location.href = 'index.html';
-      });
-
-      setTimeout(function() {
-        document.getElementById('statAccounts').textContent = mockData.accounts.length;
-        document.getElementById('statCards').textContent = mockData.creditCards.filter(c => c.activeStatus === 'Y').length;
-        document.getElementById('statTransactions').textContent = mockData.transactions.length;
-        document.getElementById('statReports').textContent = mockData.reports.length;
-
-        // Recent transactions
-        const txBody = document.getElementById('recentTransactionsBody');
-        const recent = mockData.transactions.slice(-10).reverse();
-        if (recent.length === 0) {
-          txBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--color-text-secondary);padding:var(--space-6)">No transactions found</td></tr>';
-        } else {
-          txBody.innerHTML = recent.map(function(tx) {
-            const typeDesc = (mockData.transactionTypes.find(function(t) { return t.typeCode === tx.typeCd; }) || {}).description || tx.typeCd;
-            const amtClass = parseFloat(tx.amt) < 0 ? 'amount--negative' : 'amount--positive';
-            return '<tr onclick="window.location.href=\'transactions-detail.html?id=' + tx.id + '\'" style="cursor:pointer">' +
-              '<td><code style="font-size:var(--font-size-xs)">' + tx.tranId + '</code></td>' +
-              '<td>' + typeDesc + '</td>' +
-              '<td class="' + amtClass + '">' + formatCurrency(tx.amt) + '</td>' +
-              '<td>' + (tx.merchantName || '-') + '</td>' +
-              '<td>' + formatDate(tx.origTs ? tx.origTs.split(' ')[0] : '') + '</td>' +
-              '</tr>';
-          }).join('');
-        }
-
-        // System status
-        const statusEl = document.getElementById('systemStatus');
-        const jobs = mockData.batchJobs.slice(-5).reverse();
-        if (jobs.length === 0) {
-          statusEl.innerHTML = '<p style="color:var(--color-text-secondary);font-size:var(--font-size-sm)">No batch jobs found</p>';
-        } else {
-          statusEl.innerHTML = jobs.map(function(job) {
-            const badge = getStatusBadge(job.status);
-            return '<div style="display:flex;justify-content:space-between;align-items:center;padding:var(--space-3) 0;border-bottom:1px solid var(--border-color)">' +
-              '<div>' +
-              '<div style="font-weight:600;font-size:var(--font-size-sm)">' + job.jobName + '</div>' +
-              '<div style="font-size:var(--font-size-xs);color:var(--color-text-secondary)">' + (job.startTime ? formatDate(job.startTime) : 'Not started') + '</div>' +
-              '</div>' +
-              badge +
-              '</div>';
-          }).join('');
-        }
-      }, 500);
-    });
-  </script>
+  const batchJobs = getData('batchJobs').slice(0, 6);
+  document.getElementById('batch-status-body').innerHTML = batchJobs.map(j => `
+    <tr>
+      <td class="font-mono font-semibold">${j.name}</td>
+      <td class="text-sm">${j.function}</td>
+      <td>${getStatusBadge(j.status)}</td>
+      <td class="text-sm text-secondary">${formatDateTime(j.lastRun)}</td>
+    </tr>
+  `).join('');
+});
+</script>
 </body>
 </html>

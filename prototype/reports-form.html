@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generate Report - CardDemo</title>
+  <link rel="stylesheet" href="styles/reset.css">
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/global.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div class="app-layout">
+    <header class="app-header" role="banner">
+      <a href="dashboard.html" class="app-header__brand">💳 CardDemo</a>
+      <span class="app-header__spacer"></span>
+      <span class="app-header__user">👤 ADMIN001 <span class="badge badge--primary">Admin</span></span>
+      <button class="app-header__menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.app-sidebar').classList.toggle('is-open')">☰</button>
+    </header>
+    <nav class="app-sidebar" role="navigation" aria-label="Main navigation">
+      <ul class="nav-list">
+        <li><a href="dashboard.html" class="nav-item">🏠 Dashboard</a></li>
+        <li><a href="accounts-list.html" class="nav-item">🏦 Accounts</a></li>
+        <li><a href="credit-cards-list.html" class="nav-item">💳 Credit Cards</a></li>
+        <li><a href="transactions-list.html" class="nav-item">💸 Transactions</a></li>
+        <li><a href="billing-form.html" class="nav-item">💰 Billing</a></li>
+        <li><a href="reports-list.html" class="nav-item">📊 Reports</a></li>
+        <li><a href="users-list.html" class="nav-item">👥 User Management</a></li>
+        <li><a href="batch-list.html" class="nav-item">⚙️ Batch Jobs</a></li>
+        <li><a href="authorization-list.html" class="nav-item">🔐 Authorizations</a></li>
+        <li><a href="transaction-types-list.html" class="nav-item">🏷️ Trans. Types</a></li>
+      </ul>
+    </nav>
+    <main class="app-main" id="main-content">
+      <div class="app-main__content">
+
+        <nav class="breadcrumb"><span class="breadcrumb__item"><a href="reports-list.html">Reports</a></span><span class="breadcrumb__separator">›</span><span class="breadcrumb__item">Generate Report</span></nav>
+        <div class="page-header"><h1 class="page-title">Generate Report</h1></div>
+        <form id="rptForm" novalidate>
+          <div class="card mb-6">
+            <div class="card__header"><h2 class="card__title">Report Parameters</h2></div>
+            <div class="card__body">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-group__label form-group__label--required" for="rptType">Report Type</label>
+                  <select id="rptType" class="form-group__select" onchange="showDateFields()">
+                    <option value="">Select report type...</option>
+                    <option value="Monthly Statement">Monthly Statement</option>
+                    <option value="Yearly Summary">Yearly Summary</option>
+                    <option value="Transaction Report">Transaction Report</option>
+                    <option value="Account Summary">Account Summary</option>
+                    <option value="Interest Report">Interest Report</option>
+                  </select>
+                  <span class="form-group__error" id="rptTypeError"></span>
+                </div>
+              </div>
+              <div id="monthFields" class="form-row hidden">
+                <div class="form-group">
+                  <label class="form-group__label form-group__label--required" for="rptMonth">Month</label>
+                  <select id="rptMonth" class="form-group__select">
+                    <option value="01">January</option><option value="02">February</option><option value="03">March</option><option value="04">April</option><option value="05">May</option><option value="06">June</option><option value="07">July</option><option value="08">August</option><option value="09">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-group__label form-group__label--required" for="rptYear">Year</label>
+                  <select id="rptYear" class="form-group__select">
+                    <option value="2023">2023</option><option value="2024">2024</option><option value="2025" selected>2025</option><option value="2026">2026</option>
+                  </select>
+                </div>
+              </div>
+              <div id="yearFields" class="form-row hidden">
+                <div class="form-group">
+                  <label class="form-group__label form-group__label--required" for="rptYearOnly">Year</label>
+                  <select id="rptYearOnly" class="form-group__select">
+                    <option value="2022">2022</option><option value="2023">2023</option><option value="2024">2024</option><option value="2025" selected>2025</option>
+                  </select>
+                </div>
+              </div>
+              <div id="dateRangeFields" class="form-row hidden">
+                <div class="form-group">
+                  <label class="form-group__label form-group__label--required" for="startDate">Start Date</label>
+                  <input type="date" id="startDate" class="form-group__input">
+                </div>
+                <div class="form-group">
+                  <label class="form-group__label form-group__label--required" for="endDate">End Date</label>
+                  <input type="date" id="endDate" class="form-group__input">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-group__label" for="rptAcctId">Account ID (optional — leave blank for all)</label>
+                <input type="text" id="rptAcctId" class="form-group__input" maxlength="11" placeholder="Leave blank for all accounts">
+              </div>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn--primary btn--lg">📊 Generate Report</button>
+            <a href="reports-list.html" class="btn btn--secondary btn--lg">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+  <script src="scripts/mock-data.js"></script>
+  <script src="scripts/utils.js"></script>
+<script>
+    function showDateFields(){
+      var t=document.getElementById('rptType').value;
+      document.getElementById('monthFields').classList.toggle('hidden',t!=='Monthly Statement');
+      document.getElementById('yearFields').classList.toggle('hidden',t!=='Yearly Summary'&&t!=='Interest Report');
+      document.getElementById('dateRangeFields').classList.toggle('hidden',t!=='Transaction Report'&&t!=='Account Summary');
+    }
+    document.getElementById('rptForm').addEventListener('submit',function(e){
+      e.preventDefault();
+      var t=document.getElementById('rptType').value;
+      if(!t){document.getElementById('rptTypeError').textContent='Please select a report type.';return;}
+      document.getElementById('rptTypeError').textContent='';
+      var period='';
+      if(t==='Monthly Statement') period=document.getElementById('rptYear').value+'-'+document.getElementById('rptMonth').value;
+      else if(t==='Yearly Summary'||t==='Interest Report') period=document.getElementById('rptYearOnly').value;
+      else period=(document.getElementById('startDate').value||'2025-01-01')+' to '+(document.getElementById('endDate').value||'2025-12-31');
+      var newId='RPT'+Date.now().toString().slice(-6);
+      createItem('reports',{id:newId,type:t,period:period,generated:new Date().toISOString().split('T')[0],status:'Pending',records:0,params:{acctId:document.getElementById('rptAcctId').value}});
+      showToast('Report queued. It will be available shortly.','success');
+      setTimeout(function(){window.location.href='reports-detail.html?id='+encodeURIComponent(newId);},800);
+    });
+</script>
+</body>
+</html>

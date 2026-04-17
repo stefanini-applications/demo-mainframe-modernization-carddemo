@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transaction Type Form - CardDemo</title>
+  <link rel="stylesheet" href="styles/reset.css">
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/global.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div class="app-layout">
+    <header class="app-header" role="banner">
+      <a href="dashboard.html" class="app-header__brand">💳 CardDemo</a>
+      <span class="app-header__spacer"></span>
+      <span class="app-header__user">👤 ADMIN001 <span class="badge badge--primary">Admin</span></span>
+      <button class="app-header__menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.app-sidebar').classList.toggle('is-open')">☰</button>
+    </header>
+    <nav class="app-sidebar" role="navigation" aria-label="Main navigation">
+      <ul class="nav-list">
+        <li><a href="dashboard.html" class="nav-item">🏠 Dashboard</a></li>
+        <li><a href="accounts-list.html" class="nav-item">🏦 Accounts</a></li>
+        <li><a href="credit-cards-list.html" class="nav-item">💳 Credit Cards</a></li>
+        <li><a href="transactions-list.html" class="nav-item">💸 Transactions</a></li>
+        <li><a href="billing-form.html" class="nav-item">💰 Billing</a></li>
+        <li><a href="reports-list.html" class="nav-item">📊 Reports</a></li>
+        <li><a href="users-list.html" class="nav-item">👥 User Management</a></li>
+        <li><a href="batch-list.html" class="nav-item">⚙️ Batch Jobs</a></li>
+        <li><a href="authorization-list.html" class="nav-item">🔐 Authorizations</a></li>
+        <li><a href="transaction-types-list.html" class="nav-item">🏷️ Trans. Types</a></li>
+      </ul>
+    </nav>
+    <main class="app-main" id="main-content">
+      <div class="app-main__content">
+
+        <nav class="breadcrumb"><span class="breadcrumb__item"><a href="transaction-types-list.html">Transaction Types</a></span><span class="breadcrumb__separator">›</span><span class="breadcrumb__item" id="breadcrumbTitle">New Type</span></nav>
+        <div class="page-header"><h1 class="page-title" id="pageTitle">Add Transaction Type</h1></div>
+        <form id="ttForm" novalidate>
+          <div class="card mb-6">
+            <div class="card__header"><h2 class="card__title">Type Information</h2></div>
+            <div class="card__body">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-group__label form-group__label--required" for="code">Type Code (2 chars)</label>
+                  <input type="text" id="code" class="form-group__input" maxlength="2" placeholder="01">
+                  <span class="form-group__error" id="codeError"></span>
+                </div>
+                <div class="form-group">
+                  <label class="form-group__label form-group__label--required" for="description">Description</label>
+                  <input type="text" id="description" class="form-group__input" maxlength="50" placeholder="PURCHASE">
+                  <span class="form-group__error" id="descriptionError"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card mb-6">
+            <div class="card__header">
+              <h2 class="card__title">Categories</h2>
+              <button type="button" class="btn btn--ghost btn--sm" onclick="addCategory()">+ Add Category</button>
+            </div>
+            <div class="card__body">
+              <div id="categoriesContainer"></div>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn--primary btn--lg" id="submitBtn">Create Type</button>
+            <a href="transaction-types-list.html" class="btn btn--secondary btn--lg">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+  <script src="scripts/mock-data.js"></script>
+  <script src="scripts/utils.js"></script>
+<script>
+    var isEdit=!!getParam('id'), cats=[];
+    document.addEventListener('DOMContentLoaded',function(){
+      if(isEdit){
+        var t=getById('transactionTypes',getParam('id'));
+        if(!t){window.location.href='transaction-types-list.html';return;}
+        document.getElementById('pageTitle').textContent='Edit Type: '+t.code;
+        document.getElementById('breadcrumbTitle').textContent='Edit '+t.code;
+        document.getElementById('code').value=t.code;document.getElementById('code').readOnly=true;
+        document.getElementById('description').value=t.description;
+        cats=(t.categories||[]).slice();document.getElementById('submitBtn').textContent='Save Changes';
+      }
+      renderCategories();
+    });
+    function addCategory(){cats.push({code:'',description:''});renderCategories();}
+    function removeCategory(i){cats.splice(i,1);renderCategories();}
+    function renderCategories(){
+      document.getElementById('categoriesContainer').innerHTML=cats.length?cats.map(function(c,i){
+        return '<div class="form-row" style="align-items:flex-end"><div class="form-group"><label class="form-group__label">Code (4 chars)</label><input type="text" class="form-group__input" maxlength="4" value="'+escapeHtml(c.code)+'" onchange="cats['+i+'].code=this.value" placeholder="0001"></div><div class="form-group"><label class="form-group__label">Description</label><input type="text" class="form-group__input" maxlength="50" value="'+escapeHtml(c.description)+'" onchange="cats['+i+'].description=this.value" placeholder="Category name"></div><div><button type="button" class="btn btn--error btn--sm" onclick="removeCategory('+i+')">Remove</button></div></div>';
+      }).join(''):'<p class="text-secondary text-sm">No categories yet. Click "+ Add Category" to add one.</p>';
+    }
+    document.getElementById('ttForm').addEventListener('submit',function(e){
+      e.preventDefault();
+      var err=[];
+      function se(id,msg){var el=document.getElementById(id+'Error');if(el)el.textContent=msg||'';var inp=document.getElementById(id);if(inp)inp.classList.toggle('has-error',!!msg);if(msg)err.push(msg);}
+      se('code',!document.getElementById('code').value.trim()?'Type code is required.':'');
+      se('description',!document.getElementById('description').value.trim()?'Description is required.':'');
+      if(err.length) return;
+      var data={id:(isEdit?getParam('id'):'TT'+Date.now().toString().slice(-6)),code:document.getElementById('code').value.trim().toUpperCase(),description:document.getElementById('description').value.trim().toUpperCase(),categories:cats.filter(function(c){return c.code&&c.description;})};
+      if(isEdit)updateItem('transactionTypes',getParam('id'),data);else createItem('transactionTypes',data);
+      showToast((isEdit?'Type updated.':'Type created.'),'success');
+      setTimeout(function(){window.location.href='transaction-types-detail.html?id='+encodeURIComponent(data.id);},800);
+    });
+</script>
+</body>
+</html>

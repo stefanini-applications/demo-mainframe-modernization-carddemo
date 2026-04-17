@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Transaction - CardDemo</title>
+  <link rel="stylesheet" href="styles/reset.css">
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/global.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div class="app-layout">
+    <header class="app-header" role="banner">
+      <a href="dashboard.html" class="app-header__brand">💳 CardDemo</a>
+      <span class="app-header__spacer"></span>
+      <span class="app-header__user">👤 ADMIN001 <span class="badge badge--primary">Admin</span></span>
+      <button class="app-header__menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.app-sidebar').classList.toggle('is-open')">☰</button>
+    </header>
+    <nav class="app-sidebar" role="navigation" aria-label="Main navigation">
+      <ul class="nav-list">
+        <li><a href="dashboard.html" class="nav-item">🏠 Dashboard</a></li>
+        <li><a href="accounts-list.html" class="nav-item">🏦 Accounts</a></li>
+        <li><a href="credit-cards-list.html" class="nav-item">💳 Credit Cards</a></li>
+        <li><a href="transactions-list.html" class="nav-item">💸 Transactions</a></li>
+        <li><a href="billing-form.html" class="nav-item">💰 Billing</a></li>
+        <li><a href="reports-list.html" class="nav-item">📊 Reports</a></li>
+        <li><a href="users-list.html" class="nav-item">👥 User Management</a></li>
+        <li><a href="batch-list.html" class="nav-item">⚙️ Batch Jobs</a></li>
+        <li><a href="authorization-list.html" class="nav-item">🔐 Authorizations</a></li>
+        <li><a href="transaction-types-list.html" class="nav-item">🏷️ Trans. Types</a></li>
+      </ul>
+    </nav>
+    <main class="app-main" id="main-content">
+      <div class="app-main__content">
+        <nav class="breadcrumb"><span class="breadcrumb__item"><a href="dashboard.html">Dashboard</a></span><span class="breadcrumb__separator">›</span><span class="breadcrumb__item"><a href="transactions-list.html">Transactions</a></span><span class="breadcrumb__separator">›</span><span class="breadcrumb__item">New Transaction</span></nav>
+        <div class="page-header"><h1 class="page-title">New Transaction</h1></div>
+        <form id="txForm" novalidate>
+          <div class="card mb-6">
+            <div class="card__header"><h2 class="card__title">Card / Account</h2></div>
+            <div class="card__body">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-group__label" for="cardNum">Card Number (16 digits)</label>
+                  <input type="text" id="cardNum" class="form-group__input" maxlength="16" placeholder="4111111111111001">
+                  <span class="form-group__hint">Enter card number OR account ID</span>
+                  <span class="form-group__error" id="cardNumError"></span>
+                </div>
+                <div class="form-group">
+                  <label class="form-group__label" for="acctId">Account ID (11 digits)</label>
+                  <input type="text" id="acctId" class="form-group__input" maxlength="11" placeholder="00000000001">
+                  <span class="form-group__hint">Will auto-resolve from card number</span>
+                </div>
+              </div>
+              <button type="button" class="btn btn--ghost btn--sm" onclick="copyLastTx()">📋 Copy Last Transaction</button>
+            </div>
+          </div>
+          <div class="card mb-6">
+            <div class="card__header"><h2 class="card__title">Transaction Details</h2></div>
+            <div class="card__body">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-group__label form-group__label--required" for="typeCode">Transaction Type</label>
+                  <select id="typeCode" class="form-group__select" onchange="updateCategories()">
+                    <option value="">Select type...</option>
+                    <option value="01">01 - PURCHASE</option>
+                    <option value="02">02 - PAYMENT</option>
+                    <option value="03">03 - CREDIT</option>
+                    <option value="04">04 - AUTHORIZATION</option>
+                    <option value="05">05 - REFUND</option>
+                    <option value="06">06 - REVERSAL</option>
+                    <option value="07">07 - ADJUSTMENT</option>
+                  </select>
+                  <span class="form-group__error" id="typeCodeError"></span>
+                </div>
+                <div class="form-group">
+                  <label class="form-group__label form-group__label--required" for="catCode">Category Code</label>
+                  <select id="catCode" class="form-group__select"><option value="">Select type first...</option></select>
+                  <span class="form-group__error" id="catCodeError"></span>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-group__label form-group__label--required" for="amount">Amount ($)</label>
+                  <input type="number" id="amount" class="form-group__input" step="0.01" placeholder="-125.99 (negative=debit, positive=credit)">
+                  <span class="form-group__hint">Negative = debit/charge, Positive = credit/payment</span>
+                  <span class="form-group__error" id="amountError"></span>
+                </div>
+                <div class="form-group">
+                  <label class="form-group__label form-group__label--required" for="source">Source</label>
+                  <select id="source" class="form-group__select">
+                    <option value="POS TERM">POS TERM</option>
+                    <option value="ONLINE">ONLINE</option>
+                    <option value="ATM">ATM</option>
+                    <option value="MOBILE">MOBILE</option>
+                    <option value="BATCH">BATCH</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-group__label form-group__label--required" for="desc">Description</label>
+                <input type="text" id="desc" class="form-group__input" maxlength="100" placeholder="MERCHANT NAME PURCHASE">
+                <span class="form-group__error" id="descError"></span>
+              </div>
+            </div>
+          </div>
+          <div class="card mb-6">
+            <div class="card__header"><h2 class="card__title">Merchant Information</h2></div>
+            <div class="card__body">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-group__label" for="merchantId">Merchant ID</label>
+                  <input type="text" id="merchantId" class="form-group__input" maxlength="9" placeholder="123456789">
+                </div>
+                <div class="form-group">
+                  <label class="form-group__label form-group__label--required" for="merchantName">Merchant Name</label>
+                  <input type="text" id="merchantName" class="form-group__input" maxlength="50" placeholder="Store Name">
+                  <span class="form-group__error" id="merchantNameError"></span>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-group__label" for="merchantCity">Merchant City</label>
+                  <input type="text" id="merchantCity" class="form-group__input" maxlength="50" placeholder="New York">
+                </div>
+                <div class="form-group">
+                  <label class="form-group__label" for="merchantZip">Merchant ZIP</label>
+                  <input type="text" id="merchantZip" class="form-group__input" maxlength="10" placeholder="10001">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn--primary btn--lg">Submit Transaction</button>
+            <a href="transactions-list.html" class="btn btn--secondary btn--lg">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+  <script src="scripts/mock-data.js"></script>
+  <script src="scripts/utils.js"></script>
+<script>
+    var cats = { '01':['0001 - General Merchandise','0002 - Grocery/Food','0003 - Digital/Subscriptions','0004 - Gas/Fuel','0005 - Dining/Restaurant','0006 - Healthcare/Pharmacy','0007 - Travel/Airline','0008 - Lodging/Hotel'], '02':['0001 - Full Balance Payment','0002 - Online Payment'], '03':['0001 - Merchandise Return','0002 - Billing Adjustment'], '04':['0001 - Pre-Authorization','0002 - Incremental Auth'], '05':['0001 - Merchant Refund','0002 - System Refund'], '06':['0001 - Auth Reversal','0002 - Post Reversal'], '07':['0001 - Fee Adjustment','0002 - Interest Adjustment','0003 - Statement Adjustment'] };
+    function updateCategories(){
+      var tc=document.getElementById('typeCode').value;
+      var sel=document.getElementById('catCode');
+      sel.innerHTML = (cats[tc]||[]).map(function(c){ return '<option value="'+c.split(' - ')[0]+'">'+c+'</option>'; }).join('') || '<option value="">Select type first...</option>';
+    }
+    function copyLastTx(){
+      var txs=getData('transactions'); if(!txs.length) return;
+      var last=txs[txs.length-1];
+      document.getElementById('cardNum').value=last.cardNum;
+      document.getElementById('typeCode').value=last.typeCode; updateCategories();
+      document.getElementById('catCode').value=last.catCode;
+      document.getElementById('source').value=last.source;
+      document.getElementById('desc').value=last.desc;
+      document.getElementById('amount').value=last.amount;
+      document.getElementById('merchantId').value=last.merchantId;
+      document.getElementById('merchantName').value=last.merchantName;
+      document.getElementById('merchantCity').value=last.merchantCity;
+      document.getElementById('merchantZip').value=last.merchantZip;
+      showToast('Copied last transaction fields.','info');
+    }
+    document.getElementById('txForm').addEventListener('submit',function(e){
+      e.preventDefault();
+      var errors=[];
+      function se(id,msg){var el=document.getElementById(id+'Error');if(el)el.textContent=msg||'';var inp=document.getElementById(id);if(inp)inp.classList.toggle('has-error',!!msg);if(msg)errors.push(msg);}
+      var cn=document.getElementById('cardNum').value;
+      var ai=document.getElementById('acctId').value;
+      if(!cn&&!ai){se('cardNum','Card number or account ID is required.');errors.push('card');}else{se('cardNum','');}
+      se('typeCode',!document.getElementById('typeCode').value?'Transaction type is required.':'');
+      var amt=parseFloat(document.getElementById('amount').value);
+      se('amount',isNaN(amt)||amt===0?'Amount is required and cannot be zero.':'');
+      se('desc',!document.getElementById('desc').value?'Description is required.':'');
+      se('merchantName',!document.getElementById('merchantName').value?'Merchant name is required.':'');
+      if(errors.length) return;
+      var ts=new Date().toISOString().replace('T',' ').split('.')[0]+'.000000';
+      var newId='TX'+Date.now().toString().slice(-14).padStart(16,'0');
+      var data={id:newId,typeCode:document.getElementById('typeCode').value,catCode:document.getElementById('catCode').value,source:document.getElementById('source').value,desc:document.getElementById('desc').value,amount:amt,merchantId:document.getElementById('merchantId').value,merchantName:document.getElementById('merchantName').value,merchantCity:document.getElementById('merchantCity').value,merchantZip:document.getElementById('merchantZip').value,cardNum:cn||'',origTs:ts,procTs:ts};
+      createItem('transactions',data);
+      showToast('Transaction submitted successfully.','success');
+      setTimeout(function(){window.location.href='transactions-detail.html?id='+encodeURIComponent(newId);},800);
+    });
+</script>
+</body>
+</html>

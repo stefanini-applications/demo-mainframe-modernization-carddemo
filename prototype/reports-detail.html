@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Report Detail - CardDemo</title>
+  <link rel="stylesheet" href="styles/reset.css">
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/global.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div class="app-layout">
+    <header class="app-header" role="banner">
+      <a href="dashboard.html" class="app-header__brand">💳 CardDemo</a>
+      <span class="app-header__spacer"></span>
+      <span class="app-header__user">👤 ADMIN001 <span class="badge badge--primary">Admin</span></span>
+      <button class="app-header__menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.app-sidebar').classList.toggle('is-open')">☰</button>
+    </header>
+    <nav class="app-sidebar" role="navigation" aria-label="Main navigation">
+      <ul class="nav-list">
+        <li><a href="dashboard.html" class="nav-item">🏠 Dashboard</a></li>
+        <li><a href="accounts-list.html" class="nav-item">🏦 Accounts</a></li>
+        <li><a href="credit-cards-list.html" class="nav-item">💳 Credit Cards</a></li>
+        <li><a href="transactions-list.html" class="nav-item">💸 Transactions</a></li>
+        <li><a href="billing-form.html" class="nav-item">💰 Billing</a></li>
+        <li><a href="reports-list.html" class="nav-item">📊 Reports</a></li>
+        <li><a href="users-list.html" class="nav-item">👥 User Management</a></li>
+        <li><a href="batch-list.html" class="nav-item">⚙️ Batch Jobs</a></li>
+        <li><a href="authorization-list.html" class="nav-item">🔐 Authorizations</a></li>
+        <li><a href="transaction-types-list.html" class="nav-item">🏷️ Trans. Types</a></li>
+      </ul>
+    </nav>
+    <main class="app-main" id="main-content">
+      <div class="app-main__content">
+
+        <nav class="breadcrumb"><span class="breadcrumb__item"><a href="reports-list.html">Reports</a></span><span class="breadcrumb__</span><span class="breadcrumb__item" id="breadcrumbId">Report Detail</span></nav>separator">
+        <div class="page-header">
+          <div><h1 class="page-title" id="pageTitle">Report Detail</h1></div>
+          <div class="page-actions"><a href="reports-list.html" class="btn btn--secondary">← Back to List</a><a href="reports-form.html" class="btn btn--primary">+ New Report</a></div>
+        </div>
+        <div class="card mb-6"><div class="card__header"><h2 class="card__title">Report Information</h2></div><div class="card__body" id="rptInfo"></div></div>
+        <div class="card"><div class="card__header"><h2 class="card__title">Report Preview</h2></div><div class="card__body" id="rptPreview"></div></div>
+      </div>
+    </main>
+  </div>
+  <script src="scripts/mock-data.js"></script>
+  <script src="scripts/utils.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded',function(){
+      var id=getParam('id');
+      if(!id){window.location.href='reports-list.html';return;}
+      var r=getById('reports',id);
+      if(!r){document.querySelector('.app-main__content').innerHTML='<div class="alert alert--error"><span class="alert__icon">⚠️</span><div class="alert__content">Report not found.</div></div>';return;}
+      document.getElementById('breadcrumbId').textContent=r.id;
+      document.getElementById('pageTitle').textContent=r.type+' — '+r.period;
+      function df(l,v){return '<div class="detail-field"><div class="detail-field__label">'+l+'</div><div class="detail-field__value">'+v+'</div></div>';}
+      document.getElementById('rptInfo').innerHTML=df('Report ID','<span class="font-mono">'+escapeHtml(r.id)+'</span>')+df('Type',escapeHtml(r.type))+df('Period',escapeHtml(r.period))+df('Generated',escapeHtml(r.generated))+df('Status',getStatusBadge(r.status))+df('Total Records',String(r.records||0));
+      if(r.status==='Pending'){
+        document.getElementById('rptPreview').innerHTML='<div class="alert alert--warning"><span class="alert__icon">⏳</span><div class="alert__content">This report is queued. Simulating generation...<br><button class="btn btn--primary btn--sm mt-2" onclick="simulateCompletion()">Simulate Completion</button></div></div>';
+      } else if(r.status==='Failed'){
+        document.getElementById('rptPreview').innerHTML='<div class="alert alert--error"><span class="alert__icon">❌</span><div class="alert__content">Report generation failed. Please regenerate.</div></div>';
+      } else {
+        var txs=getData('transactions').slice(0,r.records||5);
+        var rows=txs.map(function(t){return '<tr><td class="font-mono text-xs">'+escapeHtml(t.id.slice(-8))+'</td><td>'+escapeHtml(t.typeCode)+'</td><td class="text-sm">'+escapeHtml(t.desc)+'</td><td>'+formatAmount(t.amount)+'</td><td class="text-sm">'+escapeHtml(t.procTs.split(' ')[0])+'</td></tr>';}).join('');
+        document.getElementById('rptPreview').innerHTML='<div class="table-container"><table class="table"><thead><tr><th>Trans ID</th><th>Type</th><th>Description</th><th>Amount</th><th>Date</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+      }
+    });
+    function simulateCompletion(){
+      var id=getParam('id'); if(!id) return;
+      updateItem('reports',id,{status:'Completed',records:Math.floor(Math.random()*50)+10});
+      showToast('Report generated!','success');
+      setTimeout(function(){location.reload();},600);
+    }
+</script>
+</body>
+</html>

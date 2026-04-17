@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Authorization Detail - CardDemo</title>
+  <link rel="stylesheet" href="styles/reset.css">
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/global.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div class="app-layout">
+    <header class="app-header" role="banner">
+      <a href="dashboard.html" class="app-header__brand">💳 CardDemo</a>
+      <span class="app-header__spacer"></span>
+      <span class="app-header__user">👤 ADMIN001 <span class="badge badge--primary">Admin</span></span>
+      <button class="app-header__menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.app-sidebar').classList.toggle('is-open')">☰</button>
+    </header>
+    <nav class="app-sidebar" role="navigation" aria-label="Main navigation">
+      <ul class="nav-list">
+        <li><a href="dashboard.html" class="nav-item">🏠 Dashboard</a></li>
+        <li><a href="accounts-list.html" class="nav-item">🏦 Accounts</a></li>
+        <li><a href="credit-cards-list.html" class="nav-item">💳 Credit Cards</a></li>
+        <li><a href="transactions-list.html" class="nav-item">💸 Transactions</a></li>
+        <li><a href="billing-form.html" class="nav-item">💰 Billing</a></li>
+        <li><a href="reports-list.html" class="nav-item">📊 Reports</a></li>
+        <li><a href="users-list.html" class="nav-item">👥 User Management</a></li>
+        <li><a href="batch-list.html" class="nav-item">⚙️ Batch Jobs</a></li>
+        <li><a href="authorization-list.html" class="nav-item">🔐 Authorizations</a></li>
+        <li><a href="transaction-types-list.html" class="nav-item">🏷️ Trans. Types</a></li>
+      </ul>
+    </nav>
+    <main class="app-main" id="main-content">
+      <div class="app-main__content">
+
+        <nav class="breadcrumb"><span class="breadcrumb__item"><a href="authorization-list.html">Authorizations</a></span><span class="breadcrumb__separator">›</span><span class="breadcrumb__item" id="breadcrumbId">Auth Detail</span></nav>
+        <div class="page-header">
+          <div><h1 class="page-title" id="pageTitle">Authorization Detail</h1></div>
+          <div class="page-actions">
+            <a href="authorization-list.html" class="btn btn--secondary">← Back to List</a>
+            <button id="fraudBtn" class="btn btn--error" onclick="toggleFraud()">⚠️ Flag as Fraud</button>
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="card"><div class="card__header"><h2 class="card__title">Authorization Info</h2></div><div class="card__body" id="authInfo"></div></div>
+          <div class="card"><div class="card__header"><h2 class="card__title">Merchant & Card</h2></div><div class="card__body" id="merchantInfo"></div></div>
+        </div>
+        <div class="card mt-4" id="fraudAlert"></div>
+      </div>
+    </main>
+  </div>
+  <script src="scripts/mock-data.js"></script>
+  <script src="scripts/utils.js"></script>
+<script>
+    var currentAuth=null;
+    document.addEventListener('DOMContentLoaded',function(){
+      var id=getParam('id');
+      if(!id){window.location.href='authorization-list.html';return;}
+      var a=getById('authorizations',id);
+      if(!a){document.querySelector('.app-main__content').innerHTML='<div class="alert alert--error"><span class="alert__icon">⚠️</span><div class="alert__content">Authorization not found.</div></div>';return;}
+      currentAuth=a;
+      document.getElementById('breadcrumbId').textContent=a.id;
+      document.getElementById('pageTitle').textContent='Authorization '+a.id;
+      if(a.fraudFlag){
+        document.getElementById('fraudBtn').textContent='✅ Remove Fraud Flag';
+        document.getElementById('fraudBtn').className='btn btn--success';
+        document.getElementById('fraudAlert').innerHTML='<div class="card__body"><div class="alert alert--error"><span class="alert__icon">⚠️</span><div class="alert__content"><strong>FRAUD ALERT:</strong> This authorization has been flagged as fraudulent.</div></div></div>';
+      }
+      function df(l,v){return '<div class="detail-field"><div class="detail-field__label">'+l+'</div><div class="detail-field__value">'+v+'</div></div>';}
+      document.getElementById('authInfo').innerHTML=df('Auth ID','<span class="font-mono">'+escapeHtml(a.id)+'</span>')+df('Status',getStatusBadge(a.status))+df('Amount',formatAmount(a.amount))+df('Response Code',escapeHtml(a.responseCode||'N/A'))+df('Response Msg',escapeHtml(a.responseMsg||'N/A'))+df('Timestamp',escapeHtml(a.timestamp||'N/A'));
+      document.getElementById('merchantInfo').innerHTML=df('Card Number','<span class="font-mono">'+maskCardNum(a.cardNum)+'</span>')+df('Merchant ID',escapeHtml(a.merchantId||'N/A'))+df('Merchant Name',escapeHtml(a.merchantName))+df('Merchant City',escapeHtml(a.merchantCity||'N/A'))+df('Fraud Flag',a.fraudFlag?'<span class="badge badge--error">FLAGGED</span>':'<span class="badge badge--success">Clean</span>');
+    });
+    function toggleFraud(){
+      if(!currentAuth) return;
+      var newFlag=!currentAuth.fraudFlag;
+      updateItem('authorizations',currentAuth.id,{fraudFlag:newFlag,status:newFlag?'Declined':currentAuth.status==='Declined'?'Approved':currentAuth.status});
+      showToast(newFlag?'Flagged as fraud.':'Fraud flag removed.',newFlag?'warning':'success');
+      setTimeout(function(){location.reload();},600);
+    }
+</script>
+</body>
+</html>

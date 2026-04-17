@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Credit Card Form - CardDemo</title>
+  <link rel="stylesheet" href="styles/reset.css">
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/global.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div class="app-layout">
+    <header class="app-header" role="banner">
+      <a href="dashboard.html" class="app-header__brand">� CardDemo</a>
+      <span class="app-header__spacer"></span>
+      <span class="app-header__user">👤 ADMIN001 <span class="badge badge--primary">Admin</span></span>
+      <button class="app-header__menu-toggle" aria-label="Toggle menu" onclick="document.querySelector('.app-sidebar').classList.toggle('is-open')">☰</button>
+    </header>
+    <nav class="app-sidebar" role="navigation" aria-label="Main navigation">
+      <ul class="nav-list">
+        <li><a href="dashboard.html" class="nav-item">🏠 Dashboard</a></li>
+        <li><a href="accounts-list.html" class="nav-item">🏦 Accounts</a></li>
+        <li><a href="credit-cards-list.html" class="nav-item">💳 Credit Cards</a></li>
+        <li><a href="transactions-list.html" class="nav-item">💸 Transactions</a></li>
+        <li><a href="billing-form.html" class="nav-item">💰 Billing</a></li>
+        <li><a href="reports-list.html" class="nav-item">📊 Reports</a></li>
+        <li><a href="users-list.html" class="nav-item">👥 User Management</a></li>
+        <li><a href="batch-list.html" class="nav-item">⚙️ Batch Jobs</a></li>
+        <li><a href="authorization-list.html" class="nav-item">� Authorizations</a></li>
+        <li><a href="transaction-types-list.html" class="nav-item">🏷️ Trans. Types</a></li>
+      </ul>
+    </nav>
+    <main class="app-main" id="main-content">
+      <div class="app-main__content">
+        <nav class="breadcrumb"><span class="breadcrumb__item"><a href="dashboard.html">Dashboard</a></span><span class="breadcrumb__separator">›</span><span class="breadcrumb__item"><a href="credit-cards-list.html">Credit Cards</a></span><span class="breadcrumb__separator">›</span><span class="breadcrumb__item" id="breadcrumbLabel">New Card</span></nav>
+        <div class="page-header"><h1 class="page-title" id="pageTitle">New Card</h1></div>
+        <form id="cardForm" novalidate>
+          <div class="card mb-6">
+            <div class="card__header"><h2 class="card__title">Card Information</h2></div>
+            <div class="card__body">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-group__label form-group__label--required" for="cardNum">Card Number (16 digits)</label>
+                  <input type="text" id="cardNum" class="form-group__input" maxlength="16" placeholder="4111111111111001">
+                  <span class="form-group__error" id="cardNumError"></span>
+                </div>
+                <div class="form-group">
+                  <label class="form-group__label form-group__label--required" for="acctId">Account ID (11 digits)</label>
+                  <input type="text" id="acctId" class="form-group__input" maxlength="11" placeholder="00000000001">
+                  <span class="form-group__error" id="acctIdError"></span>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-group__label form-group__label--required" for="embossedName">Embossed Name</label>
+                  <input type="text" id="embossedName" class="form-group__input" maxlength="50" placeholder="JANE DOE">
+                  <span class="form-group__hint">Alphabetic characters and spaces only</span>
+                  <span class="form-group__error" id="embossedNameError"></span>
+                </div>
+                <div class="form-group">
+                  <label class="form-group__label" for="cvv">CVV (3 digits)</label>
+                  <input type="text" id="cvv" class="form-group__input" maxlength="3" placeholder="***" autocomplete="off">
+                  <span class="form-group__hint" id="cvvHint"></span>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-group__label form-group__label--required" for="expirationDate">Expiration Date</label>
+                  <input type="date" id="expirationDate" class="form-group__input">
+                  <span class="form-group__error" id="expirationDateError"></span>
+                </div>
+                <div class="form-group">
+                  <label class="form-group__label form-group__label--required" for="activeStatus">Active Status</label>
+                  <select id="activeStatus" class="form-group__select"><option value="Y">Y - Active</option><option value="N">N - Inactive</option></select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn--primary btn--lg">Save Card</button>
+            <a href="credit-cards-list.html" class="btn btn--secondary btn--lg">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+  <script src="scripts/mock-data.js"></script>
+  <script src="scripts/utils.js"></script>
+<script>
+    var editId = getParam('id'), isEdit = !!editId;
+    document.addEventListener('DOMContentLoaded', function(){
+      if(isEdit){
+        document.getElementById('pageTitle').textContent = 'Edit Card';
+        document.getElementById('breadcrumbLabel').textContent = 'Edit Card';
+        var c = getById('creditCards', editId);
+        if(c){
+          document.getElementById('cardNum').value = c.id; document.getElementById('cardNum').disabled = true;
+          document.getElementById('acctId').value = c.acctId;
+          document.getElementById('embossedName').value = c.embossedName;
+          document.getElementById('cvv').value = '***'; document.getElementById('cvv').disabled = true;
+          document.getElementById('cvvHint').textContent = 'CVV cannot be changed after creation';
+          document.getElementById('expirationDate').value = c.expirationDate;
+          document.getElementById('activeStatus').value = c.activeStatus;
+        }
+      }
+    });
+    document.getElementById('cardForm').addEventListener('submit', function(e){
+      e.preventDefault();
+      var errors = [];
+      function se(id,msg){ var el=document.getElementById(id+'Error'); if(el) el.textContent=msg||''; var inp=document.getElementById(id); if(inp) inp.classList.toggle('has-error',!!msg); if(msg) errors.push(msg); }
+      var cn = document.getElementById('cardNum').value;
+      se('cardNum', !isEdit && (!cn||cn.length!==16||!/^\d+$/.test(cn)) ? 'Card number must be 16 digits.' : '');
+      se('acctId', !document.getElementById('acctId').value ? 'Account ID is required.' : '');
+      var en = document.getElementById('embossedName').value;
+      se('embossedName', !en ? 'Embossed name is required.' : (!/^[A-Za-z ]+$/.test(en) ? 'Only letters and spaces allowed.' : ''));
+      se('expirationDate', !document.getElementById('expirationDate').value ? 'Expiration date is required.' : '');
+      if(errors.length) return;
+      var id = isEdit ? editId : cn;
+      var data = { id: id, acctId: document.getElementById('acctId').value, embossedName: document.getElementById('embossedName').value.toUpperCase(), expirationDate: document.getElementById('expirationDate').value, activeStatus: document.getElementById('activeStatus').value, cvv: isEdit ? (getById('creditCards',editId)||{}).cvv : parseInt(document.getElementById('cvv').value)||0 };
+      if(isEdit) updateItem('creditCards', editId, data); else createItem('creditCards', data);
+      showToast(isEdit?'Card updated.':'Card created.', 'success');
+      setTimeout(function(){ window.location.href='credit-cards-detail.html?id='+encodeURIComponent(id); }, 800);
+    });
+</script>
+</body>
+</html>
