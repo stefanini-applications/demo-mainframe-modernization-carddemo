@@ -1,10 +1,3 @@
-"""
-SQLite-backed customer repository.
-
-Reproduces the CUSTFILE VSAM KSDS behaviour:
-  * Primary key  : cust_id  (equivalent to KSDS record key)
-  * Alternate index : ssn   (equivalent to CUST-SSN alternate index)
-"""
 import sqlite3
 from typing import List, Optional
 
@@ -60,15 +53,9 @@ def _row_to_customer(row: sqlite3.Row) -> Customer:
 
 
 class CustomerRepository:
-    """Manages customer persistence in an SQLite database."""
-
     def __init__(self, db_path: str = "custfile.db") -> None:
         self._db_path = db_path
         self._conn: Optional[sqlite3.Connection] = None
-
-    # ------------------------------------------------------------------
-    # Connection lifecycle
-    # ------------------------------------------------------------------
 
     def open(self) -> None:
         self._conn = sqlite3.connect(self._db_path)
@@ -88,12 +75,7 @@ class CustomerRepository:
     def __exit__(self, *_) -> None:
         self.close()
 
-    # ------------------------------------------------------------------
-    # CRUD operations
-    # ------------------------------------------------------------------
-
     def create(self, customer: Customer) -> None:
-        """Insert a new customer record (equivalent to VSAM WRITE)."""
         self._conn.execute(
             """
             INSERT INTO customers
@@ -119,21 +101,18 @@ class CustomerRepository:
         self._conn.commit()
 
     def read_by_id(self, cust_id: int) -> Optional[Customer]:
-        """Fetch a customer by primary key (equivalent to VSAM READ by CUST-ID)."""
         row = self._conn.execute(
             "SELECT * FROM customers WHERE cust_id = ?", (cust_id,)
         ).fetchone()
         return _row_to_customer(row) if row else None
 
     def read_by_ssn(self, ssn: int) -> Optional[Customer]:
-        """Fetch a customer by SSN alternate index (equivalent to VSAM READ by CUST-SSN)."""
         row = self._conn.execute(
             "SELECT * FROM customers WHERE ssn = ?", (ssn,)
         ).fetchone()
         return _row_to_customer(row) if row else None
 
     def update(self, customer: Customer) -> bool:
-        """Update an existing customer record (equivalent to VSAM REWRITE)."""
         cursor = self._conn.execute(
             """
             UPDATE customers SET
@@ -159,7 +138,6 @@ class CustomerRepository:
         return cursor.rowcount > 0
 
     def list_all(self) -> List[Customer]:
-        """Return all customers ordered by cust_id (sequential CUSTFILE scan)."""
         rows = self._conn.execute(
             "SELECT * FROM customers ORDER BY cust_id"
         ).fetchall()

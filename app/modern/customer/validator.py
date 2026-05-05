@@ -1,23 +1,3 @@
-"""
-Customer field validation.
-
-Rules are derived from the CICS COACTUPC.CBL program and the
-CSUTLDPY.CPY utility copybook that it COPIES.
-
-Validated constraints
----------------------
-* phone_num_1 / phone_num_2  : US format (NNN)NNN-NNNN  (optional fields)
-* ssn                        : NNN-NN-NNNN (stored numeric, formatted on output)
-* dob                        : YYYY-MM-DD, must be a past date
-* fico_credit_score          : integer in range 300–850  (COACTUPC line 848-849)
-* first_name / last_name     : required, alpha characters
-* addr_line_1                : required
-* addr_state_cd              : required, 2-letter alpha
-* addr_country_cd            : required, 3-letter alpha
-* addr_zip                   : required, numeric
-* eft_account_id             : required, numeric, 10 digits
-* pri_card_holder_ind        : 'Y' or 'N'
-"""
 import re
 from datetime import date
 from typing import List
@@ -29,18 +9,13 @@ _DOB_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 class ValidationError(Exception):
-    """Raised when one or more customer fields fail validation."""
-
     def __init__(self, errors: List[str]) -> None:
         self.errors = errors
         super().__init__("; ".join(errors))
 
 
 class CustomerValidator:
-    """Validates a Customer instance against the rules from COACTUPC."""
-
     def validate(self, customer: Customer) -> None:
-        """Validate *customer* and raise :exc:`ValidationError` if invalid."""
         errors: List[str] = []
 
         errors.extend(self._validate_required_alpha("first_name", customer.first_name))
@@ -59,10 +34,6 @@ class CustomerValidator:
 
         if errors:
             raise ValidationError(errors)
-
-    # ------------------------------------------------------------------
-    # Internal helpers (mirror of COACTUPC edit paragraphs)
-    # ------------------------------------------------------------------
 
     @staticmethod
     def _validate_required(field: str, value: str) -> List[str]:
@@ -95,7 +66,6 @@ class CustomerValidator:
 
     @staticmethod
     def _validate_fico(score: int) -> List[str]:
-        """FICO score: 300–850 per COACTUPC line 848-849."""
         try:
             n = int(score)
         except (TypeError, ValueError):
@@ -106,7 +76,6 @@ class CustomerValidator:
 
     @staticmethod
     def _validate_dob(dob: str) -> List[str]:
-        """DOB must be YYYY-MM-DD and must be in the past."""
         if not dob or not dob.strip():
             return ["dob: is required"]
         if not _DOB_RE.match(dob):
@@ -121,9 +90,8 @@ class CustomerValidator:
 
     @staticmethod
     def _validate_phone(field: str, value: str) -> List[str]:
-        """Phone is optional; when supplied it must match (NNN)NNN-NNNN."""
         if not value or not value.strip():
-            return []  # optional
+            return []
         cleaned = value.strip()
         if not _PHONE_RE.match(cleaned):
             return [f"{field}: must be in (NNN)NNN-NNNN format, got '{cleaned}'"]
@@ -137,7 +105,6 @@ class CustomerValidator:
 
     @staticmethod
     def _validate_ssn(ssn: int) -> List[str]:
-        """SSN stored as 9-digit numeric; must not be all-zeros."""
         try:
             n = int(ssn)
         except (TypeError, ValueError):
@@ -150,6 +117,5 @@ class CustomerValidator:
 
     @staticmethod
     def format_ssn(ssn: int) -> str:
-        """Return SSN in NNN-NN-NNNN display format."""
         s = f"{int(ssn):09d}"
         return f"{s[:3]}-{s[3:5]}-{s[5:]}"

@@ -1,30 +1,4 @@
 #!/usr/bin/env python3
-"""
-Customer Registration Migration Script
-=======================================
-Migrates CUSTFILE VSAM KSDS data to a modern SQLite database.
-
-Reads the fixed-width ASCII export of CUSTFILE (produced by CBEXPORT or
-IDCAMS REPRO) and loads valid records into the target SQLite database.
-
-Reproduces the statistical reporting pattern used by CBIMPORT:
-  * Total records processed
-  * Records successfully migrated
-  * Records rejected (with reason)
-
-Usage
------
-    python -m app.modern.customer.migration \\
-        --input  app/data/ASCII/custdata.txt \\
-        --output custfile.db \\
-        --report migration_report.txt
-
-Exit codes
-----------
-    0  All records migrated successfully
-    1  One or more records were rejected (check the report)
-    2  Fatal I/O or argument error
-"""
 import argparse
 import sys
 from datetime import datetime
@@ -67,7 +41,7 @@ class MigrationStats:
         self.total_processed: int = 0
         self.total_migrated: int = 0
         self.total_rejected: int = 0
-        self.rejected_records: List[Tuple[int, int, str]] = []  # (line_no, cust_id, reason)
+        self.rejected_records: List[Tuple[int, int, str]] = []
         self.started_at: datetime = datetime.now()
         self.finished_at: datetime | None = None
 
@@ -112,14 +86,6 @@ def run_migration(
     output_path: str,
     skip_validation: bool = False,
 ) -> MigrationStats:
-    """
-    Core migration logic.
-
-    Reads every line from *input_path*, parses it as a CVCUS01Y fixed-width
-    record, optionally validates it, and writes it to *output_path*.
-
-    Returns a :class:`MigrationStats` with reconciliation counters.
-    """
     validator = CustomerValidator()
     stats = MigrationStats()
 

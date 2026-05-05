@@ -1,29 +1,3 @@
-"""
-Customer data model.
-
-Mirrors the CUSTOMER-RECORD structure defined in CVCUS01Y.cpy (RECLN=500).
-All 19 business fields are preserved; the 168-byte FILLER is omitted.
-
-Legacy field mapping:
-  CUST-ID                   -> cust_id               PIC 9(09)
-  CUST-FIRST-NAME           -> first_name            PIC X(25)
-  CUST-MIDDLE-NAME          -> middle_name           PIC X(25)
-  CUST-LAST-NAME            -> last_name             PIC X(25)
-  CUST-ADDR-LINE-1          -> addr_line_1           PIC X(50)
-  CUST-ADDR-LINE-2          -> addr_line_2           PIC X(50)
-  CUST-ADDR-LINE-3          -> addr_line_3           PIC X(50)
-  CUST-ADDR-STATE-CD        -> addr_state_cd         PIC X(02)
-  CUST-ADDR-COUNTRY-CD      -> addr_country_cd       PIC X(03)
-  CUST-ADDR-ZIP             -> addr_zip              PIC X(10)
-  CUST-PHONE-NUM-1          -> phone_num_1           PIC X(15)
-  CUST-PHONE-NUM-2          -> phone_num_2           PIC X(15)
-  CUST-SSN                  -> ssn                   PIC 9(09)
-  CUST-GOVT-ISSUED-ID       -> govt_issued_id        PIC X(20)
-  CUST-DOB-YYYY-MM-DD       -> dob                   PIC X(10)
-  CUST-EFT-ACCOUNT-ID       -> eft_account_id        PIC X(10)
-  CUST-PRI-CARD-HOLDER-IND  -> pri_card_holder_ind   PIC X(01)
-  CUST-FICO-CREDIT-SCORE    -> fico_credit_score     PIC 9(03)
-"""
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -49,10 +23,7 @@ class Customer:
     phone_num_2: str = ""
     govt_issued_id: str = ""
 
-    # Fixed-width field lengths matching CVCUS01Y copybook
     FIELD_LENGTHS: dict = field(default_factory=lambda: {}, init=False, repr=False, compare=False)
-
-    # Record length as in RECLN=500
     RECORD_LENGTH: int = field(default=500, init=False, repr=False, compare=False)
 
     def to_dict(self) -> dict:
@@ -102,7 +73,6 @@ class Customer:
 
     @classmethod
     def from_fixed_width(cls, record: str) -> "Customer":
-        """Parse a 500-byte fixed-width CUSTFILE record (CVCUS01Y layout)."""
         if len(record) < 332:
             raise ValueError(f"Record too short: {len(record)} < 332")
         pos = 0
